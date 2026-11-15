@@ -49,14 +49,15 @@ describe('application shell', () => {
   it('renders the mockup navigation groups with stage-gated items and real session data', async () => {
     stubApi({ 'GET /api/v1/me': () => json(200, ME) });
     renderAt(<App />, '/');
-    expect(await screen.findByRole('heading', { name: 'Welcome, Ada Admin' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Command Centre' })).toBeInTheDocument();
     const nav = screen.getByRole('navigation', { name: 'Main navigation' });
     for (const g of ['Workspace', 'Governance', 'Intelligence', 'Platform']) expect(within(nav).getByText(g)).toBeInTheDocument();
     const disabled = nav.querySelectorAll('[aria-disabled="true"]');
-    expect(disabled.length).toBe(13); // 7 Workspace + 3 Governance + 2 Intelligence + 1 Platform
+    expect(disabled.length).toBe(9); // 4 Workspace + 3 Governance + 1 Intelligence + 1 Platform (F2 enabled 3, F4 1)
+    for (const label of ['Call Explorer', 'Work Queues', 'Search']) expect(within(nav).getByRole('link', { name: label })).toBeInTheDocument();
     expect(within(nav).getByText('Script Studio').closest('[aria-disabled]')).toHaveAttribute('aria-disabled', 'true');
     expect(within(nav).getByRole('link', { name: /Administration/ })).toHaveAttribute('href', '/admin/users');
-    expect(screen.getByText('ada.admin')).toBeInTheDocument();
+    expect(screen.getAllByText('Ada Admin').length).toBeGreaterThan(0);
     expect(document.body.textContent).not.toMatch(/Call 360|Survey Studio/);
   });
 

@@ -7,8 +7,8 @@ import { vi } from 'vitest';
 export const ME = {
   principal: { principal_id: '11111111-1111-1111-1111-111111111111', display_name: 'Ada Admin', username: 'ada.admin' },
   roles: ['ADMIN'],
-  permissions: ['admin.users.read', 'admin.users.manage', 'audit.read'],
-  markets: [],
+  permissions: ['admin.users.read', 'admin.users.manage', 'audit.read', 'dashboard.read'],
+  markets: ['SG'],
   session: { session_id: 's', created_at: '2026-11-15T01:00:00Z', idle_expires_at: '2026-11-15T01:30:00Z',
     absolute_expires_at: '2026-11-15T09:00:00Z', access_expires_at: '2026-11-15T01:10:00Z' },
   environment: { app_env: 'local', data_policy: 'SYNTHETIC_ONLY' },

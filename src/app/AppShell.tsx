@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { Icon } from '../components/Icon';
 import { StageChip } from '../components/ui';
+import { GlobalSearch } from './GlobalSearch';
 import { NAV, PAGE_TITLES } from './nav';
 
 export function initials(name: string): string {
@@ -10,9 +11,9 @@ export function initials(name: string): string {
 }
 
 export function AppShell() {
-  const { me, signOut } = useAuth();
+  const { me, signOut, can } = useAuth();
   const location = useLocation();
-  const title = PAGE_TITLES[location.pathname] ?? 'Call360';
+  const title = PAGE_TITLES[location.pathname] ?? (location.pathname.startsWith('/cases/') ? 'Call Detail' : location.pathname.startsWith('/policies/') ? 'Policy Detail' : 'Call360');
   const isAdmin = !!me?.roles.includes('ADMIN');
 
   useEffect(() => {
@@ -37,7 +38,7 @@ export function AppShell() {
               {group.items.map((item) =>
                 item.to ? (
                   <NavLink key={item.label} to={item.to} end={item.to === '/'}
-                    className={({ isActive }) => `navitem${isActive || (item.to?.startsWith('/admin') && location.pathname.startsWith('/admin')) ? ' active' : ''}`}>
+                    className={({ isActive }) => `navitem${isActive || (item.to?.startsWith('/admin') && location.pathname.startsWith('/admin')) || (item.to === '/calls' && location.pathname.startsWith('/cases/')) || (item.to === '/policies' && location.pathname.startsWith('/policies/')) ? ' active' : ''}`}>
                     <Icon name={item.icon} />
                     <span>{item.label}</span>
                     {item.adminOnly && !isAdmin ? <Icon name="lock" size="sm" /> : null}
@@ -64,12 +65,13 @@ export function AppShell() {
             <span className="envdot" aria-hidden="true" />
             <span>{me?.environment.app_env === 'local' ? 'Local environment' : 'Test environment'}<br />All records synthetic</span>
           </div>
-          <div className="sidebar-version">CALL360 · STAGE 0 · CP0.1A</div>
+          <div className="sidebar-version">CALL360 · STAGE 0 · F4</div>
         </div>
       </aside>
       <div className="main">
         <header className="topbar">
           <div className="crumb">Workspace <Icon name="chev" size="sm" /> <strong>{title}</strong></div>
+          {can('search.use') ? <GlobalSearch /> : null}
           <div className="topright">{me ? <UserMenu name={me.principal.display_name}
             role={me.roles.includes('ADMIN') ? 'Administrator' : 'Operations user'}
             username={me.principal.username ?? ''} onSignOut={signOut} /> : null}</div>

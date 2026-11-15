@@ -9,7 +9,7 @@ a.navitem{text-decoration:none}
 .navitem[aria-disabled="true"]:hover{background:transparent;color:#8792a6}
 .stage-chip{display:inline-flex;align-items:center;border-radius:5px;padding:3px 6px;font-size:9px;font-weight:750;letter-spacing:.2px;white-space:nowrap;background:rgba(255,255,255,.07);color:#8f9bb0;border:1px solid rgba(255,255,255,.08)}
 .page .stage-chip{background:#f1f3f6;color:#545e70;border-color:#e6e9ee}
-.state-view{display:flex;align-items:center;gap:12px;padding:28px 22px;color:#68758a;font-size:12px}
+.state-view{display:flex;align-items:center;gap:12px;padding:28px 22px;color:#5d6878;font-size:12px}
 .state-view.error{color:#a03142}
 .empty{display:flex;flex-direction:column;align-items:center;gap:6px}
 .spinner{width:16px;height:16px;border-radius:50%;border:2px solid #e2e6ec;border-top-color:var(--red);animation:spin .8s linear infinite}
@@ -55,3 +55,87 @@ a.navitem{text-decoration:none}
 .navitem .stage-chip{padding:2px 5px;font-size:8.5px}
 .navitem .stage-wrap{margin-left:auto;display:inline-flex;align-items:center}
 .navitem .stage-icon{color:#8f9bb0;display:inline-flex}
+
+/* Audit table overflow (CP0.2 regression, FE-04/E2E-17). The shell is a flex row; without min-width:0 the main
+   column grows to the min-content width of a wide nowrap table, so .table-wrap never scrolls and the whole page
+   overflows. With containment restored, audit cells holding long unbroken values wrap inside their columns via
+   CSS only (text and accessible names unchanged; nothing truncated); horizontal scrolling remains a fallback. */
+.main{min-width:0}
+.audit-table td.wrap{white-space:normal;overflow-wrap:anywhere;min-width:16ch}
+.audit-table td.wrap.action{min-width:22ch} /* typical actions (AUTH.LOGIN_SUCCEEDED) stay on one line */
+.audit-table td.wrap-text{white-space:normal;overflow-wrap:anywhere;min-width:22ch;max-width:56ch}
+.wrap-anywhere{overflow-wrap:anywhere}
+.jsonbox{white-space:pre-wrap;overflow-wrap:anywhere}
+
+/* Overview (F1). Definition popovers as native disclosure; mockup cards otherwise unchanged. */
+.kpi-def{margin-top:8px;font-size:10px;color:#626d7e}
+.kpi-def summary{cursor:pointer;font-weight:700;color:#5f6979}
+.kpi-def .kv{margin-top:6px;grid-template-columns:auto 1fr;gap:4px 8px}
+.topnotice .row{display:flex;align-items:center;gap:8px}
+.wrap-cell{white-space:normal;min-width:18ch}
+.outcome-grid .metricline{margin:9px 0}
+/* DV-11 (continued, F1): the mockup's light greys on Overview cards measure below 4.5:1; same minimal override. */
+.kpi-top,.kpi-sub,.barlabel,.legend,.legend-row,.donut-center span,.activity-content small,.metricline,.kpi-def,.kpi-def summary{color:#626d7e}
+
+
+/* F2 — Call Explorer, Work Queues and global search. Mockup classes are reused; these add filter chips, the queue
+   cards as buttons and the suggestion listbox (the mockup's top-bar search had no dropdown). */
+.filter-chips{display:flex;flex-wrap:wrap;gap:8px;padding:12px 17px;border-bottom:1px solid var(--line)}
+.filter-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid #e3e6eb;border-radius:7px;padding:4px 4px 4px 9px;font-size:11px;font-weight:650;color:#3e4c60;background:#fafbfc}
+.filter-chip.strong-chip{border-color:#f0c5ca;background:#fff7f8;color:#8f2335}
+.filter-chip button{border:0;background:transparent;border-radius:5px;padding:3px;color:#636d7e;display:inline-flex}
+.filter-chip button:hover{background:#eef0f4}
+.queue-card{text-align:left;font:inherit;color:inherit;cursor:pointer;width:100%}
+.queue-card:hover{border-color:#d5d9e0}
+.queue-card[aria-pressed="true"]{border-color:#e5a8af}
+a.btn{text-decoration:none}
+.global-search{position:relative;flex:1;max-width:475px}
+.global-search .topsearch{max-width:none}
+.suggest{position:absolute;left:0;right:0;top:calc(100% + 6px);list-style:none;margin:0;padding:6px;background:#fff;border:1px solid var(--line);border-radius:11px;box-shadow:0 12px 34px #1b26371f;z-index:40;max-height:420px;overflow:auto}
+.suggest li[role="option"]{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;font-size:12px;color:#354155}
+.suggest li[role="option"].active{background:#fff1f2}
+.suggest .suggest-main{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.suggest .suggest-note{padding:8px 10px;font-size:10px;color:#626d7e}
+.plain-list{list-style:none;margin:0;padding:0}
+.plain-list > li{border-bottom:1px solid var(--line)}
+.plain-list > li:last-child{border-bottom:0}
+.plain-list .search-result{border-bottom:0;text-decoration:none;color:inherit}
+.search-result p{color:#626d7e}
+.kpi-drill{display:inline-block;margin-top:8px;text-decoration:none}
+.legend-link{text-decoration:none;color:inherit}
+.legend-link:hover{text-decoration:underline}
+.data-table a.link{text-decoration:none}
+.topsearch kbd{color:#626d7e} /* DV-11: mockup #9299a6 on white is 2.9:1 */
+/* F2: sr-only (absolutely positioned) text inside a scrolled table must be clipped by the scroll container, not the page. */
+.table-wrap{position:relative}
+.pill-tabs button{color:#5f6979} /* DV-11: mockup #778296 on #f2f4f7 is 3.6:1 */
+
+/* F3 — Call Detail. Mockup three-pane layout and evidence cards; additions for the NOT_AVAILABLE media panels,
+   selectable attempts and pin lists. */
+.case-title{font-size:22px;letter-spacing:-.6px;margin:12px 0 6px}
+.precheck{gap:6px;align-items:flex-end;max-width:340px;text-align:right}
+.precheck-reasons{list-style:none;margin:0;padding:0;font-size:12px;line-height:1.45}
+.precheck-reasons li+li{margin-top:3px}
+.case-tiles{grid-template-columns:repeat(5,minmax(0,1fr));margin-top:20px}
+.cd-threepane{grid-template-columns:230px minmax(0,1fr) minmax(300px,.9fr)}
+.unavailable{display:flex;gap:12px;align-items:flex-start;padding:16px;border:1px dashed #d7dce4;border-radius:10px;background:#f8f9fb;color:#4c586c;font-size:12px}
+.unavailable .icon{color:#8792a6;flex-shrink:0}
+.attempts-list{list-style:none;margin:0;padding:0}
+.attempt-btn{display:block;width:100%;text-align:left;border:1px solid transparent;background:none;border-radius:8px;padding:6px 8px;margin:-6px -8px 0;font:inherit;color:#677286;font-size:11px;cursor:pointer}
+.attempt-btn:hover{background:#f7f8fa}
+.attempt-btn.selected{background:#fff6f7;border-color:#f0d5d9}
+.attempt-btn small{display:block;color:#626d7e;font-size:10px;margin-top:4px}
+.step-dot.red{background:#d34256;box-shadow:0 0 0 1px #d34256}
+.q-wording{font-size:11px;font-weight:700;margin:8px 0;color:#303c50;line-height:1.5}
+.q-kv{grid-template-columns:minmax(120px,max-content) 1fr;gap:5px 12px}
+.pins{grid-template-columns:minmax(120px,max-content) 1fr;gap:7px 12px}
+.evidence-title,.info-tile label{color:#626d7e}
+@media (max-width:1360px){.cd-threepane{grid-template-columns:220px minmax(0,1fr)}.cd-threepane > :last-child{grid-column:1 / -1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:start}}
+
+/* F4 — Policy Detail: sale list beside the sale or risk workspace (mockup "Policy 360 context" drawer, as a page). */
+.pd-sales{grid-template-columns:300px minmax(0,1fr);align-items:start}
+@media (max-width:1100px){.pd-sales{grid-template-columns:1fr}}
+/* Medium widths (≤1150px, the mockup's sidebar breakpoint): page-head actions and detail info tiles wrap instead of
+   pushing the page wider than the viewport (the mockup only wraps them below 760px). */
+@media (max-width:1150px){.page-head{flex-wrap:wrap}.head-actions{flex-wrap:wrap}.case-tiles{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.explain{color:#535f73}

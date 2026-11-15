@@ -24,9 +24,9 @@ keywords = ["postgres"]
 [[rules]]
 id = "call360-secret-assignment"
 description = "Call360 secret, pepper, password or token assigned in env/config/constant style"
-regex = '''(?m)^[ \t]*(?:export[ \t]+)?(?:[A-Z0-9]+_)*(?:REFRESH_TOKEN_PEPPER|CSRF_SECRET|PASSWORD|PASSWD|SECRET|PEPPER|PRIVATE_KEY|API_KEY|TOKEN)[ \t]*=[ \t]*["']?([^\s"'<>{}$#]{8,})'''
+regex = '''(?m)^[ \t]*(?:export[ \t]+)?(?:[A-Z0-9]+_)*(?:REFRESH_TOKEN_PEPPER|CSRF_SECRET|ENCRYPTION_KEY|HMAC_KEY|PASSWORD|PASSWD|SECRET|PEPPER|PRIVATE_KEY|API_KEY|TOKEN)[ \t]*=[ \t]*["']?([^\s"'<>{}$#]{8,})'''
 secretGroup = 1
-keywords = ["pepper", "secret", "password", "passwd", "token", "private_key", "api_key"]
+keywords = ["pepper", "secret", "password", "passwd", "token", "private_key", "api_key", "encryption_key", "hmac_key"]
 
   [[rules.allowlists]]
   description = "Synthetic test-fixture password used only against schema call360_test (tests/support.py)"

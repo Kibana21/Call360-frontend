@@ -6,6 +6,8 @@ import { Badge, Button, Card } from '../../components/ui';
 
 type Outcome = '' | 'SUCCEEDED' | 'DENIED' | 'FAILED';
 const tone = (o: string) => (o === 'SUCCEEDED' ? 'green' : o === 'DENIED' ? 'red' : 'amber') as 'green' | 'red' | 'amber';
+const actorOf = (e: AuditEvent) =>
+  e.actor_display_name ?? (e.actor_service ? `Service: ${e.actor_service}` : e.actor_principal_id ? e.actor_principal_id.slice(0, 8) : 'Anonymous');
 const when = (iso: string) =>
   new Intl.DateTimeFormat('en-SG', { dateStyle: 'medium', timeStyle: 'medium', timeZone: 'Asia/Singapore' }).format(new Date(iso));
 
@@ -37,18 +39,18 @@ export function AuditPage() {
     const events = query.data.pages.flatMap((p) => p.items);
     body = events.length === 0 ? <Empty title="No matching audit events" /> : (
       <div className="table-wrap">
-        <table className="data-table">
+        <table className="data-table audit-table">
           <caption className="sr-only">Audit events, newest first</caption>
           <thead><tr><th scope="col">Time (SGT)</th><th scope="col">Action</th><th scope="col">Outcome</th><th scope="col">Actor</th><th scope="col">Entity</th><th scope="col">Reason</th><th scope="col"><span className="sr-only">Details</span></th></tr></thead>
           <tbody>
             {events.map((e) => (
               <tr key={e.event_id}>
                 <td className="mono">{when(e.occurred_at)}</td>
-                <td className="mono strong">{e.action}</td>
+                <td className="mono strong wrap action">{e.action}</td>
                 <td><Badge tone={tone(e.outcome)}>{e.outcome}</Badge></td>
-                <td>{e.actor_display_name ?? (e.actor_service ? `Service: ${e.actor_service}` : e.actor_principal_id ? e.actor_principal_id.slice(0, 8) : 'Anonymous')}</td>
-                <td className="mono xsmall">{e.entity_type ? `${e.entity_type}${e.entity_id ? ` · ${e.entity_id.slice(0, 12)}` : ''}` : '—'}</td>
-                <td>{e.reason ?? '—'}</td>
+                <td className="wrap">{actorOf(e)}</td>
+                <td className="mono xsmall wrap">{e.entity_type ? `${e.entity_type}${e.entity_id ? ` · ${e.entity_id.slice(0, 12)}` : ''}` : '—'}</td>
+                <td className="wrap-text">{e.reason ?? '—'}</td>
                 <td><button type="button" className="linkbtn" onClick={() => setSelected(e)}>View</button></td>
               </tr>
             ))}
@@ -82,7 +84,7 @@ function EventDrawer({ event, onClose }: { event: AuditEvent; onClose: () => voi
     <div className="drawer-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <aside className="drawer" role="dialog" aria-modal="true" aria-labelledby="event-title">
         <div className="drawer-head">
-          <div><div className="eyebrow">Audit event #{event.seq}</div><h2 id="event-title" className="mono">{event.action}</h2></div>
+          <div><div className="eyebrow">Audit event #{event.seq}</div><h2 id="event-title" className="mono wrap-anywhere">{event.action}</h2></div>
           <Button icon="close" onClick={onClose} aria-label="Close" autoFocus>Close</Button>
         </div>
         <div className="drawer-body">
@@ -90,7 +92,7 @@ function EventDrawer({ event, onClose }: { event: AuditEvent; onClose: () => voi
             <dt>Time</dt><dd>{when(event.occurred_at)} SGT</dd>
             <dt>Outcome</dt><dd><Badge tone={tone(event.outcome)}>{event.outcome}</Badge></dd>
             <dt>Actor</dt><dd>{event.actor_display_name ?? (event.actor_service ? `Service: ${event.actor_service}` : '—')} {event.actor_username ? <span className="mono xsmall">({event.actor_username})</span> : null}</dd>
-            <dt>Entity</dt><dd className="mono">{event.entity_type ?? '—'} {event.entity_id ?? ''}</dd>
+            <dt>Entity</dt><dd className="mono wrap-anywhere">{event.entity_type ?? '—'} {event.entity_id ?? ''}</dd>
             <dt>Reason</dt><dd>{event.reason ?? '—'}</dd>
             <dt>Correlation ID</dt><dd className="mono xsmall">{event.correlation_id ?? '—'}</dd>
             <dt>Source IP</dt><dd className="mono xsmall">{event.source_ip ?? '—'}</dd>

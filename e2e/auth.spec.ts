@@ -15,9 +15,10 @@ test('E2E-01 unauthenticated redirect, login, landing with real session data, lo
   await page.getByRole('button', { name: /sign in/i }).click();
   await expect(page).toHaveURL(/\/admin\/users$/); // returnTo honoured
   await page.getByRole('link', { name: 'Overview' }).click();
-  await expect(page.getByRole('heading', { name: `Welcome, ${admin.display_name}` })).toBeVisible();
-  await expect(page.getByText(admin.username, { exact: true })).toBeVisible();
-  await expect(page.getByText('admin.users.manage')).toBeVisible();
+  // The landing page is the Overview (F1): real session (top bar) and real SG data from the API.
+  await expect(page.getByRole('heading', { name: 'Command Centre' })).toBeVisible();
+  await expect(page.getByRole('button', { name: new RegExp(admin.display_name) })).toBeVisible();
+  await expect(page.getByTestId('kpi-OPS-01')).toHaveText(/\d/);
   await signOut(page, admin.display_name);
   await page.goto('/');
   await expect(page).toHaveURL(/\/login/);
@@ -55,15 +56,15 @@ test('D-23 two tabs refreshing an expired access token concurrently keep the ses
   await signIn(first, tabs);
   const second = await context.newPage();
   await second.goto('/');
-  await expect(second.getByRole('heading', { name: `Welcome, ${tabs.display_name}` })).toBeVisible();
+  await expect(second.getByRole('heading', { name: 'Command Centre' })).toBeVisible();
   const sessionBefore = (await (await first.request.get('/api/v1/me')).json()).session.session_id;
   // Simulate access-token expiry in the shared cookie jar, then make both tabs hit the API at once.
   const kept = (await context.cookies()).filter((c) => c.name !== 'c360_at');
   await context.clearCookies();
   await context.addCookies(kept);
   await Promise.all([first.reload(), second.reload()]);
-  await expect(first.getByRole('heading', { name: `Welcome, ${tabs.display_name}` })).toBeVisible();
-  await expect(second.getByRole('heading', { name: `Welcome, ${tabs.display_name}` })).toBeVisible();
+  await expect(first.getByRole('heading', { name: 'Command Centre' })).toBeVisible();
+  await expect(second.getByRole('heading', { name: 'Command Centre' })).toBeVisible();
   const after = await (await first.request.get('/api/v1/me')).json();
   expect(after.session.session_id).toBe(sessionBefore); // same session, not revoked by a false reuse
 });
@@ -77,6 +78,6 @@ test('E2E-18 (partial) branding and terminology', async ({ page }) => {
   expect(text).not.toContain('Survey Studio');
   await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByText('Script Studio')).toBeVisible();
   const disabled = page.locator('.navitem[aria-disabled="true"]');
-  expect(await disabled.count()).toBeGreaterThan(10);
+  expect(await disabled.count()).toBe(9); // F2 enabled Call Explorer, Work Queues and Search; F4 Policy Explorer
   await expect(page.locator('.navitem[aria-disabled="true"]', { hasText: 'Live Monitor' })).toContainText('Stage S4');
 });

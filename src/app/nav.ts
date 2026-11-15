@@ -17,10 +17,10 @@ export const NAV: { group: string; items: NavItem[] }[] = [
     group: 'Workspace',
     items: [
       { label: 'Overview', icon: 'dashboard', to: '/' },
-      { label: 'Call Explorer', icon: 'files', stage: LATER_IN_S0 },
-      { label: 'Policy Explorer', icon: 'briefcase', stage: LATER_IN_S0 },
+      { label: 'Call Explorer', icon: 'files', to: '/calls' },
+      { label: 'Policy Explorer', icon: 'briefcase', to: '/policies' },
       { label: 'SBQ Risk Workbench', icon: 'target', stage: LATER_IN_S0 },
-      { label: 'Work Queues', icon: 'calendar', stage: LATER_IN_S0 },
+      { label: 'Work Queues', icon: 'calendar', to: '/queues' },
       { label: 'Voice Studio', icon: 'mic', stage: LATER_IN_S0 },
       { label: 'Live Monitor', icon: 'headphones', stage: 'Stage S4' },
       { label: 'Campaigns', icon: 'flag', stage: 'Stage S4' },
@@ -37,7 +37,7 @@ export const NAV: { group: string; items: NavItem[] }[] = [
   {
     group: 'Intelligence',
     items: [
-      { label: 'Search', icon: 'search', stage: LATER_IN_S0 },
+      { label: 'Search', icon: 'search', to: '/search' },
       { label: 'Analytics', icon: 'chart', stage: 'Stage S4' },
     ],
   },
@@ -52,6 +52,10 @@ export const NAV: { group: string; items: NavItem[] }[] = [
 
 export const PAGE_TITLES: Record<string, string> = {
   '/': 'Overview',
+  '/calls': 'Call Explorer',
+  '/policies': 'Policy Explorer',
+  '/queues': 'Work Queues',
+  '/search': 'Search',
   '/admin/users': 'Administration',
   '/admin/audit': 'Administration',
   '/admin/config': 'Administration',

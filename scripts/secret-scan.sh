@@ -7,7 +7,10 @@ command -v gitleaks >/dev/null || { echo "BLOCKED: gitleaks not installed"; exit
 [ -f ../Call360-backend/scripts/secret_scan_selftest.py ] || { echo "BLOCKED: ../Call360-backend self-test not found"; exit 2; }
 (cd ../Call360-backend && uv run python scripts/secret_scan_selftest.py --config "$OLDPWD/.gitleaks.toml")
 stage=$(mktemp -d); trap 'rm -rf "$stage"' EXIT
-git ls-files -z --cached --others --exclude-standard | rsync -a --from0 --files-from=- ./ "$stage/"
+# Uncommitted deletions are still in the index; they have nothing to scan, so only existing files are staged.
+git ls-files -z --cached --others --exclude-standard \
+  | while IFS= read -r -d '' f; do [ -e "$f" ] && printf '%s\0' "$f"; done \
+  | rsync -a --from0 --files-from=- ./ "$stage/"
 echo "Scanning $(git ls-files --cached --others --exclude-standard | wc -l | tr -d ' ') committable files"
 gitleaks dir "$stage" --config .gitleaks.toml --no-banner --redact --exit-code 1
 if [ -d dist ]; then
