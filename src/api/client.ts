@@ -9,6 +9,9 @@ export type Me = components['schemas']['MeResponse'];
 export type AdminUser = components['schemas']['AdminUser'];
 export type AuditEvent = components['schemas']['AuditEventOut'];
 export type ApiError = components['schemas']['ErrorResponse'];
+export type CodeList = components['schemas']['CodeListOut'];
+export type CodeListVersion = components['schemas']['CodeListVersionOut'];
+export type FeatureFlag = components['schemas']['FeatureFlagOut'];
 
 export class ApiFailure extends Error {
   constructor(public readonly status: number, public readonly body: Partial<ApiError> | undefined) {

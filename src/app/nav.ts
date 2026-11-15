@@ -54,5 +54,6 @@ export const PAGE_TITLES: Record<string, string> = {
   '/': 'Overview',
   '/admin/users': 'Administration',
   '/admin/audit': 'Administration',
+  '/admin/config': 'Administration',
   '/unauthorized': 'Access restricted',
 };

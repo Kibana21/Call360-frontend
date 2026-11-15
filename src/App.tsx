@@ -4,6 +4,7 @@ import { AuthProvider } from './auth/AuthContext';
 import { RequireAuth, RequirePermission } from './auth/guards';
 import { AdminLayout } from './features/admin/AdminLayout';
 import { AuditPage } from './features/admin/AuditPage';
+import { ConfigPage } from './features/admin/ConfigPage';
 import { UsersPage } from './features/admin/UsersPage';
 import { HomePage } from './features/HomePage';
 import { LoginPage } from './features/LoginPage';
@@ -11,7 +12,7 @@ import { NotFoundPage } from './features/NotFoundPage';
 import { SessionExpiredPage } from './features/SessionExpiredPage';
 import { UnauthorizedPage } from './features/UnauthorizedPage';
 
-// CP0.1A routes only (S0_SCREEN_SPEC §2; S0_IMPLEMENTATION_PLAN CP0.1A).
+// Routes implemented so far: CP0.1A plus /admin/config (CP0.1B-1). S0_SCREEN_SPEC §2.
 export function App() {
   return (
     <AuthProvider>
@@ -25,6 +26,7 @@ export function App() {
             <Route index element={<Navigate to="/admin/users" replace />} />
             <Route path="users" element={<UsersPage />} />
             <Route path="audit" element={<RequirePermission permission="audit.read"><AuditPage /></RequirePermission>} />
+            <Route path="config" element={<RequirePermission permission="config.read"><ConfigPage /></RequirePermission>} />
           </Route>
           <Route path="*" element={<NotFoundPage />} />
         </Route>
