@@ -78,6 +78,6 @@ test('E2E-18 (partial) branding and terminology', async ({ page }) => {
   expect(text).not.toContain('Survey Studio');
   await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByText('Script Studio')).toBeVisible();
   const disabled = page.locator('.navitem[aria-disabled="true"]');
-  expect(await disabled.count()).toBe(9); // F2 enabled Call Explorer, Work Queues and Search; F4 Policy Explorer
+  expect(await disabled.count()).toBe(8); // F2 enabled Call Explorer, Work Queues and Search; F4 Policy Explorer; F5 SBQ Risk Workbench
   await expect(page.locator('.navitem[aria-disabled="true"]', { hasText: 'Live Monitor' })).toContainText('Stage S4');
 });

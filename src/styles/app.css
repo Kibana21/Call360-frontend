@@ -139,3 +139,6 @@ a.btn{text-decoration:none}
    pushing the page wider than the viewport (the mockup only wraps them below 760px). */
 @media (max-width:1150px){.page-head{flex-wrap:wrap}.head-actions{flex-wrap:wrap}.case-tiles{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .explain{color:#535f73}
+/* F5 — SBQ Risk Workbench drawer: tables wrap inside the drawer instead of running past its edge. */
+.drawer .data-table{white-space:normal}
+.drawer .data-table td,.drawer .data-table th{padding:10px 9px}

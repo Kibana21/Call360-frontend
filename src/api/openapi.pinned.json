@@ -1081,6 +1081,30 @@
         "title": "CaseFacets",
         "type": "object"
       },
+      "CaseLink": {
+        "properties": {
+          "case_id": {
+            "format": "uuid",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "case_ref": {
+            "title": "Case Ref",
+            "type": "string"
+          },
+          "route": {
+            "title": "Route",
+            "type": "string"
+          }
+        },
+        "required": [
+          "case_id",
+          "case_ref",
+          "route"
+        ],
+        "title": "CaseLink",
+        "type": "object"
+      },
       "CaseList": {
         "properties": {
           "data_as_of": {
@@ -1954,6 +1978,30 @@
         "title": "FactSnapshotOut",
         "type": "object"
       },
+      "FactorVocabularyItem": {
+        "properties": {
+          "attributes": {
+            "additionalProperties": true,
+            "title": "Attributes",
+            "type": "object"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "label",
+          "attributes"
+        ],
+        "title": "FactorVocabularyItem",
+        "type": "object"
+      },
       "FeatureFlagChangeOut": {
         "properties": {
           "changed_at": {
@@ -2476,6 +2524,1349 @@
           "register_route"
         ],
         "title": "HoldReasonCount",
+        "type": "object"
+      },
+      "IntakeAuthorization": {
+        "additionalProperties": false,
+        "properties": {
+          "reference": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Reference",
+            "type": "string"
+          },
+          "valid_from": {
+            "format": "date-time",
+            "title": "Valid From",
+            "type": "string"
+          },
+          "valid_to": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid To"
+          }
+        },
+        "required": [
+          "reference",
+          "valid_from"
+        ],
+        "title": "IntakeAuthorization",
+        "type": "object"
+      },
+      "IntakeCallbackRequest": {
+        "additionalProperties": false,
+        "description": "The verification obligation as the source requested it: due date and priority are source-provided.",
+        "properties": {
+          "due_at": {
+            "format": "date-time",
+            "title": "Due At",
+            "type": "string"
+          },
+          "priority": {
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Priority",
+            "type": "integer"
+          },
+          "source_request_ref": {
+            "maxLength": 80,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9:._-]*$",
+            "title": "Source Request Ref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_request_ref",
+          "due_at",
+          "priority"
+        ],
+        "title": "IntakeCallbackRequest",
+        "type": "object"
+      },
+      "IntakeCaseOut": {
+        "properties": {
+          "callable": {
+            "title": "Callable",
+            "type": "boolean"
+          },
+          "case_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
+          "case_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Ref"
+          },
+          "due_at": {
+            "format": "date-time",
+            "title": "Due At",
+            "type": "string"
+          },
+          "obligation_type": {
+            "title": "Obligation Type",
+            "type": "string"
+          },
+          "priority": {
+            "title": "Priority",
+            "type": "integer"
+          },
+          "source_request_ref": {
+            "title": "Source Request Ref",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "case_id",
+          "case_ref",
+          "state",
+          "obligation_type",
+          "source_request_ref",
+          "due_at",
+          "priority",
+          "callable"
+        ],
+        "title": "IntakeCaseOut",
+        "type": "object"
+      },
+      "IntakeContact": {
+        "additionalProperties": false,
+        "properties": {
+          "channel": {
+            "enum": [
+              "PHONE",
+              "EMAIL"
+            ],
+            "title": "Channel",
+            "type": "string"
+          },
+          "consent_status": {
+            "enum": [
+              "GRANTED",
+              "WITHDRAWN",
+              "UNKNOWN"
+            ],
+            "title": "Consent Status",
+            "type": "string"
+          },
+          "is_verified": {
+            "default": false,
+            "title": "Is Verified",
+            "type": "boolean"
+          },
+          "language": {
+            "default": "en",
+            "pattern": "^[a-z]{2}(-[A-Z]{2})?$",
+            "title": "Language",
+            "type": "string"
+          },
+          "preference_rank": {
+            "default": 1,
+            "maximum": 9.0,
+            "minimum": 1.0,
+            "title": "Preference Rank",
+            "type": "integer"
+          },
+          "suppressed": {
+            "default": false,
+            "title": "Suppressed",
+            "type": "boolean"
+          },
+          "value": {
+            "description": "Synthetic identifier only (synthetic_contact_ranges)",
+            "maxLength": 120,
+            "minLength": 3,
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "channel",
+          "value",
+          "consent_status"
+        ],
+        "title": "IntakeContact",
+        "type": "object"
+      },
+      "IntakeCounts": {
+        "properties": {
+          "new": {
+            "title": "New",
+            "type": "integer"
+          },
+          "quarantined": {
+            "title": "Quarantined",
+            "type": "integer"
+          },
+          "received": {
+            "title": "Received",
+            "type": "integer"
+          },
+          "rejected": {
+            "title": "Rejected",
+            "type": "integer"
+          },
+          "unchanged": {
+            "title": "Unchanged",
+            "type": "integer"
+          },
+          "updated": {
+            "title": "Updated",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "received",
+          "new",
+          "updated",
+          "unchanged",
+          "rejected",
+          "quarantined"
+        ],
+        "title": "IntakeCounts",
+        "type": "object"
+      },
+      "IntakeEligibilityOut": {
+        "properties": {
+          "contact_masked": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Masked"
+          },
+          "eligible": {
+            "title": "Eligible",
+            "type": "boolean"
+          },
+          "ineligibility_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ineligibility Reason"
+          },
+          "masked_name": {
+            "title": "Masked Name",
+            "type": "string"
+          },
+          "party_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Party Ref"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "party_ref",
+          "masked_name",
+          "role",
+          "eligible",
+          "ineligibility_reason",
+          "contact_masked"
+        ],
+        "title": "IntakeEligibilityOut",
+        "type": "object"
+      },
+      "IntakeHoldOut": {
+        "properties": {
+          "blocking": {
+            "title": "Blocking",
+            "type": "boolean"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "label",
+          "blocking"
+        ],
+        "title": "IntakeHoldOut",
+        "type": "object"
+      },
+      "IntakeItemOut": {
+        "properties": {
+          "entity_type": {
+            "title": "Entity Type",
+            "type": "string"
+          },
+          "errors": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "payload_digest": {
+            "title": "Payload Digest",
+            "type": "string"
+          },
+          "source_event_id": {
+            "title": "Source Event Id",
+            "type": "string"
+          },
+          "source_system": {
+            "title": "Source System",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "source_system",
+          "source_event_id",
+          "entity_type",
+          "status",
+          "errors",
+          "payload_digest"
+        ],
+        "title": "IntakeItemOut",
+        "type": "object"
+      },
+      "IntakeOutcome": {
+        "properties": {
+          "case": {
+            "$ref": "#/components/schemas/IntakeCaseOut"
+          },
+          "compliance_outcome": {
+            "const": "NOT_EVALUATED_IN_S0",
+            "default": "NOT_EVALUATED_IN_S0",
+            "title": "Compliance Outcome",
+            "type": "string"
+          },
+          "eligibility": {
+            "items": {
+              "$ref": "#/components/schemas/IntakeEligibilityOut"
+            },
+            "title": "Eligibility",
+            "type": "array"
+          },
+          "holds": {
+            "items": {
+              "$ref": "#/components/schemas/IntakeHoldOut"
+            },
+            "title": "Holds",
+            "type": "array"
+          },
+          "mode": {
+            "enum": [
+              "PREVIEW",
+              "COMMITTED"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "parties": {
+            "items": {
+              "$ref": "#/components/schemas/IntakePartyOut"
+            },
+            "title": "Parties",
+            "type": "array"
+          },
+          "payload_digest": {
+            "title": "Payload Digest",
+            "type": "string"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/IntakePolicyOut"
+          },
+          "replayed": {
+            "default": false,
+            "title": "Replayed",
+            "type": "boolean"
+          },
+          "risk": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IntakeRiskOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "risk_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Note"
+          },
+          "routes": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Routes",
+            "type": "object"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
+          },
+          "run_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Ref"
+          },
+          "sale_event_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sale Event Id"
+          },
+          "sale_ref": {
+            "title": "Sale Ref",
+            "type": "string"
+          },
+          "script_routing": {
+            "const": "NOT_EVALUATED_IN_S0",
+            "default": "NOT_EVALUATED_IN_S0",
+            "title": "Script Routing",
+            "type": "string"
+          },
+          "source_event_id": {
+            "title": "Source Event Id",
+            "type": "string"
+          },
+          "source_system": {
+            "title": "Source System",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode",
+          "payload_digest",
+          "source_system",
+          "source_event_id",
+          "policy",
+          "sale_ref",
+          "sale_event_id",
+          "parties",
+          "eligibility",
+          "risk",
+          "risk_note",
+          "case",
+          "holds"
+        ],
+        "title": "IntakeOutcome",
+        "type": "object"
+      },
+      "IntakeParty": {
+        "additionalProperties": false,
+        "description": "Either an existing synthetic party (``party_ref``) or a new one (``kind`` + ``name``). Parties are never\nmatched on name or contact value.",
+        "properties": {
+          "authorization": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IntakeAuthorization"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "contacts": {
+            "items": {
+              "$ref": "#/components/schemas/IntakeContact"
+            },
+            "maxItems": 6,
+            "title": "Contacts",
+            "type": "array"
+          },
+          "date_of_birth_year": {
+            "anyOf": [
+              {
+                "maximum": 2100.0,
+                "minimum": 1900.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Of Birth Year"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "enum": [
+                  "PERSON",
+                  "ORGANIZATION"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "party_ref": {
+            "anyOf": [
+              {
+                "pattern": "^PTY-[0-9]{6}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Party Ref"
+          },
+          "roles": {
+            "items": {
+              "enum": [
+                "OWNER",
+                "INSURED",
+                "PAYER",
+                "PROPOSER",
+                "BENEFICIARY",
+                "AUTHORIZED_CONTACT"
+              ],
+              "type": "string"
+            },
+            "maxItems": 6,
+            "minItems": 1,
+            "title": "Roles",
+            "type": "array"
+          },
+          "source_party_id": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9:._-]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Party Id"
+          }
+        },
+        "required": [
+          "roles"
+        ],
+        "title": "IntakeParty",
+        "type": "object"
+      },
+      "IntakePartyOut": {
+        "properties": {
+          "contacts": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Contacts",
+            "type": "array"
+          },
+          "masked_name": {
+            "title": "Masked Name",
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "NEW",
+              "EXISTING"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "party_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Party Id"
+          },
+          "party_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Party Ref"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Roles",
+            "type": "array"
+          }
+        },
+        "required": [
+          "outcome",
+          "party_ref",
+          "party_id",
+          "masked_name",
+          "roles",
+          "contacts"
+        ],
+        "title": "IntakePartyOut",
+        "type": "object"
+      },
+      "IntakePolicy": {
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "pattern": "^[A-Z]{3}$",
+            "title": "Currency",
+            "type": "string"
+          },
+          "effective_from": {
+            "format": "date-time",
+            "title": "Effective From",
+            "type": "string"
+          },
+          "market_code": {
+            "pattern": "^[A-Z]{2}$",
+            "title": "Market Code",
+            "type": "string"
+          },
+          "policy_ref": {
+            "pattern": "^POL-[A-Z]{2}-[0-9]{6}$",
+            "title": "Policy Ref",
+            "type": "string"
+          },
+          "premium_amount": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Premium Amount"
+          },
+          "premium_frequency": {
+            "enum": [
+              "SINGLE",
+              "MONTHLY",
+              "QUARTERLY",
+              "HALF_YEARLY",
+              "ANNUAL"
+            ],
+            "title": "Premium Frequency",
+            "type": "string"
+          },
+          "premium_term_years": {
+            "anyOf": [
+              {
+                "maximum": 99.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Premium Term Years"
+          },
+          "product_code": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Product Code",
+            "type": "string"
+          },
+          "product_family": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Product Family",
+            "type": "string"
+          },
+          "product_subtype": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Product Subtype",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "PROPOSAL",
+              "IN_FORCE",
+              "FREE_LOOK_CANCELLED",
+              "LAPSED",
+              "TERMINATED"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "sum_assured": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sum Assured"
+          },
+          "sum_assured_currency": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Z]{3}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sum Assured Currency"
+          }
+        },
+        "required": [
+          "policy_ref",
+          "market_code",
+          "product_code",
+          "product_family",
+          "product_subtype",
+          "status",
+          "premium_amount",
+          "currency",
+          "premium_frequency",
+          "effective_from"
+        ],
+        "title": "IntakePolicy",
+        "type": "object"
+      },
+      "IntakePolicyOut": {
+        "properties": {
+          "outcome": {
+            "enum": [
+              "NEW",
+              "REUSED"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "policy_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Id"
+          },
+          "policy_ref": {
+            "title": "Policy Ref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "outcome",
+          "policy_ref",
+          "policy_id"
+        ],
+        "title": "IntakePolicyOut",
+        "type": "object"
+      },
+      "IntakeRiskOut": {
+        "properties": {
+          "assessment_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assessment Id"
+          },
+          "band_code": {
+            "title": "Band Code",
+            "type": "string"
+          },
+          "origin": {
+            "const": "SOURCE_ASSIGNED",
+            "title": "Origin",
+            "type": "string"
+          },
+          "source_original_value": {
+            "title": "Source Original Value",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "origin",
+          "band_code",
+          "status",
+          "source_original_value",
+          "assessment_id"
+        ],
+        "title": "IntakeRiskOut",
+        "type": "object"
+      },
+      "IntakeRunDetail": {
+        "properties": {
+          "counts": {
+            "$ref": "#/components/schemas/IntakeCounts"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/IntakeItemOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "payload_digest": {
+            "title": "Payload Digest",
+            "type": "string"
+          },
+          "requested_by": {
+            "title": "Requested By",
+            "type": "string"
+          },
+          "result": {
+            "additionalProperties": true,
+            "title": "Result",
+            "type": "object"
+          },
+          "run_ref": {
+            "title": "Run Ref",
+            "type": "string"
+          },
+          "source_system": {
+            "title": "Source System",
+            "type": "string"
+          },
+          "source_type": {
+            "title": "Source Type",
+            "type": "string"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "run_ref",
+          "source_type",
+          "source_system",
+          "status",
+          "started_at",
+          "finished_at",
+          "requested_by",
+          "counts",
+          "payload_digest",
+          "items",
+          "result"
+        ],
+        "title": "IntakeRunDetail",
+        "type": "object"
+      },
+      "IntakeRunList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/IntakeRunRow"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "IntakeRunList",
+        "type": "object"
+      },
+      "IntakeRunRow": {
+        "properties": {
+          "counts": {
+            "$ref": "#/components/schemas/IntakeCounts"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "payload_digest": {
+            "title": "Payload Digest",
+            "type": "string"
+          },
+          "requested_by": {
+            "title": "Requested By",
+            "type": "string"
+          },
+          "run_ref": {
+            "title": "Run Ref",
+            "type": "string"
+          },
+          "source_system": {
+            "title": "Source System",
+            "type": "string"
+          },
+          "source_type": {
+            "title": "Source Type",
+            "type": "string"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "run_ref",
+          "source_type",
+          "source_system",
+          "status",
+          "started_at",
+          "finished_at",
+          "requested_by",
+          "counts",
+          "payload_digest"
+        ],
+        "title": "IntakeRunRow",
+        "type": "object"
+      },
+      "IntakeSale": {
+        "additionalProperties": false,
+        "properties": {
+          "campaign_code": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Campaign Code"
+          },
+          "currency": {
+            "pattern": "^[A-Z]{3}$",
+            "title": "Currency",
+            "type": "string"
+          },
+          "fsc_ref": {
+            "pattern": "^FSC-[0-9]{4}$",
+            "title": "Fsc Ref",
+            "type": "string"
+          },
+          "premium_amount": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Premium Amount"
+          },
+          "premium_amount_band": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Z0-9_]{1,40}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Source-supplied label",
+            "title": "Premium Amount Band"
+          },
+          "proposal_ref": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Proposal Ref",
+            "type": "string"
+          },
+          "sale_event_type": {
+            "enum": [
+              "NEW_BUSINESS",
+              "REPLACEMENT",
+              "TOP_UP",
+              "OTHER_APPROVED"
+            ],
+            "title": "Sale Event Type",
+            "type": "string"
+          },
+          "sale_ref": {
+            "pattern": "^SALE-[A-Z]{2}-[0-9]{6}$",
+            "title": "Sale Ref",
+            "type": "string"
+          },
+          "selling_channel": {
+            "enum": [
+              "AGENCY",
+              "BANCASSURANCE",
+              "BROKER",
+              "DIRECT"
+            ],
+            "title": "Selling Channel",
+            "type": "string"
+          },
+          "selling_location": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Selling Location",
+            "type": "string"
+          },
+          "sold_at": {
+            "format": "date-time",
+            "title": "Sold At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sale_ref",
+          "sale_event_type",
+          "sold_at",
+          "fsc_ref",
+          "selling_channel",
+          "selling_location",
+          "proposal_ref",
+          "premium_amount",
+          "currency"
+        ],
+        "title": "IntakeSale",
+        "type": "object"
+      },
+      "IntakeSource": {
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "source_type": {
+            "enum": [
+              "MANUAL",
+              "MOCK_API",
+              "BULK",
+              "INTERNAL_API"
+            ],
+            "title": "Source Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_type",
+          "available",
+          "note"
+        ],
+        "title": "IntakeSource",
+        "type": "object"
+      },
+      "IntakeSourceList": {
+        "properties": {
+          "data_policy": {
+            "title": "Data Policy",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/IntakeSource"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items",
+          "data_policy"
+        ],
+        "title": "IntakeSourceList",
+        "type": "object"
+      },
+      "IntakeSourceRisk": {
+        "additionalProperties": false,
+        "description": "SBQ callback-selection risk exactly as the source assigned it. Call360 calculates no band or score.",
+        "properties": {
+          "assessed_at": {
+            "format": "date-time",
+            "title": "Assessed At",
+            "type": "string"
+          },
+          "band_code": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Band Code",
+            "type": "string"
+          },
+          "reason_codes": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 10,
+            "title": "Reason Codes",
+            "type": "array"
+          },
+          "source_original_value": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Source Original Value",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "PROVISIONAL",
+              "FINAL"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "band_code",
+          "source_original_value",
+          "status",
+          "assessed_at"
+        ],
+        "title": "IntakeSourceRisk",
+        "type": "object"
+      },
+      "IntakeTransaction": {
+        "additionalProperties": false,
+        "properties": {
+          "callback_request": {
+            "$ref": "#/components/schemas/IntakeCallbackRequest"
+          },
+          "is_synthetic": {
+            "title": "Is Synthetic",
+            "type": "boolean"
+          },
+          "parties": {
+            "items": {
+              "$ref": "#/components/schemas/IntakeParty"
+            },
+            "maxItems": 10,
+            "title": "Parties",
+            "type": "array"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/IntakePolicy"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          },
+          "sale": {
+            "$ref": "#/components/schemas/IntakeSale"
+          },
+          "source_event_id": {
+            "maxLength": 160,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9:._-]*$",
+            "title": "Source Event Id",
+            "type": "string"
+          },
+          "source_observed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Observed At"
+          },
+          "source_risk": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IntakeSourceRisk"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_system": {
+            "pattern": "^[A-Z0-9][A-Z0-9-]{1,79}$",
+            "title": "Source System",
+            "type": "string"
+          }
+        },
+        "required": [
+          "is_synthetic",
+          "source_system",
+          "source_event_id",
+          "reason",
+          "policy",
+          "sale",
+          "callback_request"
+        ],
+        "title": "IntakeTransaction",
         "type": "object"
       },
       "KpiDrilldown": {
@@ -4403,6 +5794,298 @@
         "title": "RefreshResponse",
         "type": "object"
       },
+      "RiskAssessmentDetail": {
+        "properties": {
+          "assessed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assessed At"
+          },
+          "band_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Band Code"
+          },
+          "cases": {
+            "items": {
+              "$ref": "#/components/schemas/CaseLink"
+            },
+            "title": "Cases",
+            "type": "array"
+          },
+          "channel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Channel"
+          },
+          "comparison": {
+            "$ref": "#/components/schemas/RiskComparison"
+          },
+          "discrepancy": {
+            "title": "Discrepancy",
+            "type": "boolean"
+          },
+          "effective": {
+            "title": "Effective",
+            "type": "boolean"
+          },
+          "explanation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explanation"
+          },
+          "factors": {
+            "items": {
+              "$ref": "#/components/schemas/RiskFactorDetail"
+            },
+            "title": "Factors",
+            "type": "array"
+          },
+          "fsc_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fsc Ref"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/RiskRow"
+            },
+            "title": "History",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "input_snapshot_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Snapshot Sha256"
+          },
+          "is_ilp": {
+            "title": "Is Ilp",
+            "type": "boolean"
+          },
+          "is_synthetic": {
+            "title": "Is Synthetic",
+            "type": "boolean"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "matched_factors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Matched Factors",
+            "type": "array"
+          },
+          "origin": {
+            "title": "Origin",
+            "type": "string"
+          },
+          "policy_id": {
+            "format": "uuid",
+            "title": "Policy Id",
+            "type": "string"
+          },
+          "policy_ref": {
+            "title": "Policy Ref",
+            "type": "string"
+          },
+          "product_family": {
+            "title": "Product Family",
+            "type": "string"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "reason_codes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reason Codes",
+            "type": "array"
+          },
+          "route": {
+            "title": "Route",
+            "type": "string"
+          },
+          "rule_set": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Set"
+          },
+          "rule_set_version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RuleSetOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sale_event_id": {
+            "format": "uuid",
+            "title": "Sale Event Id",
+            "type": "string"
+          },
+          "sale_event_type": {
+            "title": "Sale Event Type",
+            "type": "string"
+          },
+          "sale_ref": {
+            "title": "Sale Ref",
+            "type": "string"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "sold_at": {
+            "format": "date-time",
+            "title": "Sold At",
+            "type": "string"
+          },
+          "source_original_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Original Value"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "superseded_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Superseded By"
+          },
+          "supersedes_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supersedes Id"
+          },
+          "valid_at": {
+            "format": "date-time",
+            "title": "Valid At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "sale_event_id",
+          "sale_ref",
+          "sale_event_type",
+          "sold_at",
+          "policy_id",
+          "policy_ref",
+          "product_family",
+          "is_ilp",
+          "channel",
+          "fsc_ref",
+          "origin",
+          "status",
+          "band_code",
+          "score",
+          "reason_codes",
+          "source_original_value",
+          "rule_set",
+          "assessed_at",
+          "valid_at",
+          "input_snapshot_sha256",
+          "matched_factors",
+          "effective",
+          "supersedes_id",
+          "superseded_by",
+          "discrepancy",
+          "cases",
+          "is_synthetic",
+          "route",
+          "kind",
+          "explanation",
+          "factors",
+          "rule_set_version",
+          "provenance",
+          "history",
+          "comparison"
+        ],
+        "title": "RiskAssessmentDetail",
+        "type": "object"
+      },
       "RiskAssessmentOut": {
         "properties": {
           "assessed_at": {
@@ -4596,6 +6279,68 @@
         "title": "RiskBucket",
         "type": "object"
       },
+      "RiskComparison": {
+        "properties": {
+          "discrepancy": {
+            "title": "Discrepancy",
+            "type": "boolean"
+          },
+          "effective_band": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective Band"
+          },
+          "effective_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective Id"
+          },
+          "rule_band": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Band"
+          },
+          "source_band": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Band"
+          }
+        },
+        "required": [
+          "source_band",
+          "rule_band",
+          "effective_band",
+          "effective_id",
+          "discrepancy"
+        ],
+        "title": "RiskComparison",
+        "type": "object"
+      },
       "RiskDistribution": {
         "properties": {
           "data_as_of": {
@@ -4639,6 +6384,81 @@
           "note"
         ],
         "title": "RiskDistribution",
+        "type": "object"
+      },
+      "RiskFactorDetail": {
+        "properties": {
+          "factor_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Factor Code"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "matched_rule_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matched Rule Id"
+          },
+          "result": {
+            "title": "Result",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value"
+          },
+          "value_type": {
+            "title": "Value Type",
+            "type": "string"
+          },
+          "weight": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weight"
+          }
+        },
+        "required": [
+          "factor_code",
+          "label",
+          "value_type",
+          "value",
+          "source",
+          "matched_rule_id",
+          "weight",
+          "result"
+        ],
+        "title": "RiskFactorDetail",
         "type": "object"
       },
       "RiskFactorOut": {
@@ -4690,6 +6510,438 @@
           "result"
         ],
         "title": "RiskFactorOut",
+        "type": "object"
+      },
+      "RiskFactorVocabulary": {
+        "properties": {
+          "bands": {
+            "items": {
+              "$ref": "#/components/schemas/FactorVocabularyItem"
+            },
+            "title": "Bands",
+            "type": "array"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FactorVocabularyItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "list_code": {
+            "title": "List Code",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "list_code",
+          "version",
+          "status",
+          "items",
+          "bands"
+        ],
+        "title": "RiskFactorVocabulary",
+        "type": "object"
+      },
+      "RiskList": {
+        "properties": {
+          "data_as_of": {
+            "format": "date-time",
+            "title": "Data As Of",
+            "type": "string"
+          },
+          "facets": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "type": "integer"
+              },
+              "type": "object"
+            },
+            "title": "Facets",
+            "type": "object"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RiskRow"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "markets": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Markets",
+            "type": "array"
+          },
+          "page": {
+            "$ref": "#/components/schemas/PageInfo"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/RiskSummary"
+          },
+          "synthetic_badge": {
+            "title": "Synthetic Badge",
+            "type": "boolean"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "page",
+          "facets",
+          "summary",
+          "markets",
+          "data_as_of",
+          "synthetic_badge"
+        ],
+        "title": "RiskList",
+        "type": "object"
+      },
+      "RiskPopulationAssessments": {
+        "properties": {
+          "by_band": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "By Band",
+            "type": "object"
+          },
+          "by_origin": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "By Origin",
+            "type": "object"
+          },
+          "by_status": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "By Status",
+            "type": "object"
+          },
+          "superseded": {
+            "title": "Superseded",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "by_origin",
+          "by_status",
+          "by_band",
+          "superseded"
+        ],
+        "title": "RiskPopulationAssessments",
+        "type": "object"
+      },
+      "RiskPopulationSales": {
+        "properties": {
+          "by_effective_band": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "By Effective Band",
+            "type": "object"
+          },
+          "source_rule_discrepancies": {
+            "title": "Source Rule Discrepancies",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "without_assessment": {
+            "title": "Without Assessment",
+            "type": "integer"
+          },
+          "without_final_assessment": {
+            "title": "Without Final Assessment",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "by_effective_band",
+          "without_assessment",
+          "without_final_assessment",
+          "source_rule_discrepancies"
+        ],
+        "title": "RiskPopulationSales",
+        "type": "object"
+      },
+      "RiskRow": {
+        "properties": {
+          "assessed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assessed At"
+          },
+          "band_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Band Code"
+          },
+          "cases": {
+            "items": {
+              "$ref": "#/components/schemas/CaseLink"
+            },
+            "title": "Cases",
+            "type": "array"
+          },
+          "channel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Channel"
+          },
+          "discrepancy": {
+            "title": "Discrepancy",
+            "type": "boolean"
+          },
+          "effective": {
+            "title": "Effective",
+            "type": "boolean"
+          },
+          "fsc_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fsc Ref"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "input_snapshot_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Snapshot Sha256"
+          },
+          "is_ilp": {
+            "title": "Is Ilp",
+            "type": "boolean"
+          },
+          "is_synthetic": {
+            "title": "Is Synthetic",
+            "type": "boolean"
+          },
+          "matched_factors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Matched Factors",
+            "type": "array"
+          },
+          "origin": {
+            "title": "Origin",
+            "type": "string"
+          },
+          "policy_id": {
+            "format": "uuid",
+            "title": "Policy Id",
+            "type": "string"
+          },
+          "policy_ref": {
+            "title": "Policy Ref",
+            "type": "string"
+          },
+          "product_family": {
+            "title": "Product Family",
+            "type": "string"
+          },
+          "reason_codes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reason Codes",
+            "type": "array"
+          },
+          "route": {
+            "title": "Route",
+            "type": "string"
+          },
+          "rule_set": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Set"
+          },
+          "sale_event_id": {
+            "format": "uuid",
+            "title": "Sale Event Id",
+            "type": "string"
+          },
+          "sale_event_type": {
+            "title": "Sale Event Type",
+            "type": "string"
+          },
+          "sale_ref": {
+            "title": "Sale Ref",
+            "type": "string"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "sold_at": {
+            "format": "date-time",
+            "title": "Sold At",
+            "type": "string"
+          },
+          "source_original_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Original Value"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "superseded_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Superseded By"
+          },
+          "supersedes_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supersedes Id"
+          },
+          "valid_at": {
+            "format": "date-time",
+            "title": "Valid At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "sale_event_id",
+          "sale_ref",
+          "sale_event_type",
+          "sold_at",
+          "policy_id",
+          "policy_ref",
+          "product_family",
+          "is_ilp",
+          "channel",
+          "fsc_ref",
+          "origin",
+          "status",
+          "band_code",
+          "score",
+          "reason_codes",
+          "source_original_value",
+          "rule_set",
+          "assessed_at",
+          "valid_at",
+          "input_snapshot_sha256",
+          "matched_factors",
+          "effective",
+          "supersedes_id",
+          "superseded_by",
+          "discrepancy",
+          "cases",
+          "is_synthetic",
+          "route"
+        ],
+        "title": "RiskRow",
+        "type": "object"
+      },
+      "RiskSummary": {
+        "properties": {
+          "assessments": {
+            "$ref": "#/components/schemas/RiskPopulationAssessments"
+          },
+          "sales": {
+            "$ref": "#/components/schemas/RiskPopulationSales"
+          }
+        },
+        "required": [
+          "assessments",
+          "sales"
+        ],
+        "title": "RiskSummary",
         "type": "object"
       },
       "RoleEdge": {
@@ -4777,6 +7029,58 @@
           "source_system"
         ],
         "title": "RoleEdge",
+        "type": "object"
+      },
+      "RuleSetOut": {
+        "properties": {
+          "checksum": {
+            "title": "Checksum",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "content_approval_status": {
+            "title": "Content Approval Status",
+            "type": "string"
+          },
+          "effective_from": {
+            "format": "date-time",
+            "title": "Effective From",
+            "type": "string"
+          },
+          "effective_to": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective To"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "code",
+          "version",
+          "status",
+          "effective_from",
+          "effective_to",
+          "checksum",
+          "content_approval_status"
+        ],
+        "title": "RuleSetOut",
         "type": "object"
       },
       "SaleContext": {
@@ -9187,6 +11491,576 @@
         ]
       }
     },
+    "/api/v1/intake/import-runs": {
+      "get": {
+        "operationId": "intake_runs_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntakeRunList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Precondition Required"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Runs",
+        "tags": [
+          "intake"
+        ]
+      }
+    },
+    "/api/v1/intake/import-runs/{run_id}": {
+      "get": {
+        "operationId": "intake_runs_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntakeRunDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Precondition Required"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Run Detail",
+        "tags": [
+          "intake"
+        ]
+      }
+    },
+    "/api/v1/intake/manual": {
+      "post": {
+        "operationId": "intake_manual_submit",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntakeTransaction"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntakeOutcome"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Precondition Required"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Submit",
+        "tags": [
+          "intake"
+        ]
+      }
+    },
+    "/api/v1/intake/manual/preview": {
+      "post": {
+        "operationId": "intake_manual_preview",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntakeTransaction"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntakeOutcome"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Precondition Required"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Preview",
+        "tags": [
+          "intake"
+        ]
+      }
+    },
+    "/api/v1/intake/sources": {
+      "get": {
+        "operationId": "intake_sources",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntakeSourceList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Precondition Required"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Sources",
+        "tags": [
+          "intake"
+        ]
+      }
+    },
     "/api/v1/me": {
       "get": {
         "operationId": "me_get",
@@ -9801,6 +12675,446 @@
         "summary": "Policy Sales",
         "tags": [
           "policies"
+        ]
+      }
+    },
+    "/api/v1/risk-assessments": {
+      "get": {
+        "operationId": "risk_assessments_list",
+        "parameters": [
+          {
+            "description": "valid_at | band | sale_ref | origin; prefix - for descending",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "-valid_at",
+              "description": "valid_at | band | sale_ref | origin; prefix - for descending",
+              "title": "Sort",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 512,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "description": "Sale, policy, case or FSC ref",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Sale, policy, case or FSC ref",
+              "title": "Q"
+            }
+          },
+          {
+            "description": "Stored SBQ band code (NO_BAND when none)",
+            "in": "query",
+            "name": "band",
+            "required": false,
+            "schema": {
+              "default": [],
+              "description": "Stored SBQ band code (NO_BAND when none)",
+              "items": {
+                "type": "string"
+              },
+              "title": "Band",
+              "type": "array"
+            }
+          },
+          {
+            "description": "Assessments where this factor was MATCHED",
+            "in": "query",
+            "name": "factor",
+            "required": false,
+            "schema": {
+              "default": [],
+              "description": "Assessments where this factor was MATCHED",
+              "items": {
+                "type": "string"
+              },
+              "title": "Factor",
+              "type": "array"
+            }
+          },
+          {
+            "description": "SOURCE_ASSIGNED | RULE_ASSESSED | MANUAL",
+            "in": "query",
+            "name": "origin",
+            "required": false,
+            "schema": {
+              "default": [],
+              "description": "SOURCE_ASSIGNED | RULE_ASSESSED | MANUAL",
+              "items": {
+                "type": "string"
+              },
+              "title": "Origin",
+              "type": "array"
+            }
+          },
+          {
+            "description": "Stored assessment status, e.g. FINAL | SUPERSEDED",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "default": [],
+              "description": "Stored assessment status, e.g. FINAL | SUPERSEDED",
+              "items": {
+                "type": "string"
+              },
+              "title": "Status",
+              "type": "array"
+            }
+          },
+          {
+            "description": "Rule-set version label, e.g. 'SYN-SBQ-RULES v2' (NONE when absent)",
+            "in": "query",
+            "name": "rule_set",
+            "required": false,
+            "schema": {
+              "default": [],
+              "description": "Rule-set version label, e.g. 'SYN-SBQ-RULES v2' (NONE when absent)",
+              "items": {
+                "type": "string"
+              },
+              "title": "Rule Set",
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "product_family",
+            "required": false,
+            "schema": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Product Family",
+              "type": "array"
+            }
+          },
+          {
+            "description": "Selling channel of the assessed sale",
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "default": [],
+              "description": "Selling channel of the assessed sale",
+              "items": {
+                "type": "string"
+              },
+              "title": "Channel",
+              "type": "array"
+            }
+          },
+          {
+            "description": "FSC ref of the assessed sale",
+            "in": "query",
+            "name": "fsc",
+            "required": false,
+            "schema": {
+              "default": [],
+              "description": "FSC ref of the assessed sale",
+              "items": {
+                "type": "string"
+              },
+              "title": "Fsc",
+              "type": "array"
+            }
+          },
+          {
+            "description": "Latest FINAL assessment of its sale",
+            "in": "query",
+            "name": "effective",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Latest FINAL assessment of its sale",
+              "title": "Effective"
+            }
+          },
+          {
+            "description": "Sale whose source-assigned and rule-assessed bands differ",
+            "in": "query",
+            "name": "discrepancy",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Sale whose source-assigned and rule-assessed bands differ",
+              "title": "Discrepancy"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "List Risk Assessments",
+        "tags": [
+          "risk"
+        ]
+      }
+    },
+    "/api/v1/risk-assessments/{assessment_id}": {
+      "get": {
+        "operationId": "risk_assessment_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "assessment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Assessment Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskAssessmentDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Risk Assessment Detail",
+        "tags": [
+          "risk"
+        ]
+      }
+    },
+    "/api/v1/risk-factors": {
+      "get": {
+        "operationId": "risk_factors",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskFactorVocabulary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Risk Factors",
+        "tags": [
+          "risk"
         ]
       }
     },

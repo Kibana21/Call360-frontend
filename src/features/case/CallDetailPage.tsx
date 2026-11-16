@@ -67,6 +67,7 @@ function backLabel(back: string): string {
   if (back.startsWith('/search')) return 'search';
   if (back.startsWith('/policies/')) return 'policy';
   if (back.startsWith('/policies')) return 'Policy Explorer';
+  if (back.startsWith('/risk-assessments')) return 'Risk Workbench';
   return back === '/' ? 'Overview' : 'explorer';
 }
 
@@ -151,7 +152,9 @@ export function CallDetailPage() {
       {d.is_synthetic ? (
         <div className="topnotice" role="note">
           <div className="row"><Icon name="info" size="sm" />
-            <span><strong>Seeded synthetic evidence:</strong> not produced by a Call360 voice session or compliance evaluation. Script wording is illustrative, not approved AIA or MAS language.</span>
+            {d.source_type === 'MANUAL'
+              ? <span><strong>Synthetic intake case:</strong> created by manual intake from a synthetic source transaction. No script is assigned and no compliance evaluation runs in Stage 0.</span>
+              : <span><strong>Seeded synthetic evidence:</strong> not produced by a Call360 voice session or compliance evaluation. Script wording is illustrative, not approved AIA or MAS language.</span>}
           </div>
           <Badge tone="blue">Synthetic</Badge>
         </div>
@@ -206,7 +209,7 @@ export function CallDetailPage() {
               <Card title="Recording" subtitle={selectedAttempt?.session ? `Session ${selectedAttempt.session.session_ref}` : 'No conversation for this attempt'}>
                 <Unavailable q={media} none={!sessionId} fallback="Recording not available — no audio is captured before Stage S1" icon="headphones" testId="cd-recording" />
               </Card>
-              <Card title="Transcript" subtitle="Seeded answers are shown under Question results">
+              <Card title="Transcript" subtitle="Recorded answers are shown under Question results">
                 <Unavailable q={transcript} none={!sessionId} fallback="Transcript not available — transcripts are captured from Stage S1" icon="chat" testId="cd-transcript" />
               </Card>
               <Card title="Question results" subtitle="Expected-answer policy → observed answer → seeded rule outcome" aside={run.data ? <ControlsBadge run={run.data} /> : null}>
@@ -218,7 +221,7 @@ export function CallDetailPage() {
               <Card title="Session pins" subtitle="Immutable inputs fixed when the session started">
                 {!sessionId ? <Empty title="No session selected" /> : <Region query={session} label="session">{() => <SessionPins s={session.data!} />}</Region>}
               </Card>
-              <Card title="Why this script" subtitle="Seeded assignment record and rule trace">
+              <Card title="Why this script" subtitle="Recorded assignment and rule trace">
                 <Region query={assignment} label="script assignment">{() => <WhyScript items={assignment.data!.items} />}</Region>
               </Card>
               <Card title="Findings" subtitle="Severity is a compliance finding attribute, not selection risk">
@@ -235,7 +238,7 @@ export function CallDetailPage() {
         ) : null}
         {tab === 'context' ? <ContextTab d={d} policyRoute={policyRoute} from={here} /> : null}
         {tab === 'timeline' ? (
-          <Card title="Case event timeline" subtitle="Every recorded case event, oldest first (seeded synthetic)">
+          <Card title="Case event timeline" subtitle="Every recorded case event, oldest first (synthetic)">
             <Region query={timeline} label="timeline">{() => <Events items={timeline.data!.items} onOpen={showAttempt} attempts={items} />}</Region>
           </Card>
         ) : null}
@@ -409,6 +412,7 @@ function AnswersTable({ q }: { q: QuestionResult[] }) {
 }
 
 function ContextTab({ d, policyRoute, from }: { d: CaseDetail; policyRoute: string; from: { from: string } }) {
+  const canRisk = useAuth().can('risk.read');
   const snap = d.fact_snapshots[d.fact_snapshots.length - 1];
   const kv = (rows: [string, ReactNode][]) => <dl className="kv">{rows.map(([k, v]) => <Fragment key={k}><dt>{k}</dt><dd>{v}</dd></Fragment>)}</dl>;
   const money = (n: number | null | undefined, c?: string | null) => (n == null ? '—' : `${c ?? ''} ${n.toLocaleString('en-SG', { minimumFractionDigits: 2 })}`);
@@ -435,7 +439,9 @@ function ContextTab({ d, policyRoute, from }: { d: CaseDetail; policyRoute: stri
             {s.eligible ? <Badge tone="green">Eligible</Badge> : <Badge tone="gray">{humanize(s.ineligibility_reason ?? 'Ineligible')}</Badge>}</div>
         )) : <Empty title="No contact selection recorded" />}
       </Card>
-      <Card title="SBQ callback-selection risk" subtitle="Selection risk sets script and priority; it is not a misconduct verdict or the customer's risk tolerance">
+      <Card title="SBQ callback-selection risk" subtitle="Selection risk sets script and priority; it is not a misconduct verdict or the customer's risk tolerance"
+        aside={canRisk ? <Link className="btn tiny" to={`/risk-assessments?q=${d.sale.sale_ref}${d.effective_risk ? `&assessment=${d.effective_risk.id}` : ''}`} state={from}>
+          <Icon name="target" size="sm" /> Risk Workbench</Link> : null}>
         {d.risk_assessments.length ? <div className="stack" style={{ gap: 9 }}>{d.risk_assessments.map((a) => <Risk key={a.id} a={a} />)}</div>
           : <Empty title="No SBQ assessment recorded">The case is held for risk triage until one is supplied.</Empty>}
       </Card>

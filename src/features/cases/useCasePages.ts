@@ -1,8 +1,8 @@
-// Server-side keyset pagination over a cursor list API (API-035, API-050). Cursors are kept as a stack so
+// Server-side keyset pagination over a cursor list API (API-035, API-050, API-056). Cursors are kept as a stack so
 // "Previous" returns to the exact earlier page; any filter change resets to the first page.
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { api, unwrap, type CaseQuery, type PolicyQuery } from '../../api/client';
+import { api, unwrap, type CaseQuery, type PolicyQuery, type RiskQuery } from '../../api/client';
 
 interface CursorPage { page: { next_cursor?: string | null } }
 
@@ -40,4 +40,9 @@ export function useCasePages(query: CaseQuery, opts: { limit?: number; enabled?:
 export function usePolicyPages(query: PolicyQuery, opts: { limit?: number; enabled?: boolean } = {}) {
   return useCursorPages('policies', query, async (cursor, limit) =>
     unwrap(await api.GET('/api/v1/policies', { params: { query: { ...query, limit, ...(cursor ? { cursor } : {}) } } })), opts);
+}
+
+export function useRiskPages(query: RiskQuery, opts: { limit?: number; enabled?: boolean } = {}) {
+  return useCursorPages('risk', query, async (cursor, limit) =>
+    unwrap(await api.GET('/api/v1/risk-assessments', { params: { query: { ...query, limit, ...(cursor ? { cursor } : {}) } } })), opts);
 }

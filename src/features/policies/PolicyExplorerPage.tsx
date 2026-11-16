@@ -85,7 +85,7 @@ export function PolicyExplorerPage() {
         actions={<>
           <Button icon="plus" disabled aria-describedby="pe-intake">Manual intake</Button>
           <Button variant="primary" icon="refresh" disabled aria-describedby="pe-intake">Sync from source</Button>
-          <span id="pe-intake"><StageChip label="Data Intake — CP0.4" /></span>
+          <span id="pe-intake"><StageChip label="Data Intake screen — CP0.4b" /></span>
         </>} />
       <div className="layout cols-4" style={{ marginBottom: 18 }} aria-label="Policy summary for the current filters">
         <Tile label="Policies in scope" value={data?.total} sub="Matching the current filters" icon="briefcase" accent />

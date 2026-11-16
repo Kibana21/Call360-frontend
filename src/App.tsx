@@ -11,6 +11,7 @@ import { CallExplorerPage } from './features/cases/CallExplorerPage';
 import { WorkQueuesPage } from './features/cases/WorkQueuesPage';
 import { PolicyDetailPage } from './features/policies/PolicyDetailPage';
 import { PolicyExplorerPage } from './features/policies/PolicyExplorerPage';
+import { RiskWorkbenchPage } from './features/risk/RiskWorkbenchPage';
 import { OverviewPage } from './features/OverviewPage';
 import { SearchPage } from './features/search/SearchPage';
 import { LoginPage } from './features/LoginPage';
@@ -19,7 +20,7 @@ import { SessionExpiredPage } from './features/SessionExpiredPage';
 import { UnauthorizedPage } from './features/UnauthorizedPage';
 
 // Routes implemented so far: CP0.1A, /admin/config (CP0.1B-1), the Overview (F1), and Call Explorer, Work Queues
-// and Search (F2), Call Detail (F3), and Policy Explorer and Policy Detail (F4). S0_SCREEN_SPEC §2.
+// and Search (F2), Call Detail (F3), Policy Explorer and Policy Detail (F4), and the SBQ Risk Workbench (F5). S0_SCREEN_SPEC §2.
 export function App() {
   return (
     <AuthProvider>
@@ -32,6 +33,7 @@ export function App() {
           <Route path="cases/:caseId" element={<RequirePermission permission="case.read"><CallDetailPage /></RequirePermission>} />
           <Route path="policies" element={<RequirePermission permission="policy.read"><PolicyExplorerPage /></RequirePermission>} />
           <Route path="policies/:policyId" element={<RequirePermission permission="policy.read"><PolicyDetailPage /></RequirePermission>} />
+          <Route path="risk-assessments" element={<RequirePermission permission="risk.read"><RiskWorkbenchPage /></RequirePermission>} />
           <Route path="queues" element={<RequirePermission permission="queue.read"><WorkQueuesPage /></RequirePermission>} />
           <Route path="search" element={<RequirePermission permission="search.use"><SearchPage /></RequirePermission>} />
           <Route path="unauthorized" element={<UnauthorizedPage />} />

@@ -31,6 +31,7 @@ function backLabel(back: string): string {
   if (back.startsWith('/search')) return 'search';
   if (back.startsWith('/calls')) return 'Call Explorer';
   if (back.startsWith('/queues')) return 'queues';
+  if (back.startsWith('/risk-assessments')) return 'Risk Workbench';
   return back === '/' ? 'Overview' : 'Policy Explorer';
 }
 
@@ -71,7 +72,7 @@ export function PolicyDetailPage() {
       actions={<>
         <Link className="btn" to={back}><Icon name="chev" size="sm" /> Back to {backLabel(back)}</Link>
         {can('intake.manual.submit') ? <Button icon="edit" disabled aria-describedby="pd-cp04">Correct field</Button> : null}
-        {can('intake.manual.submit') ? <span id="pd-cp04"><StageChip label="Corrections — CP0.4" /></span> : null}
+        {can('intake.manual.submit') ? <span id="pd-cp04"><StageChip label="Corrections — CP0.4b" /></span> : null}
         <Button icon="target" disabled aria-describedby="pd-s2">Request risk override</Button>
         <span id="pd-s2"><StageChip label="Stage S2" /></span>
       </>} />
@@ -93,7 +94,7 @@ export function PolicyDetailPage() {
       {d.provenance.is_synthetic ? (
         <div className="topnotice" role="note">
           <div className="row"><Icon name="info" size="sm" />
-            <span><strong>Synthetic policy data:</strong> seeded for Stage 0 development; not an AIA customer record. Names and contact values are masked by the server.</span></div>
+            <span><strong>Synthetic policy data:</strong> {d.provenance.source_type === 'MANUAL' ? 'submitted through manual intake from a synthetic source transaction' : 'seeded for Stage 0 development'}; not an AIA customer record. Names and contact values are masked by the server.</span></div>
           <Badge tone="blue">Synthetic</Badge>
         </div>
       ) : null}
@@ -139,7 +140,7 @@ export function PolicyDetailPage() {
             {!selected ? (sales.isPending ? <Loading label="Loading sale context…" /> : <Card><Empty title="No sale event to show" /></Card>)
               : <Region query={saleCtx} label="sale context">{() => tab === 'sale'
                 ? <SaleWorkspace ctx={saleCtx.data!} from={here} />
-                : <RiskWorkspace ctx={saleCtx.data!} />}</Region>}
+                : <RiskWorkspace ctx={saleCtx.data!} from={here} />}</Region>}
           </div>
         ) : null}
         {tab === 'parties' ? (can('party.read')
@@ -201,11 +202,15 @@ function SaleWorkspace({ ctx, from }: { ctx: SaleContext; from: { from: string }
   );
 }
 
-function RiskWorkspace({ ctx }: { ctx: SaleContext }) {
+function RiskWorkspace({ ctx, from }: { ctx: SaleContext; from: { from: string } }) {
+  const { can } = useAuth();
   const byId = new Map(ctx.risk_assessments.map((a) => [a.id, a]));
+  const eff = ctx.risk_assessments.find((a) => a.effective);
   return (
     <Card title={`SBQ callback-selection risk · ${ctx.sale.sale_ref}`}
-      subtitle="Most recent first; the effective assessment is the latest FINAL one">
+      subtitle="Most recent first; the effective assessment is the latest FINAL one"
+      aside={can('risk.read') ? <Link className="btn tiny" to={`/risk-assessments?q=${ctx.sale.sale_ref}${eff ? `&assessment=${eff.id}` : ''}`} state={from}>
+        <Icon name="target" size="sm" /> Risk Workbench</Link> : null}>
       <div className="explain" style={{ marginBottom: 12 }} role="note">SBQ selection risk decides script and priority for the callback. It is not the customer&apos;s
         investment suitability (shown in the fact snapshot) and not a compliance finding severity.</div>
       {ctx.risk_assessments.length ? <div className="stack" style={{ gap: 9 }} data-testid="risk-history">

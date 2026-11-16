@@ -158,6 +158,16 @@ describe('Call Detail', () => {
     expect(reasons[0]).toHaveTextContent('No eligible contact — active blocking hold and no eligible contact in the case contact selection');
   });
 
+  it('labels an intake-created case as manual intake, not seeded evidence (CP0.4a)', async () => {
+    const intake = { ...DETAIL, source_type: 'MANUAL', current_script: null, attempts: 0, sessions: 0, callable: false,
+      callable_blockers: ['HOLD:AWAITING_SCRIPT_ASSIGNMENT'] };
+    stubApi({ ...ok, 'GET /api/v1/cases/c1': () => json(200, intake), 'GET /api/v1/cases/c1/attempts': () => json(200, { items: [] }),
+      'GET /api/v1/cases/c1/script-assignment': () => json(200, { items: [] }) });
+    renderAt(<App />, '/cases/c1');
+    expect(await screen.findByText(/Synthetic intake case/)).toBeInTheDocument();
+    expect(screen.queryByText(/Seeded synthetic evidence/)).toBeNull();
+  });
+
   it('shows a loading state first', async () => {
     stubApi({ 'GET /api/v1/me': () => json(200, USER_ME), 'GET /api/v1/cases/c1': () => new Promise<Response>(() => {}) as never });
     renderAt(<App />, '/cases/c1');

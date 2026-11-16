@@ -65,7 +65,7 @@ export function AppShell() {
             <span className="envdot" aria-hidden="true" />
             <span>{me?.environment.app_env === 'local' ? 'Local environment' : 'Test environment'}<br />All records synthetic</span>
           </div>
-          <div className="sidebar-version">CALL360 · STAGE 0 · F4</div>
+          <div className="sidebar-version">CALL360 · STAGE 0 · F5</div>
         </div>
       </aside>
       <div className="main">

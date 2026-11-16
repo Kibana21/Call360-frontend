@@ -94,7 +94,7 @@ function KpiCard({ k, icon, sub, accent }: { k: Kpi | undefined; icon: IconName;
 }
 
 export function OverviewPage() {
-  const { me } = useAuth();
+  const { me, can } = useAuth();
   const [params, setParams] = useSearchParams();
   const days = RANGES.find((r) => String(r) === params.get('days')) ?? 30;
   const from = localDate(-(days - 1));
@@ -131,7 +131,7 @@ export function OverviewPage() {
     <>
       <div className="topnotice" role="note">
         <div className="row"><Icon name="info" size="sm" />
-          <span><strong>Synthetic data:</strong> every record is a seeded synthetic example (S0-SEED-1), not AIA data or an approved process. Singapore records only.</span>
+          <span><strong>Synthetic data:</strong> every record is synthetic: the seeded examples (S0-SEED-1) and transactions submitted through manual intake. Not AIA data or an approved process. Singapore records only.</span>
         </div>
         <Badge tone="blue">Synthetic</Badge>
       </div>
@@ -194,7 +194,8 @@ export function OverviewPage() {
             </>;
           }}</Region>
         </Card>
-        <Card title="Case distribution by risk" subtitle="Open cases by effective SBQ callback-selection band">
+        <Card title="Case distribution by risk" subtitle="Open cases by effective SBQ callback-selection band"
+          aside={can('risk.read') ? <Link className="linkbtn" to="/risk-assessments">Assessments<span className="sr-only"> in the SBQ Risk Workbench</span> <span aria-hidden="true">→</span></Link> : null}>
           <Region query={risk} label="risk distribution">{() => <RiskDonut items={risk.data!.items} total={risk.data!.total_open} note={risk.data!.note} />}</Region>
         </Card>
       </div>
@@ -203,7 +204,7 @@ export function OverviewPage() {
         <Card title="Priority attention" subtitle="Open cases needing S&C action, highest priority first" pad={false}>
           <Region query={attention} label="priority attention">{() => <AttentionTable items={attention.data!.items} />}</Region>
         </Card>
-        <Card title="Recent activity" subtitle="Latest case events (seeded synthetic)">
+        <Card title="Recent activity" subtitle="Latest case events (synthetic)">
           <Region query={activity} label="recent activity">{() => <Activity items={activity.data!.items} />}</Region>
         </Card>
       </div>
@@ -341,7 +342,7 @@ function Register({ items }: { items: Kpi[] }) {
             : <b>{formatKpi(k)}</b>}
         </div>
       ))}
-      <p className="xsmall muted">N/A: not measurable yet (recordings and transcripts arrive in Stage S1; intake in CP0.4).</p>
+      <p className="xsmall muted">N/A: not measurable yet (recordings and transcripts arrive in Stage S1).</p>
     </div>
   );
 }

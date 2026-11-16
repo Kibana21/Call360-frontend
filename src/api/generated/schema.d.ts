@@ -425,6 +425,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/intake/import-runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Runs */
+        get: operations["intake_runs_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/intake/import-runs/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Run Detail */
+        get: operations["intake_runs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/intake/manual": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit */
+        post: operations["intake_manual_submit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/intake/manual/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview */
+        post: operations["intake_manual_preview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/intake/sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sources */
+        get: operations["intake_sources"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me": {
         parameters: {
             query?: never;
@@ -519,6 +604,57 @@ export interface paths {
         };
         /** Policy Sales */
         get: operations["policy_sales"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/risk-assessments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Risk Assessments */
+        get: operations["risk_assessments_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/risk-assessments/{assessment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Risk Assessment Detail */
+        get: operations["risk_assessment_detail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/risk-factors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Risk Factors */
+        get: operations["risk_factors"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1073,6 +1209,18 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** CaseLink */
+        CaseLink: {
+            /**
+             * Case Id
+             * Format: uuid
+             */
+            case_id: string;
+            /** Case Ref */
+            case_ref: string;
+            /** Route */
+            route: string;
+        };
         /** CaseList */
         CaseList: {
             /**
@@ -1381,6 +1529,17 @@ export interface components {
             /** Sha256 */
             sha256: string;
         };
+        /** FactorVocabularyItem */
+        FactorVocabularyItem: {
+            /** Attributes */
+            attributes: {
+                [key: string]: unknown;
+            };
+            /** Code */
+            code: string;
+            /** Label */
+            label: string;
+        };
         /** FeatureFlagChangeOut */
         FeatureFlagChangeOut: {
             /**
@@ -1568,6 +1727,480 @@ export interface components {
             hold_reason: string;
             /** Register Route */
             register_route: string;
+        };
+        /** IntakeAuthorization */
+        IntakeAuthorization: {
+            /** Reference */
+            reference: string;
+            /**
+             * Valid From
+             * Format: date-time
+             */
+            valid_from: string;
+            /** Valid To */
+            valid_to?: string | null;
+        };
+        /**
+         * IntakeCallbackRequest
+         * @description The verification obligation as the source requested it: due date and priority are source-provided.
+         */
+        IntakeCallbackRequest: {
+            /**
+             * Due At
+             * Format: date-time
+             */
+            due_at: string;
+            /** Priority */
+            priority: number;
+            /** Source Request Ref */
+            source_request_ref: string;
+        };
+        /** IntakeCaseOut */
+        IntakeCaseOut: {
+            /** Callable */
+            callable: boolean;
+            /** Case Id */
+            case_id: string | null;
+            /** Case Ref */
+            case_ref: string | null;
+            /**
+             * Due At
+             * Format: date-time
+             */
+            due_at: string;
+            /** Obligation Type */
+            obligation_type: string;
+            /** Priority */
+            priority: number;
+            /** Source Request Ref */
+            source_request_ref: string;
+            /** State */
+            state: string;
+        };
+        /** IntakeContact */
+        IntakeContact: {
+            /**
+             * Channel
+             * @enum {string}
+             */
+            channel: "PHONE" | "EMAIL";
+            /**
+             * Consent Status
+             * @enum {string}
+             */
+            consent_status: "GRANTED" | "WITHDRAWN" | "UNKNOWN";
+            /**
+             * Is Verified
+             * @default false
+             */
+            is_verified: boolean;
+            /**
+             * Language
+             * @default en
+             */
+            language: string;
+            /**
+             * Preference Rank
+             * @default 1
+             */
+            preference_rank: number;
+            /**
+             * Suppressed
+             * @default false
+             */
+            suppressed: boolean;
+            /**
+             * Value
+             * @description Synthetic identifier only (synthetic_contact_ranges)
+             */
+            value: string;
+        };
+        /** IntakeCounts */
+        IntakeCounts: {
+            /** New */
+            new: number;
+            /** Quarantined */
+            quarantined: number;
+            /** Received */
+            received: number;
+            /** Rejected */
+            rejected: number;
+            /** Unchanged */
+            unchanged: number;
+            /** Updated */
+            updated: number;
+        };
+        /** IntakeEligibilityOut */
+        IntakeEligibilityOut: {
+            /** Contact Masked */
+            contact_masked: string | null;
+            /** Eligible */
+            eligible: boolean;
+            /** Ineligibility Reason */
+            ineligibility_reason: string | null;
+            /** Masked Name */
+            masked_name: string;
+            /** Party Ref */
+            party_ref: string | null;
+            /** Role */
+            role: string;
+        };
+        /** IntakeHoldOut */
+        IntakeHoldOut: {
+            /** Blocking */
+            blocking: boolean;
+            /** Label */
+            label: string;
+            /** Reason */
+            reason: string;
+        };
+        /** IntakeItemOut */
+        IntakeItemOut: {
+            /** Entity Type */
+            entity_type: string;
+            /** Errors */
+            errors: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Payload Digest */
+            payload_digest: string;
+            /** Source Event Id */
+            source_event_id: string;
+            /** Source System */
+            source_system: string;
+            /** Status */
+            status: string;
+        };
+        /** IntakeOutcome */
+        IntakeOutcome: {
+            case: components["schemas"]["IntakeCaseOut"];
+            /**
+             * Compliance Outcome
+             * @default NOT_EVALUATED_IN_S0
+             * @constant
+             */
+            compliance_outcome: "NOT_EVALUATED_IN_S0";
+            /** Eligibility */
+            eligibility: components["schemas"]["IntakeEligibilityOut"][];
+            /** Holds */
+            holds: components["schemas"]["IntakeHoldOut"][];
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "PREVIEW" | "COMMITTED";
+            /** Parties */
+            parties: components["schemas"]["IntakePartyOut"][];
+            /** Payload Digest */
+            payload_digest: string;
+            policy: components["schemas"]["IntakePolicyOut"];
+            /**
+             * Replayed
+             * @default false
+             */
+            replayed: boolean;
+            risk: components["schemas"]["IntakeRiskOut"] | null;
+            /** Risk Note */
+            risk_note: string | null;
+            /** Routes */
+            routes?: {
+                [key: string]: string;
+            };
+            /** Run Id */
+            run_id?: string | null;
+            /** Run Ref */
+            run_ref?: string | null;
+            /** Sale Event Id */
+            sale_event_id: string | null;
+            /** Sale Ref */
+            sale_ref: string;
+            /**
+             * Script Routing
+             * @default NOT_EVALUATED_IN_S0
+             * @constant
+             */
+            script_routing: "NOT_EVALUATED_IN_S0";
+            /** Source Event Id */
+            source_event_id: string;
+            /** Source System */
+            source_system: string;
+        };
+        /**
+         * IntakeParty
+         * @description Either an existing synthetic party (``party_ref``) or a new one (``kind`` + ``name``). Parties are never
+         *     matched on name or contact value.
+         */
+        IntakeParty: {
+            authorization?: components["schemas"]["IntakeAuthorization"] | null;
+            /** Contacts */
+            contacts?: components["schemas"]["IntakeContact"][];
+            /** Date Of Birth Year */
+            date_of_birth_year?: number | null;
+            /** Kind */
+            kind?: ("PERSON" | "ORGANIZATION") | null;
+            /** Name */
+            name?: string | null;
+            /** Party Ref */
+            party_ref?: string | null;
+            /** Roles */
+            roles: ("OWNER" | "INSURED" | "PAYER" | "PROPOSER" | "BENEFICIARY" | "AUTHORIZED_CONTACT")[];
+            /** Source Party Id */
+            source_party_id?: string | null;
+        };
+        /** IntakePartyOut */
+        IntakePartyOut: {
+            /** Contacts */
+            contacts: string[];
+            /** Masked Name */
+            masked_name: string;
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "NEW" | "EXISTING";
+            /** Party Id */
+            party_id: string | null;
+            /** Party Ref */
+            party_ref: string | null;
+            /** Roles */
+            roles: string[];
+        };
+        /** IntakePolicy */
+        IntakePolicy: {
+            /** Currency */
+            currency: string;
+            /**
+             * Effective From
+             * Format: date-time
+             */
+            effective_from: string;
+            /** Market Code */
+            market_code: string;
+            /** Policy Ref */
+            policy_ref: string;
+            /** Premium Amount */
+            premium_amount: number | string;
+            /**
+             * Premium Frequency
+             * @enum {string}
+             */
+            premium_frequency: "SINGLE" | "MONTHLY" | "QUARTERLY" | "HALF_YEARLY" | "ANNUAL";
+            /** Premium Term Years */
+            premium_term_years?: number | null;
+            /** Product Code */
+            product_code: string;
+            /** Product Family */
+            product_family: string;
+            /** Product Subtype */
+            product_subtype: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "PROPOSAL" | "IN_FORCE" | "FREE_LOOK_CANCELLED" | "LAPSED" | "TERMINATED";
+            /** Sum Assured */
+            sum_assured?: number | string | null;
+            /** Sum Assured Currency */
+            sum_assured_currency?: string | null;
+        };
+        /** IntakePolicyOut */
+        IntakePolicyOut: {
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "NEW" | "REUSED";
+            /** Policy Id */
+            policy_id: string | null;
+            /** Policy Ref */
+            policy_ref: string;
+        };
+        /** IntakeRiskOut */
+        IntakeRiskOut: {
+            /** Assessment Id */
+            assessment_id: string | null;
+            /** Band Code */
+            band_code: string;
+            /**
+             * Origin
+             * @constant
+             */
+            origin: "SOURCE_ASSIGNED";
+            /** Source Original Value */
+            source_original_value: string;
+            /** Status */
+            status: string;
+        };
+        /** IntakeRunDetail */
+        IntakeRunDetail: {
+            counts: components["schemas"]["IntakeCounts"];
+            /** Finished At */
+            finished_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Items */
+            items: components["schemas"]["IntakeItemOut"][];
+            /** Payload Digest */
+            payload_digest: string;
+            /** Requested By */
+            requested_by: string;
+            /** Result */
+            result: {
+                [key: string]: unknown;
+            };
+            /** Run Ref */
+            run_ref: string;
+            /** Source System */
+            source_system: string;
+            /** Source Type */
+            source_type: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Status */
+            status: string;
+        };
+        /** IntakeRunList */
+        IntakeRunList: {
+            /** Items */
+            items: components["schemas"]["IntakeRunRow"][];
+            /** Total */
+            total: number;
+        };
+        /** IntakeRunRow */
+        IntakeRunRow: {
+            counts: components["schemas"]["IntakeCounts"];
+            /** Finished At */
+            finished_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Payload Digest */
+            payload_digest: string;
+            /** Requested By */
+            requested_by: string;
+            /** Run Ref */
+            run_ref: string;
+            /** Source System */
+            source_system: string;
+            /** Source Type */
+            source_type: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Status */
+            status: string;
+        };
+        /** IntakeSale */
+        IntakeSale: {
+            /** Campaign Code */
+            campaign_code?: string | null;
+            /** Currency */
+            currency: string;
+            /** Fsc Ref */
+            fsc_ref: string;
+            /** Premium Amount */
+            premium_amount: number | string;
+            /**
+             * Premium Amount Band
+             * @description Source-supplied label
+             */
+            premium_amount_band?: string | null;
+            /** Proposal Ref */
+            proposal_ref: string;
+            /**
+             * Sale Event Type
+             * @enum {string}
+             */
+            sale_event_type: "NEW_BUSINESS" | "REPLACEMENT" | "TOP_UP" | "OTHER_APPROVED";
+            /** Sale Ref */
+            sale_ref: string;
+            /**
+             * Selling Channel
+             * @enum {string}
+             */
+            selling_channel: "AGENCY" | "BANCASSURANCE" | "BROKER" | "DIRECT";
+            /** Selling Location */
+            selling_location: string;
+            /**
+             * Sold At
+             * Format: date-time
+             */
+            sold_at: string;
+        };
+        /** IntakeSource */
+        IntakeSource: {
+            /** Available */
+            available: boolean;
+            /** Note */
+            note: string;
+            /**
+             * Source Type
+             * @enum {string}
+             */
+            source_type: "MANUAL" | "MOCK_API" | "BULK" | "INTERNAL_API";
+        };
+        /** IntakeSourceList */
+        IntakeSourceList: {
+            /** Data Policy */
+            data_policy: string;
+            /** Items */
+            items: components["schemas"]["IntakeSource"][];
+        };
+        /**
+         * IntakeSourceRisk
+         * @description SBQ callback-selection risk exactly as the source assigned it. Call360 calculates no band or score.
+         */
+        IntakeSourceRisk: {
+            /**
+             * Assessed At
+             * Format: date-time
+             */
+            assessed_at: string;
+            /** Band Code */
+            band_code: string;
+            /** Reason Codes */
+            reason_codes?: string[];
+            /** Source Original Value */
+            source_original_value: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "PROVISIONAL" | "FINAL";
+        };
+        /** IntakeTransaction */
+        IntakeTransaction: {
+            callback_request: components["schemas"]["IntakeCallbackRequest"];
+            /** Is Synthetic */
+            is_synthetic: boolean;
+            /** Parties */
+            parties?: components["schemas"]["IntakeParty"][];
+            policy: components["schemas"]["IntakePolicy"];
+            /** Reason */
+            reason: string;
+            sale: components["schemas"]["IntakeSale"];
+            /** Source Event Id */
+            source_event_id: string;
+            /** Source Observed At */
+            source_observed_at?: string | null;
+            source_risk?: components["schemas"]["IntakeSourceRisk"] | null;
+            /** Source System */
+            source_system: string;
         };
         /** KpiDrilldown */
         KpiDrilldown: {
@@ -2162,6 +2795,93 @@ export interface components {
              */
             session_expires_at: string;
         };
+        /** RiskAssessmentDetail */
+        RiskAssessmentDetail: {
+            /** Assessed At */
+            assessed_at: string | null;
+            /** Band Code */
+            band_code: string | null;
+            /** Cases */
+            cases: components["schemas"]["CaseLink"][];
+            /** Channel */
+            channel: string | null;
+            comparison: components["schemas"]["RiskComparison"];
+            /** Discrepancy */
+            discrepancy: boolean;
+            /** Effective */
+            effective: boolean;
+            /** Explanation */
+            explanation: string | null;
+            /** Factors */
+            factors: components["schemas"]["RiskFactorDetail"][];
+            /** Fsc Ref */
+            fsc_ref: string | null;
+            /** History */
+            history: components["schemas"]["RiskRow"][];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Input Snapshot Sha256 */
+            input_snapshot_sha256: string | null;
+            /** Is Ilp */
+            is_ilp: boolean;
+            /** Is Synthetic */
+            is_synthetic: boolean;
+            /** Kind */
+            kind: string;
+            /** Matched Factors */
+            matched_factors: string[];
+            /** Origin */
+            origin: string;
+            /**
+             * Policy Id
+             * Format: uuid
+             */
+            policy_id: string;
+            /** Policy Ref */
+            policy_ref: string;
+            /** Product Family */
+            product_family: string;
+            provenance: components["schemas"]["Provenance"];
+            /** Reason Codes */
+            reason_codes: string[];
+            /** Route */
+            route: string;
+            /** Rule Set */
+            rule_set: string | null;
+            rule_set_version: components["schemas"]["RuleSetOut"] | null;
+            /**
+             * Sale Event Id
+             * Format: uuid
+             */
+            sale_event_id: string;
+            /** Sale Event Type */
+            sale_event_type: string;
+            /** Sale Ref */
+            sale_ref: string;
+            /** Score */
+            score: number | null;
+            /**
+             * Sold At
+             * Format: date-time
+             */
+            sold_at: string;
+            /** Source Original Value */
+            source_original_value: string | null;
+            /** Status */
+            status: string;
+            /** Superseded By */
+            superseded_by: string | null;
+            /** Supersedes Id */
+            supersedes_id: string | null;
+            /**
+             * Valid At
+             * Format: date-time
+             */
+            valid_at: string;
+        };
         /** RiskAssessmentOut */
         RiskAssessmentOut: {
             /** Assessed At */
@@ -2216,6 +2936,19 @@ export interface components {
             /** Share */
             share: number | null;
         };
+        /** RiskComparison */
+        RiskComparison: {
+            /** Discrepancy */
+            discrepancy: boolean;
+            /** Effective Band */
+            effective_band: string | null;
+            /** Effective Id */
+            effective_id: string | null;
+            /** Rule Band */
+            rule_band: string | null;
+            /** Source Band */
+            source_band: string | null;
+        };
         /** RiskDistribution */
         RiskDistribution: {
             /**
@@ -2234,6 +2967,25 @@ export interface components {
             /** Total Open */
             total_open: number;
         };
+        /** RiskFactorDetail */
+        RiskFactorDetail: {
+            /** Factor Code */
+            factor_code: string | null;
+            /** Label */
+            label: string | null;
+            /** Matched Rule Id */
+            matched_rule_id: string | null;
+            /** Result */
+            result: string;
+            /** Source */
+            source: string;
+            /** Value */
+            value: unknown;
+            /** Value Type */
+            value_type: string;
+            /** Weight */
+            weight: number | null;
+        };
         /** RiskFactorOut */
         RiskFactorOut: {
             /** Factor Code */
@@ -2248,6 +3000,158 @@ export interface components {
             value: unknown;
             /** Value Type */
             value_type: string;
+        };
+        /** RiskFactorVocabulary */
+        RiskFactorVocabulary: {
+            /** Bands */
+            bands: components["schemas"]["FactorVocabularyItem"][];
+            /** Items */
+            items: components["schemas"]["FactorVocabularyItem"][];
+            /** List Code */
+            list_code: string;
+            /** Status */
+            status: string;
+            /** Version */
+            version: number;
+        };
+        /** RiskList */
+        RiskList: {
+            /**
+             * Data As Of
+             * Format: date-time
+             */
+            data_as_of: string;
+            /** Facets */
+            facets: {
+                [key: string]: {
+                    [key: string]: number;
+                };
+            };
+            /** Items */
+            items: components["schemas"]["RiskRow"][];
+            /** Markets */
+            markets: string[];
+            page: components["schemas"]["PageInfo"];
+            summary: components["schemas"]["RiskSummary"];
+            /** Synthetic Badge */
+            synthetic_badge: boolean;
+            /** Total */
+            total: number;
+        };
+        /** RiskPopulationAssessments */
+        RiskPopulationAssessments: {
+            /** By Band */
+            by_band: {
+                [key: string]: number;
+            };
+            /** By Origin */
+            by_origin: {
+                [key: string]: number;
+            };
+            /** By Status */
+            by_status: {
+                [key: string]: number;
+            };
+            /** Superseded */
+            superseded: number;
+            /** Total */
+            total: number;
+        };
+        /** RiskPopulationSales */
+        RiskPopulationSales: {
+            /** By Effective Band */
+            by_effective_band: {
+                [key: string]: number;
+            };
+            /** Source Rule Discrepancies */
+            source_rule_discrepancies: number;
+            /** Total */
+            total: number;
+            /** Without Assessment */
+            without_assessment: number;
+            /** Without Final Assessment */
+            without_final_assessment: number;
+        };
+        /** RiskRow */
+        RiskRow: {
+            /** Assessed At */
+            assessed_at: string | null;
+            /** Band Code */
+            band_code: string | null;
+            /** Cases */
+            cases: components["schemas"]["CaseLink"][];
+            /** Channel */
+            channel: string | null;
+            /** Discrepancy */
+            discrepancy: boolean;
+            /** Effective */
+            effective: boolean;
+            /** Fsc Ref */
+            fsc_ref: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Input Snapshot Sha256 */
+            input_snapshot_sha256: string | null;
+            /** Is Ilp */
+            is_ilp: boolean;
+            /** Is Synthetic */
+            is_synthetic: boolean;
+            /** Matched Factors */
+            matched_factors: string[];
+            /** Origin */
+            origin: string;
+            /**
+             * Policy Id
+             * Format: uuid
+             */
+            policy_id: string;
+            /** Policy Ref */
+            policy_ref: string;
+            /** Product Family */
+            product_family: string;
+            /** Reason Codes */
+            reason_codes: string[];
+            /** Route */
+            route: string;
+            /** Rule Set */
+            rule_set: string | null;
+            /**
+             * Sale Event Id
+             * Format: uuid
+             */
+            sale_event_id: string;
+            /** Sale Event Type */
+            sale_event_type: string;
+            /** Sale Ref */
+            sale_ref: string;
+            /** Score */
+            score: number | null;
+            /**
+             * Sold At
+             * Format: date-time
+             */
+            sold_at: string;
+            /** Source Original Value */
+            source_original_value: string | null;
+            /** Status */
+            status: string;
+            /** Superseded By */
+            superseded_by: string | null;
+            /** Supersedes Id */
+            supersedes_id: string | null;
+            /**
+             * Valid At
+             * Format: date-time
+             */
+            valid_at: string;
+        };
+        /** RiskSummary */
+        RiskSummary: {
+            assessments: components["schemas"]["RiskPopulationAssessments"];
+            sales: components["schemas"]["RiskPopulationSales"];
         };
         /** RoleEdge */
         RoleEdge: {
@@ -2270,6 +3174,26 @@ export interface components {
             valid_from: string;
             /** Valid To */
             valid_to: string | null;
+        };
+        /** RuleSetOut */
+        RuleSetOut: {
+            /** Checksum */
+            checksum: string;
+            /** Code */
+            code: string;
+            /** Content Approval Status */
+            content_approval_status: string;
+            /**
+             * Effective From
+             * Format: date-time
+             */
+            effective_from: string;
+            /** Effective To */
+            effective_to: string | null;
+            /** Status */
+            status: string;
+            /** Version */
+            version: number;
         };
         /** SaleContext */
         SaleContext: {
@@ -4556,6 +5480,480 @@ export interface operations {
             };
         };
     };
+    intake_runs_list: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntakeRunList"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    intake_runs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntakeRunDetail"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    intake_manual_submit: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IntakeTransaction"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntakeOutcome"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    intake_manual_preview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IntakeTransaction"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntakeOutcome"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    intake_sources: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntakeSourceList"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Precondition Required */
+            428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     me_get: {
         parameters: {
             query?: never;
@@ -4890,6 +6288,229 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SaleList"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    risk_assessments_list: {
+        parameters: {
+            query?: {
+                /** @description valid_at | band | sale_ref | origin; prefix - for descending */
+                sort?: string;
+                limit?: number;
+                cursor?: string | null;
+                /** @description Sale, policy, case or FSC ref */
+                q?: string | null;
+                /** @description Stored SBQ band code (NO_BAND when none) */
+                band?: string[];
+                /** @description Assessments where this factor was MATCHED */
+                factor?: string[];
+                /** @description SOURCE_ASSIGNED | RULE_ASSESSED | MANUAL */
+                origin?: string[];
+                /** @description Stored assessment status, e.g. FINAL | SUPERSEDED */
+                status?: string[];
+                /** @description Rule-set version label, e.g. 'SYN-SBQ-RULES v2' (NONE when absent) */
+                rule_set?: string[];
+                product_family?: string[];
+                /** @description Selling channel of the assessed sale */
+                channel?: string[];
+                /** @description FSC ref of the assessed sale */
+                fsc?: string[];
+                /** @description Latest FINAL assessment of its sale */
+                effective?: boolean | null;
+                /** @description Sale whose source-assigned and rule-assessed bands differ */
+                discrepancy?: boolean | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RiskList"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    risk_assessment_detail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assessment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RiskAssessmentDetail"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    risk_factors: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RiskFactorVocabulary"];
                 };
             };
             /** @description Unauthorized */

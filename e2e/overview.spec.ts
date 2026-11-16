@@ -3,6 +3,8 @@ import { expect, test, type Page } from '@playwright/test';
 import { f2Admin, f2User } from './f2-checks';
 import { f3Admin, f3User } from './f3-checks';
 import { f4Admin, f4User } from './f4-checks';
+import { f5Admin, f5User } from './f5-checks';
+import { cp04aAdmin, cp04aUser } from './cp04a-checks';
 import { accounts, signIn } from './helpers';
 
 // F1 — Overview on the real stack (backend 8001 + call360_test seeded with S0-SEED-1). E2E-02 (card values equal the
@@ -34,7 +36,7 @@ async function checkDashboard(page: Page): Promise<void> {
 }
 
 // One sign-in per role keeps the suite under the per-IP login rate limit (20/min), which stays unchanged.
-test('F1 Overview + F2 register, queues, search + F3 Call Detail + F4 Policy Explorer and Detail (ADMIN): real Singapore data; a11y and layout', async ({ page }) => {
+test('F1 Overview + F2 register, queues, search + F3 Call Detail + F4 Policy Explorer and Detail + F5 Risk Workbench + CP0.4a intake (ADMIN): real Singapore data; a11y and layout', async ({ page }) => {
   await signIn(page, accounts().admin);
   await checkDashboard(page);
   for (const width of [1280, 1440]) {
@@ -49,12 +51,16 @@ test('F1 Overview + F2 register, queues, search + F3 Call Detail + F4 Policy Exp
   await f2Admin(page);
   await f3Admin(page);
   await f4Admin(page);
+  await f5Admin(page);
+  await cp04aAdmin(page);
 });
 
-test('F1 Overview + F2 register and queues + F3 Call Detail + F4 Policy Detail (USER): the same real Singapore data', async ({ page }) => {
+test('F1 Overview + F2 register and queues + F3 Call Detail + F4 Policy Detail + F5 Risk Workbench + CP0.4a intake (USER): the same real Singapore data', async ({ page }) => {
   await signIn(page, accounts().user);
   await checkDashboard(page);
   await f2User(page);
   await f3User(page);
   await f4User(page);
+  await f5User(page);
+  await cp04aUser(page);
 });

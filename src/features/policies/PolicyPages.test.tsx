@@ -66,7 +66,7 @@ const PARTIES = { policy_id: 'p17', policy_ref: 'POL-SG-000017', items: [
       rule_basis: 'OWNER', decided_at: T, decided_by: 'SYSTEM:seed', superseded: false }] },
 ] };
 const HISTORY = { policy_id: 'p17', policy_ref: 'POL-SG-000017', lineage: [{ entity_type: 'sale_event', entity_ref: 'SALE-SG-000118', label: 'TOP_UP', provenance: prov, external_refs: [] }],
-  field_changes: { availability: 'NOT_AVAILABLE', reason: 'LEDGER_ARRIVES_CP0_4', message: 'Field-level change history is not available yet: the field_change ledger is recorded by intake and corrections (CP0.4).' } };
+  field_changes: { availability: 'NOT_AVAILABLE', reason: 'LEDGER_ARRIVES_CP0_4', message: 'Field-level change history is not available yet: field corrections, which write the field_change ledger, arrive in CP0.4b.' } };
 const detailApi = {
   'GET /api/v1/me': () => json(200, USER_ME),
   'GET /api/v1/policies/p17': () => json(200, DETAIL),
