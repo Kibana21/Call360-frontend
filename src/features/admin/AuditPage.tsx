@@ -49,7 +49,7 @@ export function AuditPage() {
                 <td className="mono strong wrap action">{e.action}</td>
                 <td><Badge tone={tone(e.outcome)}>{e.outcome}</Badge></td>
                 <td className="wrap">{actorOf(e)}</td>
-                <td className="mono xsmall wrap">{e.entity_type ? `${e.entity_type}${e.entity_id ? ` · ${e.entity_id.slice(0, 12)}` : ''}` : '—'}</td>
+                <td className="mono xsmall wrap">{e.entity_type ? `${e.entity_type}${e.entity_id ? ` · ${e.entity_id.slice(0, 12)}` : ''}` : '—'}{e.scope_redacted ? <span className="muted"> · withheld (outside your markets)</span> : null}</td>
                 <td className="wrap-text">{e.reason ?? '—'}</td>
                 <td><button type="button" className="linkbtn" onClick={() => setSelected(e)}>View</button></td>
               </tr>
@@ -61,7 +61,7 @@ export function AuditPage() {
   }
 
   return (
-    <Card title="Audit trail" subtitle="Append-only and hash-chained. Entries cannot be edited or deleted through the application." pad={false}>
+    <Card title="Audit trail" subtitle="Append-only and hash-chained; nothing can be edited or deleted. This operational view shows events for your markets (Singapore) and platform events; records outside your markets are not listed or are shown with their identifier withheld. The complete ledger is retained and verified (System)." pad={false}>
       <form className="table-toolbar" onSubmit={apply} aria-label="Filter audit events">
         <label className="sr-only" htmlFor="f-action">Action starts with</label>
         <input id="f-action" className="field wide" placeholder="Action starts with, e.g. AUTH. or ADMIN." maxLength={64}
@@ -92,7 +92,8 @@ function EventDrawer({ event, onClose }: { event: AuditEvent; onClose: () => voi
             <dt>Time</dt><dd>{when(event.occurred_at)} SGT</dd>
             <dt>Outcome</dt><dd><Badge tone={tone(event.outcome)}>{event.outcome}</Badge></dd>
             <dt>Actor</dt><dd>{event.actor_display_name ?? (event.actor_service ? `Service: ${event.actor_service}` : '—')} {event.actor_username ? <span className="mono xsmall">({event.actor_username})</span> : null}</dd>
-            <dt>Entity</dt><dd className="mono wrap-anywhere">{event.entity_type ?? '—'} {event.entity_id ?? ''}</dd>
+            <dt>Entity</dt><dd className="mono wrap-anywhere">{event.entity_type ?? '—'} {event.entity_id ?? ''}{event.scope_redacted
+              ? <span className="muted" style={{ fontFamily: 'inherit' }}> — {event.action === 'SEED.MANIFEST' ? 'dataset-wide totals withheld (all markets)' : 'record outside your markets; identifier withheld'}</span> : null}</dd>
             <dt>Reason</dt><dd>{event.reason ?? '—'}</dd>
             <dt>Correlation ID</dt><dd className="mono xsmall">{event.correlation_id ?? '—'}</dd>
             <dt>Source IP</dt><dd className="mono xsmall">{event.source_ip ?? '—'}</dd>

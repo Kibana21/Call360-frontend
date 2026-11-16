@@ -71,8 +71,11 @@ export function PolicyDetailPage() {
       description="One policy with its sale events, parties and masked contacts, SBQ selection risk, assigned scripts, callback cases and source lineage."
       actions={<>
         <Link className="btn" to={back}><Icon name="chev" size="sm" /> Back to {backLabel(back)}</Link>
+        {can('intake.manual.submit') && detail.data ? (
+          <Link className="btn" to={`/intake?policy=${encodeURIComponent(detail.data.policy_ref)}`}><Icon name="plus" size="sm" /> Add a sale</Link>
+        ) : null}
         {can('intake.manual.submit') ? <Button icon="edit" disabled aria-describedby="pd-cp04">Correct field</Button> : null}
-        {can('intake.manual.submit') ? <span id="pd-cp04"><StageChip label="Corrections — CP0.4b" /></span> : null}
+        {can('intake.manual.submit') ? <span id="pd-cp04"><StageChip label="Corrections — deferred" /></span> : null}
         <Button icon="target" disabled aria-describedby="pd-s2">Request risk override</Button>
         <span id="pd-s2"><StageChip label="Stage S2" /></span>
       </>} />

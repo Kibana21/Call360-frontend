@@ -58,6 +58,7 @@ export async function f2Admin(page: Page): Promise<void> {
   await expect(page.getByLabel('State', { exact: true })).toHaveValue('AWAITING_CALLBACK');
 
   // Stable paging: next then previous returns the same first page; pages never overlap.
+  // E2E-07: sort and cursor pagination with no duplicate or missing rows.
   await page.goto('/calls?sort=case_ref');
   const refs = async () => page.locator('[data-testid="case-table"] tbody tr').evaluateAll((rows) => rows.map((r) => r.getAttribute('data-case-ref')));
   await expect(page.locator('[data-testid="case-table"] tbody tr')).toHaveCount(25);

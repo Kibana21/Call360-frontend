@@ -53,9 +53,10 @@ describe('application shell', () => {
     const nav = screen.getByRole('navigation', { name: 'Main navigation' });
     for (const g of ['Workspace', 'Governance', 'Intelligence', 'Platform']) expect(within(nav).getByText(g)).toBeInTheDocument();
     const disabled = nav.querySelectorAll('[aria-disabled="true"]');
-    expect(disabled.length).toBe(8); // 3 Workspace + 3 Governance + 1 Intelligence + 1 Platform (F2 enabled 3, F4 1, F5 1)
+    expect(disabled.length).toBe(3); // Live Monitor, Campaigns (S4) + Analytics (S4); every Stage 0 screen is enabled after F7
     for (const label of ['Call Explorer', 'Work Queues', 'Search']) expect(within(nav).getByRole('link', { name: label })).toBeInTheDocument();
-    expect(within(nav).getByText('Script Studio').closest('[aria-disabled]')).toHaveAttribute('aria-disabled', 'true');
+    expect(within(nav).getByRole('link', { name: 'Script Studio' })).toHaveAttribute('href', '/scripts');
+    expect(within(nav).getByText('Live Monitor').closest('[aria-disabled]')).toHaveAttribute('aria-disabled', 'true');
     expect(within(nav).getByRole('link', { name: /Administration/ })).toHaveAttribute('href', '/admin/users');
     expect(screen.getAllByText('Ada Admin').length).toBeGreaterThan(0);
     expect(document.body.textContent).not.toMatch(/Call 360|Survey Studio/);

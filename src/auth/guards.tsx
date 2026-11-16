@@ -11,6 +11,8 @@ export function RequireAuth({ children }: { children: ReactNode }) {
     const returnTo = encodeURIComponent(location.pathname + location.search);
     return <Navigate to={`/login?returnTo=${returnTo}`} replace />;
   }
+  // CP0.1B-3: a one-time password must be replaced first (the server refuses everything else until then).
+  if (me.password_change_required && location.pathname !== '/account/password') return <Navigate to="/account/password" replace />;
   return <>{children}</>;
 }
 

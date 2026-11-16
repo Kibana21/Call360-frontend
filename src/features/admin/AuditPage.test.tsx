@@ -37,4 +37,16 @@ describe('Audit screen', () => {
     expect(within(drawer).getByText(/"reference_data_version": "0007_governed_values"/)).toHaveClass('jsonbox');
     expect(within(drawer).getByText(REASON)).toBeInTheDocument();
   });
+
+  it('marks an out-of-scope record identifier as withheld (CP0.6-F1)', async () => {
+    const denied = { ...EVENT, event_id: '00000000-0000-0000-0000-000000000002', seq: 8, action: 'ACCESS.DENIED_OBJECT', outcome: 'DENIED',
+      entity_type: 'callback_case', entity_id: null, reason: 'out of scope or missing', after: null, scope_redacted: true };
+    stubApi({ 'GET /api/v1/me': () => json(200, ME),
+      'GET /api/v1/admin/audit-events': () => json(200, { items: [denied], page: { next_cursor: null } }) });
+    renderAt(<App />, '/admin/audit');
+    const table = await screen.findByRole('table', { name: 'Audit events, newest first' });
+    expect(within(table).getAllByRole('row')[1]!).toHaveTextContent('callback_case · withheld (outside your markets)');
+    await userEvent.click(within(table).getByRole('button', { name: 'View' }));
+    expect(screen.getByRole('dialog')).toHaveTextContent('record outside your markets; identifier withheld');
+  });
 });

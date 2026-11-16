@@ -145,7 +145,9 @@ export function OverviewPage() {
           </select>
           <Button icon="download" disabled aria-describedby="ov-export-note">Export report</Button>
           <span id="ov-export-note"><StageChip label="Stage S4 — Export" /></span>
-          <Button variant="primary" icon="plus" disabled aria-describedby="ov-new-note">New callback case</Button>
+          {can('intake.manual.submit') ? (
+            <Link className="btn primary" to="/intake" aria-describedby="ov-new-note"><Icon name="plus" size="sm" />New callback case</Link>
+          ) : <Button variant="primary" icon="plus" disabled aria-describedby="ov-new-note">New callback case</Button>}
           <span id="ov-new-note" className="sr-only">Cases are created through Data Intake in Stage 0.</span>
         </>} />
 

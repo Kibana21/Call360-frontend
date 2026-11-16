@@ -83,6 +83,266 @@
         "title": "ActivityList",
         "type": "object"
       },
+      "AdminGroup": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "former_members": {
+            "items": {
+              "$ref": "#/components/schemas/GroupMember"
+            },
+            "title": "Former Members",
+            "type": "array"
+          },
+          "group_id": {
+            "format": "uuid",
+            "title": "Group Id",
+            "type": "string"
+          },
+          "mappings_version": {
+            "title": "Mappings Version",
+            "type": "string"
+          },
+          "markets": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Markets",
+            "type": "array"
+          },
+          "member_count": {
+            "title": "Member Count",
+            "type": "integer"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/GroupMember"
+            },
+            "title": "Members",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "role_history": {
+            "items": {
+              "$ref": "#/components/schemas/GroupRoleOut"
+            },
+            "title": "Role History",
+            "type": "array"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Roles",
+            "type": "array"
+          },
+          "scope_history": {
+            "items": {
+              "$ref": "#/components/schemas/GroupScopeOut"
+            },
+            "title": "Scope History",
+            "type": "array"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "group_id",
+          "code",
+          "name",
+          "status",
+          "provider",
+          "member_count",
+          "roles",
+          "markets",
+          "mappings_version",
+          "members",
+          "former_members",
+          "role_history",
+          "scope_history"
+        ],
+        "title": "AdminGroup",
+        "type": "object"
+      },
+      "AdminGroupList": {
+        "properties": {
+          "enabled_markets": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Enabled Markets",
+            "type": "array"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AdminGroup"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items",
+          "enabled_markets"
+        ],
+        "title": "AdminGroupList",
+        "type": "object"
+      },
+      "AdminRole": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "permissions": {
+            "items": {
+              "$ref": "#/components/schemas/RolePermissionOut"
+            },
+            "title": "Permissions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "permissions"
+        ],
+        "title": "AdminRole",
+        "type": "object"
+      },
+      "AdminRoleList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AdminRole"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "reserved_permissions": {
+            "items": {
+              "$ref": "#/components/schemas/RolePermissionOut"
+            },
+            "title": "Reserved Permissions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items",
+          "reserved_permissions"
+        ],
+        "title": "AdminRoleList",
+        "type": "object"
+      },
+      "AdminSessionList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AdminSessionOut"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "AdminSessionList",
+        "type": "object"
+      },
+      "AdminSessionOut": {
+        "properties": {
+          "absolute_expires_at": {
+            "format": "date-time",
+            "title": "Absolute Expires At",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "current": {
+            "title": "Current",
+            "type": "boolean"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "idle_expires_at": {
+            "format": "date-time",
+            "title": "Idle Expires At",
+            "type": "string"
+          },
+          "ip": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ip"
+          },
+          "last_seen_at": {
+            "format": "date-time",
+            "title": "Last Seen At",
+            "type": "string"
+          },
+          "principal_id": {
+            "format": "uuid",
+            "title": "Principal Id",
+            "type": "string"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username"
+          }
+        },
+        "required": [
+          "session_id",
+          "principal_id",
+          "username",
+          "display_name",
+          "created_at",
+          "last_seen_at",
+          "idle_expires_at",
+          "absolute_expires_at",
+          "ip",
+          "current"
+        ],
+        "title": "AdminSessionOut",
+        "type": "object"
+      },
       "AdminUser": {
         "properties": {
           "active_sessions": {
@@ -181,6 +441,43 @@
         "title": "AdminUser",
         "type": "object"
       },
+      "AdminUserCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "display_name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "group_code": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Group Code",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          },
+          "username": {
+            "maxLength": 64,
+            "minLength": 3,
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "display_name",
+          "group_code",
+          "reason"
+        ],
+        "title": "AdminUserCreate",
+        "type": "object"
+      },
       "AdminUserList": {
         "properties": {
           "items": {
@@ -247,6 +544,160 @@
           "reason"
         ],
         "title": "AdminUserPatch",
+        "type": "object"
+      },
+      "AssignmentRuleList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AssignmentRuleOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "AssignmentRuleList",
+        "type": "object"
+      },
+      "AssignmentRuleOut": {
+        "properties": {
+          "author_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author Ref"
+          },
+          "cases_assigned": {
+            "title": "Cases Assigned",
+            "type": "integer"
+          },
+          "checker_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checker Ref"
+          },
+          "checksum": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checksum"
+          },
+          "effective_from": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective From"
+          },
+          "effective_to": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective To"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "market": {
+            "title": "Market",
+            "type": "string"
+          },
+          "predicate": {
+            "title": "Predicate"
+          },
+          "priority": {
+            "title": "Priority",
+            "type": "integer"
+          },
+          "recent_cases": {
+            "items": {
+              "$ref": "#/components/schemas/RuleCaseRef"
+            },
+            "title": "Recent Cases",
+            "type": "array"
+          },
+          "rule_code": {
+            "title": "Rule Code",
+            "type": "string"
+          },
+          "specificity": {
+            "title": "Specificity",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "target": {
+            "$ref": "#/components/schemas/ScriptPin"
+          },
+          "target_family_id": {
+            "format": "uuid",
+            "title": "Target Family Id",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "rule_code",
+          "version",
+          "status",
+          "predicate",
+          "priority",
+          "specificity",
+          "effective_from",
+          "effective_to",
+          "checksum",
+          "author_ref",
+          "checker_ref",
+          "market",
+          "target",
+          "target_family_id",
+          "cases_assigned",
+          "recent_cases"
+        ],
+        "title": "AssignmentRuleOut",
         "type": "object"
       },
       "AttemptList": {
@@ -693,6 +1144,11 @@
               }
             ],
             "title": "Reason"
+          },
+          "scope_redacted": {
+            "default": false,
+            "title": "Scope Redacted",
+            "type": "boolean"
           },
           "seq": {
             "title": "Seq",
@@ -1746,6 +2202,146 @@
         "title": "ContactSelectionOut",
         "type": "object"
       },
+      "ControlList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ControlOut"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ControlList",
+        "type": "object"
+      },
+      "ControlOut": {
+        "properties": {
+          "content_approval_status": {
+            "title": "Content Approval Status",
+            "type": "string"
+          },
+          "control_code": {
+            "title": "Control Code",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "owner_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner Role"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/ControlQuestionLink"
+            },
+            "title": "Questions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "control_code",
+          "name",
+          "owner_role",
+          "content_approval_status",
+          "questions"
+        ],
+        "title": "ControlOut",
+        "type": "object"
+      },
+      "ControlQuestionLink": {
+        "properties": {
+          "intent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intent"
+          },
+          "mapping_status": {
+            "title": "Mapping Status",
+            "type": "string"
+          },
+          "question_code": {
+            "title": "Question Code",
+            "type": "string"
+          },
+          "rationale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rationale"
+          },
+          "regulatory_reference_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Regulatory Reference Id"
+          },
+          "regulatory_reference_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Regulatory Reference Title"
+          },
+          "script_versions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Script Versions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "question_code",
+          "intent",
+          "rationale",
+          "mapping_status",
+          "regulatory_reference_id",
+          "regulatory_reference_title",
+          "script_versions"
+        ],
+        "title": "ControlQuestionLink",
+        "type": "object"
+      },
       "CsrfResponse": {
         "properties": {
           "csrf_token": {
@@ -2358,6 +2954,184 @@
         "title": "FscOut",
         "type": "object"
       },
+      "GroupMappingsUpdate": {
+        "additionalProperties": false,
+        "properties": {
+          "markets": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 10,
+            "title": "Markets",
+            "type": "array"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 10,
+            "title": "Roles",
+            "type": "array"
+          }
+        },
+        "required": [
+          "roles",
+          "markets",
+          "reason"
+        ],
+        "title": "GroupMappingsUpdate",
+        "type": "object"
+      },
+      "GroupMember": {
+        "properties": {
+          "created_by": {
+            "title": "Created By",
+            "type": "string"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "principal_id": {
+            "format": "uuid",
+            "title": "Principal Id",
+            "type": "string"
+          },
+          "provenance": {
+            "title": "Provenance",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username"
+          },
+          "valid_from": {
+            "format": "date-time",
+            "title": "Valid From",
+            "type": "string"
+          },
+          "valid_to": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid To"
+          }
+        },
+        "required": [
+          "principal_id",
+          "username",
+          "display_name",
+          "status",
+          "valid_from",
+          "valid_to",
+          "provenance",
+          "created_by"
+        ],
+        "title": "GroupMember",
+        "type": "object"
+      },
+      "GroupRoleOut": {
+        "properties": {
+          "approved_by": {
+            "title": "Approved By",
+            "type": "string"
+          },
+          "effective_from": {
+            "format": "date-time",
+            "title": "Effective From",
+            "type": "string"
+          },
+          "effective_to": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective To"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "effective_from",
+          "effective_to",
+          "approved_by"
+        ],
+        "title": "GroupRoleOut",
+        "type": "object"
+      },
+      "GroupScopeOut": {
+        "properties": {
+          "change_reason": {
+            "title": "Change Reason",
+            "type": "string"
+          },
+          "created_by": {
+            "title": "Created By",
+            "type": "string"
+          },
+          "effective_from": {
+            "format": "date-time",
+            "title": "Effective From",
+            "type": "string"
+          },
+          "effective_to": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective To"
+          },
+          "market": {
+            "title": "Market",
+            "type": "string"
+          }
+        },
+        "required": [
+          "market",
+          "effective_from",
+          "effective_to",
+          "created_by",
+          "change_reason"
+        ],
+        "title": "GroupScopeOut",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -2369,6 +3143,40 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HealthCheck": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "OK",
+              "WARN",
+              "FAIL",
+              "NOT_AVAILABLE"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "label",
+          "status",
+          "detail"
+        ],
+        "title": "HealthCheck",
         "type": "object"
       },
       "HealthResponse": {
@@ -2560,6 +3368,24 @@
         "title": "IntakeAuthorization",
         "type": "object"
       },
+      "IntakeBandOption": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "label"
+        ],
+        "title": "IntakeBandOption",
+        "type": "object"
+      },
       "IntakeCallbackRequest": {
         "additionalProperties": false,
         "description": "The verification obligation as the source requested it: due date and priority are source-provided.",
@@ -2714,6 +3540,39 @@
         "title": "IntakeContact",
         "type": "object"
       },
+      "IntakeContactFormat": {
+        "properties": {
+          "channel": {
+            "title": "Channel",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "example": {
+            "title": "Example",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "pattern": {
+            "title": "Pattern",
+            "type": "string"
+          }
+        },
+        "required": [
+          "channel",
+          "code",
+          "label",
+          "pattern",
+          "example"
+        ],
+        "title": "IntakeContactFormat",
+        "type": "object"
+      },
       "IntakeCounts": {
         "properties": {
           "new": {
@@ -2809,6 +3668,29 @@
           "contact_masked"
         ],
         "title": "IntakeEligibilityOut",
+        "type": "object"
+      },
+      "IntakeFscOption": {
+        "properties": {
+          "channel": {
+            "title": "Channel",
+            "type": "string"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "fsc_ref": {
+            "title": "Fsc Ref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fsc_ref",
+          "display_name",
+          "channel"
+        ],
+        "title": "IntakeFscOption",
         "type": "object"
       },
       "IntakeHoldOut": {
@@ -3374,6 +4256,124 @@
           "policy_id"
         ],
         "title": "IntakePolicyOut",
+        "type": "object"
+      },
+      "IntakeProductOption": {
+        "properties": {
+          "product_code": {
+            "title": "Product Code",
+            "type": "string"
+          },
+          "product_family": {
+            "title": "Product Family",
+            "type": "string"
+          },
+          "product_subtype": {
+            "title": "Product Subtype",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_code",
+          "product_family",
+          "product_subtype"
+        ],
+        "title": "IntakeProductOption",
+        "type": "object"
+      },
+      "IntakeReference": {
+        "description": "Values the intake API accepts, read from the same sources the validator uses (no new rules).",
+        "properties": {
+          "contact_formats": {
+            "items": {
+              "$ref": "#/components/schemas/IntakeContactFormat"
+            },
+            "title": "Contact Formats",
+            "type": "array"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "data_policy": {
+            "title": "Data Policy",
+            "type": "string"
+          },
+          "enums": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": "Enums",
+            "type": "object"
+          },
+          "fscs": {
+            "items": {
+              "$ref": "#/components/schemas/IntakeFscOption"
+            },
+            "title": "Fscs",
+            "type": "array"
+          },
+          "market_code": {
+            "title": "Market Code",
+            "type": "string"
+          },
+          "priority_max": {
+            "title": "Priority Max",
+            "type": "integer"
+          },
+          "priority_min": {
+            "title": "Priority Min",
+            "type": "integer"
+          },
+          "products": {
+            "items": {
+              "$ref": "#/components/schemas/IntakeProductOption"
+            },
+            "title": "Products",
+            "type": "array"
+          },
+          "reserved_source_systems": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reserved Source Systems",
+            "type": "array"
+          },
+          "risk_band_list_version": {
+            "title": "Risk Band List Version",
+            "type": "string"
+          },
+          "risk_bands": {
+            "items": {
+              "$ref": "#/components/schemas/IntakeBandOption"
+            },
+            "title": "Risk Bands",
+            "type": "array"
+          },
+          "source_system_prefix": {
+            "title": "Source System Prefix",
+            "type": "string"
+          }
+        },
+        "required": [
+          "market_code",
+          "currency",
+          "data_policy",
+          "source_system_prefix",
+          "reserved_source_systems",
+          "products",
+          "fscs",
+          "risk_bands",
+          "risk_band_list_version",
+          "contact_formats",
+          "enums",
+          "priority_min",
+          "priority_max"
+        ],
+        "title": "IntakeReference",
         "type": "object"
       },
       "IntakeRiskOut": {
@@ -4364,6 +5364,11 @@
             "title": "Markets",
             "type": "array"
           },
+          "password_change_required": {
+            "default": false,
+            "title": "Password Change Required",
+            "type": "boolean"
+          },
           "permissions": {
             "items": {
               "type": "string"
@@ -4394,6 +5399,41 @@
           "environment"
         ],
         "title": "MeResponse",
+        "type": "object"
+      },
+      "OneTimePassword": {
+        "description": "Returned once to the administrator; never stored in plain text, logged or audited.",
+        "properties": {
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "one_time_password": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "One Time Password"
+          },
+          "replayed": {
+            "default": false,
+            "title": "Replayed",
+            "type": "boolean"
+          },
+          "user": {
+            "$ref": "#/components/schemas/AdminUser"
+          }
+        },
+        "required": [
+          "user",
+          "one_time_password",
+          "note"
+        ],
+        "title": "OneTimePassword",
         "type": "object"
       },
       "PageInfo": {
@@ -4550,6 +5590,29 @@
           "authorization_ref"
         ],
         "title": "PartyRoleOut",
+        "type": "object"
+      },
+      "PasswordChange": {
+        "additionalProperties": false,
+        "properties": {
+          "current_password": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Current Password",
+            "type": "string"
+          },
+          "new_password": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "New Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "current_password",
+          "new_password"
+        ],
+        "title": "PasswordChange",
         "type": "object"
       },
       "PolicyCaseSummary": {
@@ -5774,6 +6837,22 @@
         "title": "QuestionResult",
         "type": "object"
       },
+      "Reason": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "Reason",
+        "type": "object"
+      },
       "RefreshResponse": {
         "properties": {
           "access_expires_at": {
@@ -5792,6 +6871,439 @@
           "access_expires_at"
         ],
         "title": "RefreshResponse",
+        "type": "object"
+      },
+      "RegulatoryReferenceList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RegulatoryReferenceOut"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "RegulatoryReferenceList",
+        "type": "object"
+      },
+      "RegulatoryReferenceOut": {
+        "properties": {
+          "controls": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Controls",
+            "type": "array"
+          },
+          "document_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Version"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "interpretation_status": {
+            "title": "Interpretation Status",
+            "type": "string"
+          },
+          "issuer": {
+            "title": "Issuer",
+            "type": "string"
+          },
+          "jurisdiction": {
+            "title": "Jurisdiction",
+            "type": "string"
+          },
+          "market": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market"
+          },
+          "published_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published On"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "required": [
+          "id",
+          "issuer",
+          "jurisdiction",
+          "market",
+          "title",
+          "document_version",
+          "url",
+          "published_on",
+          "interpretation_status",
+          "controls"
+        ],
+        "title": "RegulatoryReferenceOut",
+        "type": "object"
+      },
+      "ReviewEvidence": {
+        "description": "What the finding points at, as recorded. Absent media is stated, never implied.",
+        "properties": {
+          "answer_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer State"
+          },
+          "controls": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Controls",
+            "type": "array"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "question_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Question Code"
+          },
+          "question_wording": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Question Wording"
+          },
+          "recording": {
+            "title": "Recording",
+            "type": "string"
+          },
+          "rule_expected": {
+            "title": "Rule Expected"
+          },
+          "rule_observed": {
+            "title": "Rule Observed"
+          },
+          "rule_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Ref"
+          },
+          "rule_result": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Result"
+          },
+          "rule_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Version"
+          },
+          "transcript": {
+            "title": "Transcript",
+            "type": "string"
+          },
+          "typed_value": {
+            "title": "Typed Value"
+          },
+          "verbatim_redacted": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verbatim Redacted"
+          }
+        },
+        "required": [
+          "question_code",
+          "question_wording",
+          "controls",
+          "answer_state",
+          "typed_value",
+          "verbatim_redacted",
+          "rule_ref",
+          "rule_version",
+          "rule_expected",
+          "rule_observed",
+          "rule_result",
+          "transcript",
+          "recording",
+          "label"
+        ],
+        "title": "ReviewEvidence",
+        "type": "object"
+      },
+      "ReviewItem": {
+        "properties": {
+          "case_id": {
+            "format": "uuid",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "case_ref": {
+            "title": "Case Ref",
+            "type": "string"
+          },
+          "case_state": {
+            "title": "Case State",
+            "type": "string"
+          },
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "evidence": {
+            "$ref": "#/components/schemas/ReviewEvidence"
+          },
+          "finding_ref": {
+            "title": "Finding Ref",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "material": {
+            "title": "Material",
+            "type": "boolean"
+          },
+          "origin": {
+            "title": "Origin",
+            "type": "string"
+          },
+          "policy_id": {
+            "format": "uuid",
+            "title": "Policy Id",
+            "type": "string"
+          },
+          "policy_ref": {
+            "title": "Policy Ref",
+            "type": "string"
+          },
+          "raised_at": {
+            "format": "date-time",
+            "title": "Raised At",
+            "type": "string"
+          },
+          "record_origin": {
+            "title": "Record Origin",
+            "type": "string"
+          },
+          "review_assigned_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Assigned At"
+          },
+          "review_closed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Closed At"
+          },
+          "reviewer_assigned": {
+            "title": "Reviewer Assigned",
+            "type": "boolean"
+          },
+          "sale_event_id": {
+            "format": "uuid",
+            "title": "Sale Event Id",
+            "type": "string"
+          },
+          "sale_ref": {
+            "title": "Sale Ref",
+            "type": "string"
+          },
+          "selection_risk_band": {
+            "title": "Selection Risk Band",
+            "type": "string"
+          },
+          "severity": {
+            "title": "Severity",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "finding_ref",
+          "category",
+          "severity",
+          "material",
+          "status",
+          "origin",
+          "record_origin",
+          "raised_at",
+          "review_assigned_at",
+          "review_closed_at",
+          "reviewer_assigned",
+          "case_id",
+          "case_ref",
+          "case_state",
+          "policy_id",
+          "policy_ref",
+          "sale_event_id",
+          "sale_ref",
+          "selection_risk_band",
+          "evidence"
+        ],
+        "title": "ReviewItem",
+        "type": "object"
+      },
+      "ReviewQueue": {
+        "properties": {
+          "facets": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "type": "integer"
+              },
+              "type": "object"
+            },
+            "title": "Facets",
+            "type": "object"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "markets": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Markets",
+            "type": "array"
+          },
+          "material_severities": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Material Severities",
+            "type": "array"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset",
+          "facets",
+          "material_severities",
+          "markets"
+        ],
+        "title": "ReviewQueue",
         "type": "object"
       },
       "RiskAssessmentDetail": {
@@ -7031,6 +8543,66 @@
         "title": "RoleEdge",
         "type": "object"
       },
+      "RolePermissionOut": {
+        "properties": {
+          "alias": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alias"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "reserved": {
+            "title": "Reserved",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "alias",
+          "reserved",
+          "description"
+        ],
+        "title": "RolePermissionOut",
+        "type": "object"
+      },
+      "RuleCaseRef": {
+        "properties": {
+          "assigned_at": {
+            "format": "date-time",
+            "title": "Assigned At",
+            "type": "string"
+          },
+          "case_id": {
+            "format": "uuid",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "case_ref": {
+            "title": "Case Ref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "case_id",
+          "case_ref",
+          "assigned_at"
+        ],
+        "title": "RuleCaseRef",
+        "type": "object"
+      },
       "RuleSetOut": {
         "properties": {
           "checksum": {
@@ -7625,6 +9197,142 @@
         "title": "ScriptAssignmentOut",
         "type": "object"
       },
+      "ScriptFamilyDetail": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "market": {
+            "title": "Market",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "purpose": {
+            "title": "Purpose",
+            "type": "string"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/ScriptVersionSummary"
+            },
+            "title": "Versions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "market",
+          "purpose",
+          "description",
+          "versions"
+        ],
+        "title": "ScriptFamilyDetail",
+        "type": "object"
+      },
+      "ScriptLibrary": {
+        "properties": {
+          "facets": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "type": "integer"
+              },
+              "type": "object"
+            },
+            "title": "Facets",
+            "type": "object"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ScriptVersionSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "markets": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Markets",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "facets",
+          "markets"
+        ],
+        "title": "ScriptLibrary",
+        "type": "object"
+      },
+      "ScriptModuleSummary": {
+        "properties": {
+          "inclusion_condition": {
+            "title": "Inclusion Condition"
+          },
+          "module_code": {
+            "title": "Module Code",
+            "type": "string"
+          },
+          "module_kind": {
+            "title": "Module Kind",
+            "type": "string"
+          },
+          "module_name": {
+            "title": "Module Name",
+            "type": "string"
+          },
+          "module_revision": {
+            "title": "Module Revision",
+            "type": "integer"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "questions": {
+            "title": "Questions",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "position",
+          "module_code",
+          "module_name",
+          "module_kind",
+          "module_revision",
+          "inclusion_condition",
+          "questions"
+        ],
+        "title": "ScriptModuleSummary",
+        "type": "object"
+      },
       "ScriptPin": {
         "properties": {
           "content_approval_status": {
@@ -7637,6 +9345,11 @@
           },
           "manifest_sha256": {
             "title": "Manifest Sha256",
+            "type": "string"
+          },
+          "script_family_id": {
+            "format": "uuid",
+            "title": "Script Family Id",
             "type": "string"
           },
           "script_version_id": {
@@ -7655,6 +9368,7 @@
         },
         "required": [
           "script_version_id",
+          "script_family_id",
           "family",
           "version_label",
           "status",
@@ -7869,8 +9583,15 @@
             "type": "string"
           },
           "manifest_sha256": {
-            "title": "Manifest Sha256",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manifest Sha256"
           },
           "market": {
             "title": "Market",
@@ -7898,6 +9619,11 @@
               }
             ],
             "title": "Reviewer Ref"
+          },
+          "script_family_id": {
+            "format": "uuid",
+            "title": "Script Family Id",
+            "type": "string"
           },
           "sections": {
             "items": {
@@ -7928,6 +9654,7 @@
         },
         "required": [
           "id",
+          "script_family_id",
           "family",
           "family_name",
           "market",
@@ -7945,6 +9672,236 @@
           "sections"
         ],
         "title": "ScriptVersionDetail",
+        "type": "object"
+      },
+      "ScriptVersionList": {
+        "properties": {
+          "family": {
+            "title": "Family",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ScriptVersionSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "script_family_id": {
+            "format": "uuid",
+            "title": "Script Family Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "script_family_id",
+          "family",
+          "items"
+        ],
+        "title": "ScriptVersionList",
+        "type": "object"
+      },
+      "ScriptVersionSummary": {
+        "properties": {
+          "author_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author Ref"
+          },
+          "cases_assigned": {
+            "title": "Cases Assigned",
+            "type": "integer"
+          },
+          "content_approval_status": {
+            "title": "Content Approval Status",
+            "type": "string"
+          },
+          "effective_from": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective From"
+          },
+          "effective_to": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective To"
+          },
+          "family": {
+            "title": "Family",
+            "type": "string"
+          },
+          "family_name": {
+            "title": "Family Name",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "language": {
+            "title": "Language",
+            "type": "string"
+          },
+          "mandatory_questions": {
+            "title": "Mandatory Questions",
+            "type": "integer"
+          },
+          "manifest_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manifest Sha256"
+          },
+          "market": {
+            "title": "Market",
+            "type": "string"
+          },
+          "modules": {
+            "items": {
+              "$ref": "#/components/schemas/ScriptModuleSummary"
+            },
+            "title": "Modules",
+            "type": "array"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "purpose": {
+            "title": "Purpose",
+            "type": "string"
+          },
+          "questions": {
+            "title": "Questions",
+            "type": "integer"
+          },
+          "reviewer_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewer Ref"
+          },
+          "rules_targeting": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Rules Targeting",
+            "type": "array"
+          },
+          "script_family_id": {
+            "format": "uuid",
+            "title": "Script Family Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "supersedes_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supersedes Id"
+          },
+          "supersedes_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supersedes Label"
+          },
+          "validation_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Validation Status"
+          },
+          "version_label": {
+            "title": "Version Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "script_family_id",
+          "family",
+          "family_name",
+          "market",
+          "purpose",
+          "version_label",
+          "status",
+          "validation_status",
+          "language",
+          "effective_from",
+          "effective_to",
+          "published_at",
+          "manifest_sha256",
+          "content_approval_status",
+          "author_ref",
+          "reviewer_ref",
+          "supersedes_id",
+          "supersedes_label",
+          "modules",
+          "questions",
+          "mandatory_questions",
+          "cases_assigned",
+          "rules_targeting"
+        ],
+        "title": "ScriptVersionSummary",
         "type": "object"
       },
       "SearchHit": {
@@ -8331,6 +10288,44 @@
         "title": "SessionLink",
         "type": "object"
       },
+      "SessionStatus": {
+        "properties": {
+          "absolute_expires_at": {
+            "format": "date-time",
+            "title": "Absolute Expires At",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "idle_expires_at": {
+            "format": "date-time",
+            "title": "Idle Expires At",
+            "type": "string"
+          },
+          "last_seen_at": {
+            "format": "date-time",
+            "title": "Last Seen At",
+            "type": "string"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "created_at",
+          "last_seen_at",
+          "idle_expires_at",
+          "absolute_expires_at"
+        ],
+        "title": "SessionStatus",
+        "type": "object"
+      },
       "Sla": {
         "properties": {
           "breached": {
@@ -8482,6 +10477,98 @@
           "record_origin"
         ],
         "title": "SurveyRunDetail",
+        "type": "object"
+      },
+      "SystemHealth": {
+        "properties": {
+          "app_env": {
+            "title": "App Env",
+            "type": "string"
+          },
+          "audit_chain_head": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audit Chain Head"
+          },
+          "audit_events": {
+            "title": "Audit Events",
+            "type": "integer"
+          },
+          "checked_at": {
+            "format": "date-time",
+            "title": "Checked At",
+            "type": "string"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/HealthCheck"
+            },
+            "title": "Checks",
+            "type": "array"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Counts",
+            "type": "object"
+          },
+          "current_stage": {
+            "title": "Current Stage",
+            "type": "string"
+          },
+          "data_policy": {
+            "title": "Data Policy",
+            "type": "string"
+          },
+          "enabled_markets": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Enabled Markets",
+            "type": "array"
+          },
+          "expected_migration_head": {
+            "title": "Expected Migration Head",
+            "type": "string"
+          },
+          "migration_head": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Migration Head"
+          },
+          "openapi_sha256": {
+            "title": "Openapi Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "checked_at",
+          "app_env",
+          "data_policy",
+          "current_stage",
+          "migration_head",
+          "expected_migration_head",
+          "enabled_markets",
+          "openapi_sha256",
+          "audit_chain_head",
+          "audit_events",
+          "checks",
+          "counts"
+        ],
+        "title": "SystemHealth",
         "type": "object"
       },
       "Timeline": {
@@ -8646,6 +10733,529 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "VoiceCapability": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "stage": {
+            "title": "Stage",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "AVAILABLE",
+              "NOT_AVAILABLE",
+              "DISABLED",
+              "NOT_PERFORMED",
+              "NOT_EVALUATED"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "label",
+          "status",
+          "reason",
+          "stage"
+        ],
+        "title": "VoiceCapability",
+        "type": "object"
+      },
+      "VoiceCaseOption": {
+        "properties": {
+          "case_id": {
+            "format": "uuid",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "case_ref": {
+            "title": "Case Ref",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "case_id",
+          "case_ref",
+          "state"
+        ],
+        "title": "VoiceCaseOption",
+        "type": "object"
+      },
+      "VoiceContact": {
+        "properties": {
+          "channel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Channel"
+          },
+          "masked_contact": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Masked Contact"
+          },
+          "masked_name": {
+            "title": "Masked Name",
+            "type": "string"
+          },
+          "party_ref": {
+            "title": "Party Ref",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "party_ref",
+          "masked_name",
+          "role",
+          "channel",
+          "masked_contact"
+        ],
+        "title": "VoiceContact",
+        "type": "object"
+      },
+      "VoicePreflight": {
+        "properties": {
+          "callable_cases": {
+            "items": {
+              "$ref": "#/components/schemas/VoiceCaseOption"
+            },
+            "title": "Callable Cases",
+            "type": "array"
+          },
+          "capabilities": {
+            "items": {
+              "$ref": "#/components/schemas/VoiceCapability"
+            },
+            "title": "Capabilities",
+            "type": "array"
+          },
+          "data_policy": {
+            "title": "Data Policy",
+            "type": "string"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "stage": {
+            "title": "Stage",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "AVAILABLE",
+              "NOT_AVAILABLE"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "test_message": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Test Message",
+            "type": "array"
+          }
+        },
+        "required": [
+          "status",
+          "reason",
+          "stage",
+          "provider",
+          "capabilities",
+          "data_policy",
+          "test_message",
+          "callable_cases"
+        ],
+        "title": "VoicePreflight",
+        "type": "object"
+      },
+      "VoiceSessionCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "format": "uuid",
+            "title": "Case Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "case_id"
+        ],
+        "title": "VoiceSessionCreate",
+        "type": "object"
+      },
+      "VoiceSessionEvent": {
+        "properties": {
+          "client_seq": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Seq"
+          },
+          "details": {
+            "additionalProperties": true,
+            "title": "Details",
+            "type": "object"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "out_of_order": {
+            "title": "Out Of Order",
+            "type": "boolean"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "seq",
+          "event_type",
+          "source",
+          "occurred_at",
+          "client_seq",
+          "out_of_order",
+          "details"
+        ],
+        "title": "VoiceSessionEvent",
+        "type": "object"
+      },
+      "VoiceSessionList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/VoiceSessionStatus"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "VoiceSessionList",
+        "type": "object"
+      },
+      "VoiceSessionOut": {
+        "description": "A short-lived, case-bound test session (S1-A; persisted from S1-B). ``session_id`` is the persisted browser\ncontact attempt. The credential is single-use and expires quickly; it is sent as the first WebSocket message,\nnever in a URL.",
+        "properties": {
+          "attempt_ref": {
+            "title": "Attempt Ref",
+            "type": "string"
+          },
+          "case_id": {
+            "format": "uuid",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "case_ref": {
+            "title": "Case Ref",
+            "type": "string"
+          },
+          "compliance_outcome": {
+            "const": "NOT_EVALUATED",
+            "default": "NOT_EVALUATED",
+            "title": "Compliance Outcome",
+            "type": "string"
+          },
+          "contact": {
+            "$ref": "#/components/schemas/VoiceContact"
+          },
+          "credential": {
+            "title": "Credential",
+            "type": "string"
+          },
+          "credential_expires_at": {
+            "format": "date-time",
+            "title": "Credential Expires At",
+            "type": "string"
+          },
+          "frame_ms": {
+            "title": "Frame Ms",
+            "type": "integer"
+          },
+          "identity_verification": {
+            "const": "NOT_PERFORMED",
+            "default": "NOT_PERFORMED",
+            "title": "Identity Verification",
+            "type": "string"
+          },
+          "max_duration_s": {
+            "title": "Max Duration S",
+            "type": "integer"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "recording": {
+            "const": "DISABLED",
+            "default": "DISABLED",
+            "title": "Recording",
+            "type": "string"
+          },
+          "resumed": {
+            "default": false,
+            "title": "Resumed",
+            "type": "boolean"
+          },
+          "sample_rate": {
+            "title": "Sample Rate",
+            "type": "integer"
+          },
+          "script": {
+            "$ref": "#/components/schemas/ScriptPin"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          },
+          "stream_path": {
+            "title": "Stream Path",
+            "type": "string"
+          },
+          "test_message": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Test Message",
+            "type": "array"
+          },
+          "transcript": {
+            "const": "NOT_AVAILABLE",
+            "default": "NOT_AVAILABLE",
+            "title": "Transcript",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "attempt_ref",
+          "credential",
+          "credential_expires_at",
+          "stream_path",
+          "case_id",
+          "case_ref",
+          "provider",
+          "script",
+          "contact",
+          "test_message",
+          "sample_rate",
+          "frame_ms",
+          "max_duration_s"
+        ],
+        "title": "VoiceSessionOut",
+        "type": "object"
+      },
+      "VoiceSessionStatus": {
+        "properties": {
+          "attempt_ref": {
+            "title": "Attempt Ref",
+            "type": "string"
+          },
+          "can_resume": {
+            "title": "Can Resume",
+            "type": "boolean"
+          },
+          "case_id": {
+            "format": "uuid",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "case_ref": {
+            "title": "Case Ref",
+            "type": "string"
+          },
+          "compliance_outcome": {
+            "const": "NOT_EVALUATED",
+            "default": "NOT_EVALUATED",
+            "title": "Compliance Outcome",
+            "type": "string"
+          },
+          "end_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Reason"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/VoiceSessionEvent"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "events_total": {
+            "title": "Events Total",
+            "type": "integer"
+          },
+          "identity_verification": {
+            "const": "NOT_PERFORMED",
+            "default": "NOT_PERFORMED",
+            "title": "Identity Verification",
+            "type": "string"
+          },
+          "interruptions": {
+            "title": "Interruptions",
+            "type": "integer"
+          },
+          "recording": {
+            "const": "DISABLED",
+            "default": "DISABLED",
+            "title": "Recording",
+            "type": "string"
+          },
+          "responses": {
+            "title": "Responses",
+            "type": "integer"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          },
+          "session_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Ref"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "started_by": {
+            "title": "Started By",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "PENDING_CONNECTION",
+              "NOT_CONNECTED",
+              "CREATED",
+              "INTERRUPTED",
+              "FINALIZING",
+              "FINALIZED",
+              "ABORTED"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "yours": {
+            "title": "Yours",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "session_id",
+          "attempt_ref",
+          "session_ref",
+          "case_id",
+          "case_ref",
+          "status",
+          "started_at",
+          "ended_at",
+          "end_reason",
+          "responses",
+          "interruptions",
+          "events_total",
+          "started_by",
+          "yours",
+          "can_resume"
+        ],
+        "title": "VoiceSessionStatus",
         "type": "object"
       },
       "WorkQueue": {
@@ -9392,6 +12002,850 @@
         ]
       }
     },
+    "/api/v1/admin/groups": {
+      "get": {
+        "operationId": "admin_groups_list",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminGroupList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Precondition Required"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "List Groups",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/groups/{group_id}/mappings": {
+      "put": {
+        "operationId": "admin_group_mappings_replace",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "If-Match",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 40,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "If-Match"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupMappingsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminGroup"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Precondition Required"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Replace Mappings",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/groups/{group_id}/members/{principal_id}": {
+      "delete": {
+        "operationId": "admin_group_member_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "principal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Principal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Reason"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminGroup"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Precondition Required"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Remove Member",
+        "tags": [
+          "admin"
+        ]
+      },
+      "put": {
+        "operationId": "admin_group_member_add",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Group Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "principal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Principal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Reason"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminGroup"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Precondition Required"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Add Member",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/roles": {
+      "get": {
+        "operationId": "admin_roles_list",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminRoleList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Precondition Required"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "List Roles",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/sessions": {
+      "get": {
+        "operationId": "admin_sessions_list",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSessionList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Precondition Required"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "List Sessions",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/sessions/{session_id}/revoke": {
+      "post": {
+        "operationId": "admin_sessions_revoke",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Reason"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Precondition Required"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Revoke Session",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/system-health": {
+      "get": {
+        "operationId": "admin_system_health",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemHealth"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Precondition Required"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "System Health",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/api/v1/admin/users": {
       "get": {
         "operationId": "admin_users_list",
@@ -9499,6 +12953,124 @@
           }
         },
         "summary": "List Users",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "operationId": "admin_users_create",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminUserCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OneTimePassword"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Precondition Required"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Create User",
         "tags": [
           "admin"
         ]
@@ -9619,6 +13191,119 @@
           }
         },
         "summary": "Update User",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/users/{principal_id}/password-reset": {
+      "post": {
+        "operationId": "admin_users_password_reset",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "principal_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Principal Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Reason"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OneTimePassword"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Precondition Required"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Reset Password",
         "tags": [
           "admin"
         ]
@@ -9901,6 +13586,97 @@
         "summary": "Post Refresh",
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/session": {
+      "get": {
+        "operationId": "auth_session",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Precondition Required"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Own Session",
+        "tags": [
+          "admin"
         ]
       }
     },
@@ -11095,6 +14871,68 @@
         ]
       }
     },
+    "/api/v1/controls": {
+      "get": {
+        "description": "Controls linked to questions of in-scope script versions; regulatory links only from in-scope markets.",
+        "operationId": "controls_list",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ControlList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Controls List",
+        "tags": [
+          "scripts"
+        ]
+      }
+    },
     "/api/v1/dashboard/activity": {
       "get": {
         "operationId": "dashboard_activity",
@@ -11960,6 +15798,108 @@
         ]
       }
     },
+    "/api/v1/intake/reference": {
+      "get": {
+        "description": "API-087: the values the manual-intake validator accepts for the caller's market (Stage 0: SG only).",
+        "operationId": "intake_reference",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntakeReference"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Precondition Required"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Reference",
+        "tags": [
+          "intake"
+        ]
+      }
+    },
     "/api/v1/intake/sources": {
       "get": {
         "operationId": "intake_sources",
@@ -12089,6 +16029,100 @@
         "summary": "Get Me",
         "tags": [
           "me"
+        ]
+      }
+    },
+    "/api/v1/me/password": {
+      "post": {
+        "operationId": "me_password_change",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordChange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "428": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Precondition Required"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Change Own Password",
+        "tags": [
+          "admin"
         ]
       }
     },
@@ -12678,6 +16712,277 @@
         ]
       }
     },
+    "/api/v1/regulatory-references": {
+      "get": {
+        "operationId": "regulatory_references",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegulatoryReferenceList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Regulatory References",
+        "tags": [
+          "scripts"
+        ]
+      }
+    },
+    "/api/v1/review-queue": {
+      "get": {
+        "operationId": "review_queue",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "queue",
+            "required": false,
+            "schema": {
+              "default": "AWAITING_REVIEW",
+              "enum": [
+                "AWAITING_REVIEW",
+                "ALL"
+              ],
+              "title": "Queue",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Finding, case, policy or sale reference, or question code",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 80,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Finding, case, policy or sale reference, or question code",
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "severity",
+            "required": false,
+            "schema": {
+              "items": {
+                "enum": [
+                  "LOW",
+                  "MEDIUM",
+                  "HIGH",
+                  "CRITICAL"
+                ],
+                "type": "string"
+              },
+              "title": "Severity",
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "items": {
+                "enum": [
+                  "OPEN",
+                  "UNDER_REVIEW",
+                  "CONFIRMED",
+                  "DISMISSED",
+                  "CLOSED"
+                ],
+                "type": "string"
+              },
+              "title": "Status",
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 20,
+              "title": "Category",
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "origin",
+            "required": false,
+            "schema": {
+              "items": {
+                "enum": [
+                  "RULE_EVALUATION",
+                  "NARRATIVE_FLAG",
+                  "REVIEWER"
+                ],
+                "type": "string"
+              },
+              "title": "Origin",
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "material",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Material"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "severity",
+              "enum": [
+                "-raised_at",
+                "raised_at",
+                "severity",
+                "case_ref",
+                "finding_ref"
+              ],
+              "title": "Sort",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "maximum": 100000,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewQueue"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Review Queue",
+        "tags": [
+          "reviews"
+        ]
+      }
+    },
     "/api/v1/risk-assessments": {
       "get": {
         "operationId": "risk_assessments_list",
@@ -13201,6 +17506,68 @@
         ]
       }
     },
+    "/api/v1/script-assignment-rules": {
+      "get": {
+        "description": "Seeded rule versions as recorded; a rule's market is its target script family's market.",
+        "operationId": "assignment_rules",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignmentRuleList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Assignment Rules",
+        "tags": [
+          "scripts"
+        ]
+      }
+    },
     "/api/v1/script-versions/{script_version_id}": {
       "get": {
         "operationId": "script_version_detail",
@@ -13281,6 +17648,355 @@
         "summary": "Script Version Detail",
         "tags": [
           "call-detail"
+        ]
+      }
+    },
+    "/api/v1/scripts": {
+      "get": {
+        "operationId": "scripts_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "market_code",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^[A-Z]{2}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Market Code"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "items": {
+                "enum": [
+                  "DRAFT",
+                  "SUBMITTED_FOR_REVIEW",
+                  "APPROVED",
+                  "SCHEDULED",
+                  "PUBLISHED",
+                  "SUPERSEDED",
+                  "WITHDRAWN"
+                ],
+                "type": "string"
+              },
+              "title": "Status",
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "language",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^[a-z]{2}(-[A-Z]{2})?$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Language"
+            }
+          },
+          {
+            "in": "query",
+            "name": "effective_on",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Effective On"
+            }
+          },
+          {
+            "in": "query",
+            "name": "product_family",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 40,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Product Family"
+            }
+          },
+          {
+            "in": "query",
+            "name": "risk_band",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 40,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Risk Band"
+            }
+          },
+          {
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 40,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Channel"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 80,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScriptLibrary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Scripts List",
+        "tags": [
+          "scripts"
+        ]
+      }
+    },
+    "/api/v1/scripts/{script_family_id}": {
+      "get": {
+        "operationId": "script_family",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "script_family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Script Family Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScriptFamilyDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Script Family",
+        "tags": [
+          "scripts"
+        ]
+      }
+    },
+    "/api/v1/scripts/{script_family_id}/versions": {
+      "get": {
+        "operationId": "script_family_versions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "script_family_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Script Family Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScriptVersionList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Script Family Versions",
+        "tags": [
+          "scripts"
         ]
       }
     },
@@ -13805,6 +18521,548 @@
         "summary": "Survey Run Detail",
         "tags": [
           "call-detail"
+        ]
+      }
+    },
+    "/api/v1/voice/preflight": {
+      "get": {
+        "operationId": "voice_preflight",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoicePreflight"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Voice Preflight",
+        "tags": [
+          "voice"
+        ]
+      }
+    },
+    "/api/v1/voice/sessions": {
+      "get": {
+        "operationId": "voice_sessions_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoiceSessionList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "List Sessions",
+        "tags": [
+          "voice"
+        ]
+      },
+      "post": {
+        "operationId": "voice_session_create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoiceSessionCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoiceSessionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Create Session",
+        "tags": [
+          "voice"
+        ]
+      }
+    },
+    "/api/v1/voice/sessions/{session_id}": {
+      "get": {
+        "operationId": "voice_session_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoiceSessionStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Get Session",
+        "tags": [
+          "voice"
+        ]
+      }
+    },
+    "/api/v1/voice/sessions/{session_id}/resume": {
+      "post": {
+        "operationId": "voice_session_resume",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoiceSessionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Resume Session",
+        "tags": [
+          "voice"
+        ]
+      }
+    },
+    "/api/v1/voice/sessions/{session_id}/stop": {
+      "post": {
+        "operationId": "voice_session_stop",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoiceSessionStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Stop Session",
+        "tags": [
+          "voice"
         ]
       }
     },

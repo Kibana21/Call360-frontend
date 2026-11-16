@@ -20,7 +20,7 @@ export default defineConfig({
   plugins: [react(), cspOnBuild()],
   server: {
     proxy: {
-      '/api': { target: apiTarget, changeOrigin: false },
+      '/api': { target: apiTarget, changeOrigin: false, ws: true }, // S1-A voice stream (WebSocket)
       '/health': { target: apiTarget, changeOrigin: false },
     },
   },

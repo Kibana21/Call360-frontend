@@ -110,13 +110,15 @@ export async function cp04aUser(page: Page): Promise<void> {
   expect(cases.total).toBe(1);
 }
 
-async function a11yAndLayout(page: Page, name: string): Promise<void> {
+export async function a11yAndLayout(page: Page, name: string): Promise<void> {
   for (const width of [820, 1280, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     if (width > 820) {
+      // Let entrance animations (drawer fade) finish; mid-fade colours are not the rendered contrast.
+      await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined))));
       const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']).analyze();
       const serious = result.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
-      expect(serious.map((v) => `${name}@${width}: ${v.id} (${v.nodes.map((x) => x.target.join(' ')).join(', ')})`)).toEqual([]);
+      expect(serious.map((v) => `${name}@${width}: ${v.id} (${v.nodes.map((x) => x.target.join(' ')).join(', ')}) — ${v.nodes[0]?.failureSummary ?? ''}`)).toEqual([]);
     }
     await page.screenshot({ path: `test-results/screens/${name}-${width}.png`, fullPage: true });
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);

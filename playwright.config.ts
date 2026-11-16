@@ -15,7 +15,26 @@ export default defineConfig({
     baseURL: 'http://127.0.0.1:5174',
     trace: 'retain-on-failure',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } }],
+  projects: [
+    { name: 'chromium', testIgnore: /voice\.spec\.ts/, use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
+    {
+      // S1-A: Chromium's fake capture device plays a synthetic WAV through the real getUserMedia pipeline.
+      name: 'voice',
+      testMatch: /voice\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1440, height: 900 },
+        launchOptions: {
+          args: [
+            '--use-fake-ui-for-media-stream',
+            '--use-fake-device-for-media-stream',
+            `--use-file-for-fake-audio-capture=${new URL('./e2e/fixtures/fake-mic-hello.wav', import.meta.url).pathname}`,
+            '--autoplay-policy=no-user-gesture-required',
+          ],
+        },
+      },
+    },
+  ],
   webServer: [
     {
       command: 'uv run uvicorn --factory app.main:app_factory --host 127.0.0.1 --port 8001',

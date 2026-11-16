@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { Icon } from '../components/Icon';
 import { StageChip } from '../components/ui';
@@ -13,7 +13,7 @@ export function initials(name: string): string {
 export function AppShell() {
   const { me, signOut, can } = useAuth();
   const location = useLocation();
-  const title = PAGE_TITLES[location.pathname] ?? (location.pathname.startsWith('/cases/') ? 'Call Detail' : location.pathname.startsWith('/policies/') ? 'Policy Detail' : 'Call360');
+  const title = PAGE_TITLES[location.pathname] ?? (location.pathname.startsWith('/cases/') ? 'Call Detail' : location.pathname.startsWith('/policies/') ? 'Policy Detail' : location.pathname.startsWith('/scripts/') ? 'Script Detail' : location.pathname === '/account/password' ? 'Change password' : 'Call360');
   const isAdmin = !!me?.roles.includes('ADMIN');
 
   useEffect(() => {
@@ -38,7 +38,7 @@ export function AppShell() {
               {group.items.map((item) =>
                 item.to ? (
                   <NavLink key={item.label} to={item.to} end={item.to === '/'}
-                    className={({ isActive }) => `navitem${isActive || (item.to?.startsWith('/admin') && location.pathname.startsWith('/admin')) || (item.to === '/calls' && location.pathname.startsWith('/cases/')) || (item.to === '/policies' && location.pathname.startsWith('/policies/')) ? ' active' : ''}`}>
+                    className={({ isActive }) => `navitem${isActive || (item.to?.startsWith('/admin') && location.pathname.startsWith('/admin')) || (item.to === '/calls' && location.pathname.startsWith('/cases/')) || (item.to === '/policies' && location.pathname.startsWith('/policies/')) || (item.to === '/scripts' && location.pathname.startsWith('/scripts/')) ? ' active' : ''}`}>
                     <Icon name={item.icon} />
                     <span>{item.label}</span>
                     {item.adminOnly && !isAdmin ? <Icon name="lock" size="sm" /> : null}
@@ -65,7 +65,7 @@ export function AppShell() {
             <span className="envdot" aria-hidden="true" />
             <span>{me?.environment.app_env === 'local' ? 'Local environment' : 'Test environment'}<br />All records synthetic</span>
           </div>
-          <div className="sidebar-version">CALL360 · STAGE 0 · F5</div>
+          <div className="sidebar-version">CALL360 · STAGE 0 · F7</div>
         </div>
       </aside>
       <div className="main">
@@ -88,6 +88,7 @@ function UserMenu({ name, role, username, onSignOut }: {
   name: string; role: string; username: string; onSignOut: () => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
@@ -111,6 +112,9 @@ function UserMenu({ name, role, username, onSignOut }: {
       {open ? (
         <div className="menu" role="menu">
           <div className="menu-meta">Signed in as <strong>{username}</strong><br />Local demo identity — not SSO</div>
+          <button role="menuitem" onClick={() => { setOpen(false); navigate('/account/password'); }}>
+            <Icon name="key" size="sm" /> Change password
+          </button>
           <button role="menuitem" onClick={() => { setOpen(false); void onSignOut(); }}>
             <Icon name="logout" size="sm" /> Sign out
           </button>

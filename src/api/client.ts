@@ -31,6 +31,10 @@ export function unwrap<T>(result: { data?: T; error?: unknown; response: Respons
   if (result.data !== undefined && result.response.ok) return result.data;
   throw new ApiFailure(result.response.status, result.error as Partial<ApiError> | undefined);
 }
+/** For operations without a body (204): throws ApiFailure unless the response succeeded. */
+export function expectOk(result: { error?: unknown; response: Response }): void {
+  if (!result.response.ok) throw new ApiFailure(result.response.status, result.error as Partial<ApiError> | undefined);
+}
 export type CaseRow = components['schemas']['CaseRow'];
 export type CaseList = components['schemas']['CaseList'];
 export type CaseFacets = components['schemas']['CaseFacets'];

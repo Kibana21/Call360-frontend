@@ -1,10 +1,11 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { api, ApiFailure, unwrap, type AdminUser } from '../../api/client';
 import { useAuth } from '../../auth/AuthContext';
 import { initials } from '../../app/AppShell';
 import { Empty, ErrorState, Forbidden, Loading } from '../../components/StateView';
 import { Badge, Button, Card } from '../../components/ui';
+import { OneTimePasswordPanel, ReasonDialog } from './shared';
 
 const when = (iso: string | null | undefined) =>
   iso ? new Intl.DateTimeFormat('en-SG', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Singapore' }).format(new Date(iso)) : '—';
@@ -19,6 +20,10 @@ export function UsersPage() {
     getNextPageParam: (last) => last.page.next_cursor ?? undefined,
   });
   const [target, setTarget] = useState<AdminUser | null>(null);
+  const [resetTarget, setResetTarget] = useState<AdminUser | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [otp, setOtp] = useState<{ username: string; password: string } | null>(null);
+  const qc = useQueryClient();
 
   if (query.isPending) return <Card title="Users"><Loading label="Loading users…" /></Card>;
   if (query.isError) {
@@ -30,7 +35,8 @@ export function UsersPage() {
   const canManage = can('admin.users.manage');
 
   return (
-    <Card title="Users" subtitle="Local demo identities. New accounts are created with the operator CLI until user creation is added later in Stage 0." pad={false}>
+    <Card title="Users" subtitle="Local demo identities. New accounts get a one-time password that the user must replace at first sign-in." pad={false}
+      aside={canManage ? <Button variant="primary" icon="plus" onClick={() => setCreating(true)}>New user</Button> : undefined}>
       {users.length === 0 ? <Empty title="No users yet" /> : (
         <div className="table-wrap">
           <table className="data-table">
@@ -48,6 +54,9 @@ export function UsersPage() {
                     <td>{when(u.last_login_at)}</td>
                     <td>{u.active_sessions}</td>
                     <td style={{ textAlign: 'right' }}>
+                      {canManage && !self && u.status === 'ACTIVE' ? (
+                        <Button tiny onClick={() => setResetTarget(u)} aria-label={`Reset password for ${u.display_name}`} style={{ marginRight: 6 }}>Reset password</Button>
+                      ) : null}
                       {canManage ? (
                         u.status === 'ACTIVE' ? (
                           <Button tiny variant="danger" disabled={self} title={self ? 'You cannot disable your own account' : undefined}
@@ -68,6 +77,19 @@ export function UsersPage() {
         <div style={{ padding: 15 }}><Button onClick={() => void query.fetchNextPage()} disabled={query.isFetchingNextPage}>Load more</Button></div>
       ) : null}
       {target ? <StatusDialog user={target} onClose={() => setTarget(null)} /> : null}
+      {resetTarget ? (
+        <ReasonDialog eyebrow="Reset password" title={resetTarget.display_name} confirm="Reset password" danger
+          description="Sets a new one-time password and ends every session of this user. The reason is recorded in the audit trail; the password is not."
+          onClose={() => setResetTarget(null)}
+          onConfirm={async (reason) => {
+            const r = unwrap(await api.POST('/api/v1/admin/users/{principal_id}/password-reset', { params: { path: { principal_id: resetTarget.principal_id } }, body: { reason } }));
+            await qc.invalidateQueries({ queryKey: ['admin'] });
+            setResetTarget(null);
+            if (r.one_time_password) setOtp({ username: resetTarget.username ?? resetTarget.display_name, password: r.one_time_password });
+          }} />
+      ) : null}
+      {creating ? <CreateUserDialog onClose={() => setCreating(false)} onCreated={(username, password) => { setCreating(false); setOtp({ username, password }); }} /> : null}
+      {otp ? <OneTimePasswordPanel username={otp.username} password={otp.password} onDone={() => setOtp(null)} /> : null}
     </Card>
   );
 }
@@ -132,5 +154,43 @@ function StatusDialog({ user, onClose }: { user: AdminUser; onClose: () => void 
         </form>
       </div>
     </div>
+  );
+}
+
+function CreateUserDialog({ onClose, onCreated }: { onClose: () => void; onCreated: (username: string, password: string) => void }) {
+  const qc = useQueryClient();
+  const groups = useQuery({ queryKey: ['admin', 'groups'], queryFn: async () => unwrap(await api.GET('/api/v1/admin/groups')) });
+  const [username, setUsername] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [group, setGroup] = useState('LOCAL_USER_SG');
+  const [key] = useState(() => `user-${globalThis.crypto?.randomUUID?.() ?? Date.now().toString(36)}`);
+  const active = (groups.data?.items ?? []).filter((g) => g.status === 'ACTIVE');
+  return (
+    <ReasonDialog eyebrow="New user" title="Create a local user" confirm="Create user"
+      description="Creates a LOCAL account with a server-generated one-time password, shown once. The reason is recorded in the audit trail."
+      canConfirm={username.trim().length >= 3 && displayName.trim().length > 0 && !!group}
+      onClose={onClose}
+      onConfirm={async (reason) => {
+        const r = unwrap(await api.POST('/api/v1/admin/users', {
+          params: { header: { 'Idempotency-Key': key } },
+          body: { username: username.trim(), display_name: displayName.trim(), group_code: group, reason },
+        }));
+        await qc.invalidateQueries({ queryKey: ['admin'] });
+        if (r.one_time_password) onCreated(r.user.username ?? username, r.one_time_password);
+        else onClose();
+      }}>
+      <div className="input-grid" style={{ marginBottom: 12 }}>
+        <div><label className="form-label" htmlFor="nu-username">Username</label>
+          <input id="nu-username" className="field labelled" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="off"
+            aria-describedby="nu-username-hint" />
+          <div id="nu-username-hint" className="xsmall muted" style={{ marginTop: 4 }}>3–64 letters, digits, '.', '_' or '-'</div></div>
+        <div><label className="form-label" htmlFor="nu-name">Display name</label>
+          <input id="nu-name" className="field labelled" value={displayName} onChange={(e) => setDisplayName(e.target.value)} autoComplete="off" /></div>
+        <div><label className="form-label" htmlFor="nu-group">Group</label>
+          <select id="nu-group" className="field labelled" value={group} onChange={(e) => setGroup(e.target.value)}>
+            {active.map((g) => <option key={g.code} value={g.code}>{g.name} ({g.roles.join(', ') || 'no role'} · {g.markets.join(', ') || 'no market'})</option>)}
+          </select></div>
+      </div>
+    </ReasonDialog>
   );
 }

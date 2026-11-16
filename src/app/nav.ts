@@ -21,7 +21,7 @@ export const NAV: { group: string; items: NavItem[] }[] = [
       { label: 'Policy Explorer', icon: 'briefcase', to: '/policies' },
       { label: 'SBQ Risk Workbench', icon: 'target', to: '/risk-assessments' },
       { label: 'Work Queues', icon: 'calendar', to: '/queues' },
-      { label: 'Voice Studio', icon: 'mic', stage: LATER_IN_S0 },
+      { label: 'Voice Studio', icon: 'mic', to: '/voice-studio' },
       { label: 'Live Monitor', icon: 'headphones', stage: 'Stage S4' },
       { label: 'Campaigns', icon: 'flag', stage: 'Stage S4' },
     ],
@@ -29,9 +29,9 @@ export const NAV: { group: string; items: NavItem[] }[] = [
   {
     group: 'Governance',
     items: [
-      { label: 'Script Studio', icon: 'clipboard', stage: LATER_IN_S0 },
-      { label: 'Assignment Rules', icon: 'layers', stage: LATER_IN_S0 },
-      { label: 'Review Workbench', icon: 'shield', stage: LATER_IN_S0 },
+      { label: 'Script Studio', icon: 'clipboard', to: '/scripts' },
+      { label: 'Assignment Rules', icon: 'layers', to: '/assignment-rules' },
+      { label: 'Review Workbench', icon: 'shield', to: '/reviews' },
     ],
   },
   {
@@ -44,7 +44,7 @@ export const NAV: { group: string; items: NavItem[] }[] = [
   {
     group: 'Platform',
     items: [
-      { label: 'Data Intake', icon: 'server', stage: LATER_IN_S0, adminOnly: true },
+      { label: 'Data Intake', icon: 'server', to: '/intake', adminOnly: true },
       { label: 'Administration', icon: 'settings', to: '/admin/users', adminOnly: true },
     ],
   },
@@ -57,8 +57,16 @@ export const PAGE_TITLES: Record<string, string> = {
   '/risk-assessments': 'SBQ Risk Workbench',
   '/queues': 'Work Queues',
   '/search': 'Search',
+  '/intake': 'Data Intake',
+  '/scripts': 'Script Studio',
+  '/assignment-rules': 'Assignment Rules',
+  '/reviews': 'Review Workbench',
+  '/voice-studio': 'Voice Studio',
   '/admin/users': 'Administration',
   '/admin/audit': 'Administration',
   '/admin/config': 'Administration',
+  '/admin/groups': 'Administration',
+  '/admin/sessions': 'Administration',
+  '/admin/system': 'Administration',
   '/unauthorized': 'Access restricted',
 };

@@ -10,6 +10,7 @@ import {
   type ScriptAssignment, type SessionDetail, type SurveyRun, type TimelineItem,
 } from '../../api/client';
 import { useAuth } from '../../auth/AuthContext';
+import { VoiceSessionTimeline } from '../voice/VoiceSessionTimeline';
 import { Icon, type IconName } from '../../components/Icon';
 import { Empty, ErrorState, Forbidden, Loading } from '../../components/StateView';
 import { Badge, Button, Card, PageHead, StageChip, type Tone } from '../../components/ui';
@@ -57,7 +58,7 @@ function PreCheck({ d }: { d: CaseDetail }) {
       {reasons.length ? <ul className="precheck-reasons">{reasons.map((r) => (
         <li key={r.cause}><strong>{r.label}</strong> <span className="muted">— {r.evidence.join(' and ')}</span></li>
       ))}</ul> : null}
-      <span className="xsmall muted">Not an authorisation to call; outbound calling arrives in Stage S1.</span>
+      <span className="xsmall muted">Not an authorisation to call a customer. S1-A allows only a local synthetic audio test.</span>
     </div>
   );
 }
@@ -126,8 +127,10 @@ export function CallDetailPage() {
       description="One verification obligation from sale context and selection risk to every contact attempt, the pinned script, answers and findings."
       actions={<>
         <Link className="btn" to={back}><Icon name="chev" size="sm" /> Back to {backLabel(back)}</Link>
-        <Button icon="phone" disabled aria-describedby="cd-s1">Start browser call</Button>
-        <span id="cd-s1"><StageChip label="Stage S1" /></span>
+        {detail.data?.callable && can('voice.session.start') ? (
+          <Link className="btn" to={`/voice-studio?case=${caseId}`} data-testid="cd-start-voice"><Icon name="phone" size="sm" /> Start browser call</Link>
+        ) : <Button icon="phone" disabled aria-describedby="cd-s1">Start browser call</Button>}
+        <span id="cd-s1"><StageChip label={detail.data?.callable ? 'S1-A synthetic audio test' : 'Pre-check blocked'} /></span>
         <Button icon="download" disabled aria-describedby="cd-s3">Evidence bundle</Button>
         <Button variant="primary" icon="users" disabled aria-describedby="cd-s3">Assign reviewer</Button>
         <span id="cd-s3"><StageChip label="Stage S3" /></span>
@@ -185,7 +188,9 @@ export function CallDetailPage() {
             <div className="xsmall muted">{eligible[0] ? `${humanize(eligible[0].role)} · ${eligible[0].masked_contact ?? '—'}` : `${d.contact_selection.length} considered`}</div></div>
           <div className="info-tile"><label>Attempts</label><strong data-testid="cd-attempts">{d.attempts} · {d.sessions} session{d.sessions === 1 ? '' : 's'}</strong>
             <div className="xsmall muted">{items.length ? humanize(items[items.length - 1]!.status) : 'None yet'}</div></div>
-          <div className="info-tile"><label>Assigned script</label><strong>{d.current_script ? `${d.current_script.family} v${d.current_script.version_label}` : 'Not assigned'}</strong>
+          <div className="info-tile"><label>Assigned script</label><strong>{d.current_script
+            ? <Link className="link" to={`/scripts/${d.current_script.script_family_id}?version=${d.current_script.script_version_id}`} data-testid="cd-script-link">{d.current_script.family} v{d.current_script.version_label}</Link>
+            : 'Not assigned'}</strong>
             <div className="xsmall muted">{d.current_script ? humanize(d.current_script.status) : '—'}</div></div>
           <div className="info-tile"><label>Verification outcome</label><strong>{OUTCOME_LABELS[d.outcome] ?? d.outcome}</strong>
             <div className="xsmall muted">{d.state === 'VERIFIED' ? (d.controls_satisfied ? 'Mandatory controls satisfied' : 'Mandatory controls not all satisfied') : `${d.open_findings} open finding${d.open_findings === 1 ? '' : 's'}`}</div></div>
@@ -221,6 +226,7 @@ export function CallDetailPage() {
               <Card title="Session pins" subtitle="Immutable inputs fixed when the session started">
                 {!sessionId ? <Empty title="No session selected" /> : <Region query={session} label="session">{() => <SessionPins s={session.data!} />}</Region>}
               </Card>
+              {selectedAttempt?.transport === 'BROWSER' ? <VoiceSessionTimeline sessionId={selectedAttempt.id} title={`Browser voice session · ${selectedAttempt.attempt_ref}`} /> : null}
               <Card title="Why this script" subtitle="Recorded assignment and rule trace">
                 <Region query={assignment} label="script assignment">{() => <WhyScript items={assignment.data!.items} />}</Region>
               </Card>
@@ -275,7 +281,7 @@ function Attempts({ items, selected, onSelect }: { items: Attempt[]; selected?: 
           <div className={`step-dot ${ATTEMPT_TONES[a.status] ?? ''}`} />
           <button type="button" className={`step-body attempt-btn${a.id === selected ? ' selected' : ''}`} aria-pressed={a.id === selected}
             onClick={() => onSelect(a.id)} data-testid={`attempt-${a.sequence}`}>
-            <strong>Attempt {a.sequence} · {humanize(a.status)}</strong>
+            <strong>Attempt {a.sequence} · {humanize(a.status)}{a.transport === 'BROWSER' ? ' · Browser voice test' : ''}</strong>
             {a.started_at ? `${when(a.started_at)} SGT` : 'Not started'}
             <small>{show(a.contact_snapshot.channel)} {show(a.contact_snapshot.masked_value)} · {a.contacted_party ?? 'party not recorded'}</small>
             <small>{a.session ? `Session ${a.session.session_ref} · ${humanize(a.session.state)}` : 'No conversation or recording created'}</small>
@@ -350,11 +356,11 @@ function WhyScript({ items }: { items: ScriptAssignment[] }) {
   const trace = a.rule_trace as { matched?: string; precedence?: string; resolved_sections?: string[]; excluded?: { rule: string; reason: string }[]; label?: string };
   return (
     <div className="stack" style={{ gap: 9 }}>
-      <div><strong className="small">{a.script.family} v{a.script.version_label}</strong> <Badge tone="gray">{humanize(a.script.status)}</Badge>
+      <div><Link className="link small strong" to={`/scripts/${a.script.script_family_id}?version=${a.script.script_version_id}`}>{a.script.family} v{a.script.version_label}</Link> <Badge tone="gray">{humanize(a.script.status)}</Badge>
         <div className="xsmall muted mono" style={{ marginTop: 4 }}>manifest {short(a.script_manifest_sha256)}</div></div>
       <div className="rules-flow">{(trace.resolved_sections ?? []).map((s, i) => <span key={s} className="row" style={{ gap: 9 }}>{i ? <span className="arrow">+</span> : null}<span className="rule-chip">{humanize(s)}</span></span>)}</div>
       <dl className="kv xsmall">
-        <dt>Matched rule</dt><dd>{a.matched_rule ?? trace.matched ?? '—'}</dd>
+        <dt>Matched rule</dt><dd>{a.matched_rule ? <Link className="link" to={`/assignment-rules?rule=${encodeURIComponent(a.matched_rule)}`}>{a.matched_rule}</Link> : trace.matched ?? '—'}</dd>
         <dt>Precedence</dt><dd>{trace.precedence ?? '—'}</dd>
         <dt>Inputs</dt><dd>{Object.entries(a.input_snapshot).filter(([k]) => !k.endsWith('_id')).map(([k, v]) => `${humanize(k)} ${show(v)}`).join(' · ')}</dd>
         {trace.excluded?.length ? <><dt>Not applied</dt><dd>{trace.excluded.map((x) => `${x.rule} (${x.reason})`).join('; ')}</dd></> : null}

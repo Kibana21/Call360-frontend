@@ -83,9 +83,11 @@ export function PolicyExplorerPage() {
       <PageHead eyebrow="Policy & sale context" title="Policy Explorer"
         description="Authoritative Singapore policy, sale and contact context for selecting and investigating a callback. Read-only; filtering and paging run on the server."
         actions={<>
-          <Button icon="plus" disabled aria-describedby="pe-intake">Manual intake</Button>
+          {can('intake.manual.submit') ? <Link className="btn" to="/intake"><Icon name="plus" size="sm" />Manual intake</Link>
+            : <Button icon="plus" disabled aria-describedby="pe-intake-admin">Manual intake</Button>}
+          {can('intake.manual.submit') ? null : <span id="pe-intake-admin" className="sr-only">Manual intake is available to administrators in Data Intake.</span>}
           <Button variant="primary" icon="refresh" disabled aria-describedby="pe-intake">Sync from source</Button>
-          <span id="pe-intake"><StageChip label="Data Intake screen — CP0.4b" /></span>
+          <span id="pe-intake"><StageChip label="Mock sync — deferred" /></span>
         </>} />
       <div className="layout cols-4" style={{ marginBottom: 18 }} aria-label="Policy summary for the current filters">
         <Tile label="Policies in scope" value={data?.total} sub="Matching the current filters" icon="briefcase" accent />
