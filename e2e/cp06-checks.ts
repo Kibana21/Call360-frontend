@@ -96,9 +96,10 @@ export async function cp06Integrated(page: Page): Promise<void> {
   // Seeded traceability: Script Studio → rule → its case's Call Detail pins the same version; Review Workbench →
   // finding → Call Detail lists it.
   const rules = await (await page.request.get('/api/v1/script-assignment-rules')).json();
-  const live = rules.items.find((r: { status: string }) => r.status === 'PUBLISHED');
+  // A published rule that has recorded assignments (S2-B rules published by other journeys have none yet).
+  const live = rules.items.find((r: { status: string; cases_assigned: number }) => r.status === 'PUBLISHED' && r.cases_assigned > 0);
   await page.goto(`/assignment-rules?rule=${encodeURIComponent(`${live.rule_code} v${live.version}`)}`);
-  await page.getByTestId(`rule-${live.rule_code}-v${live.version}`).getByRole('link', { name: live.recent_cases[0].case_ref }).click();
+  await page.getByTestId('rule-cases').getByRole('link', { name: live.recent_cases[0].case_ref }).click();
   await expect(page.getByTestId('cd-script-link')).toHaveText(`${live.target.family} v${live.target.version_label}`);
   const findings = await (await page.request.get('/api/v1/review-queue?queue=ALL&limit=1')).json();
   const f = findings.items[0];

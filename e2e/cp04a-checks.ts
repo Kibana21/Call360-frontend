@@ -31,7 +31,7 @@ export const INTAKE = {
 };
 
 // Unsafe API calls carry what the browser would send: the session CSRF token and the page Origin.
-async function writeHeaders(page: Page): Promise<Record<string, string>> {
+export async function writeHeaders(page: Page): Promise<Record<string, string>> {
   const token = (await page.context().cookies()).find((c) => c.name === 'c360_csrf')?.value ?? '';
   return { 'X-CSRF-Token': token, Origin: new URL(page.url()).origin };
 }

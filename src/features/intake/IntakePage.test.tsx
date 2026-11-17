@@ -32,7 +32,7 @@ const outcome = (mode: 'PREVIEW' | 'COMMITTED') => ({
   case: { case_id: mode === 'COMMITTED' ? 'c1' : null, case_ref: mode === 'COMMITTED' ? 'CB-2026-10600' : null, state: 'VALIDATED',
     obligation_type: 'NEW_BUSINESS_VERIFICATION', source_request_ref: 'R1', due_at: '2026-12-01T00:00:00Z', priority: 2, callable: false },
   holds: [{ reason: 'AWAITING_SCRIPT_ASSIGNMENT', label: 'Awaiting script assignment', blocking: true }],
-  script_routing: 'NOT_EVALUATED_IN_S0', compliance_outcome: 'NOT_EVALUATED_IN_S0',
+  script_routing: 'AWAITING_DETERMINISTIC_ASSIGNMENT', compliance_outcome: 'NOT_EVALUATED_IN_S0',
   routes: mode === 'COMMITTED' ? { policy: '/policies/p1?sale=s1', case: '/cases/c1' } : {},
 });
 const base = (extra: Record<string, (r: Request) => Response> = {}) => ({

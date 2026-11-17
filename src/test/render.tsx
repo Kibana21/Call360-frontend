@@ -14,7 +14,7 @@ export const ME = {
   environment: { app_env: 'local', data_policy: 'SYNTHETIC_ONLY' },
 };
 
-export function stubApi(routes: Record<string, (req: Request) => Response>) {
+export function stubApi(routes: Record<string, (req: Request) => Response | Promise<Response>>) {
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const req = input instanceof Request ? input : new Request(new URL(String(input), 'http://localhost'), init);
     const key = `${req.method} ${new URL(req.url).pathname}`;

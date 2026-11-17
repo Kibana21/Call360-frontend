@@ -25,7 +25,7 @@ export function OutcomeView({ outcome }: { outcome: IntakeOutcome }) {
         <div><dt>SBQ risk</dt><dd>{outcome.risk
           ? <><RiskBadge band={outcome.risk.band_code} /> <span className="xsmall muted">Source-assigned · {humanize(outcome.risk.status)} · source value {outcome.risk.source_original_value}</span></>
           : <span className="muted">{outcome.risk_note ?? 'No source risk supplied'}</span>}</dd></div>
-        <div><dt>Script routing</dt><dd className="muted">Not evaluated in Stage 0</dd></div>
+        <div><dt>Script routing</dt><dd className="muted">Awaiting deterministic assignment — preview and apply it in Call Detail</dd></div>
         <div><dt>Compliance outcome</dt><dd className="muted">Not evaluated in Stage 0</dd></div>
       </dl>
       <div>

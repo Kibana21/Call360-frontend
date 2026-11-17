@@ -13,7 +13,7 @@ export function initials(name: string): string {
 export function AppShell() {
   const { me, signOut, can } = useAuth();
   const location = useLocation();
-  const title = PAGE_TITLES[location.pathname] ?? (location.pathname.startsWith('/cases/') ? 'Call Detail' : location.pathname.startsWith('/policies/') ? 'Policy Detail' : location.pathname.startsWith('/scripts/') ? 'Script Detail' : location.pathname === '/account/password' ? 'Change password' : 'Call360');
+  const title = PAGE_TITLES[location.pathname] ?? (location.pathname.startsWith('/cases/') ? 'Call Detail' : location.pathname.startsWith('/policies/') ? 'Policy Detail' : location.pathname.startsWith('/scripts/') ? 'Script Detail' : location.pathname.startsWith('/assignment-rules/') ? 'Rule Detail' : location.pathname === '/account/password' ? 'Change password' : 'Call360');
   const isAdmin = !!me?.roles.includes('ADMIN');
 
   useEffect(() => {
@@ -73,7 +73,7 @@ export function AppShell() {
           <div className="crumb">Workspace <Icon name="chev" size="sm" /> <strong>{title}</strong></div>
           {can('search.use') ? <GlobalSearch /> : null}
           <div className="topright">{me ? <UserMenu name={me.principal.display_name}
-            role={me.roles.includes('ADMIN') ? 'Administrator' : 'Operations user'}
+            role={me.roles.includes('ADMIN') ? 'Administrator' : me.roles.includes('USER') ? 'Operations user' : me.roles.includes('SC_CHECKER') ? 'S&C script checker' : 'Signed in'}
             username={me.principal.username ?? ''} onSignOut={signOut} /> : null}</div>
         </header>
         <main className="page" id="main" tabIndex={-1}>

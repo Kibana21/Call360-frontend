@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url));
 
 export interface Account { username: string; password: string; display_name: string }
-export function accounts(): Record<'admin' | 'user' | 'victim' | 'tabs', Account> {
+export function accounts(): Record<'admin' | 'user' | 'victim' | 'tabs' | 'checker', Account> {
   return JSON.parse(readFileSync(resolve(here, '.auth/accounts.json'), 'utf8'));
 }
 

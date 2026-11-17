@@ -1,6 +1,6 @@
 // Script Studio library (`/scripts`, F6): every script version in the caller's markets (API-060) with server-side
 // filters in the URL, plus the controls (API-066) and regulatory references (API-065) the questions link to.
-// Read-only: drafting, review and publishing are Stage S2.
+// S2-A: users with script.edit create new script families here; drafting, review and publishing happen on the family page.
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -8,13 +8,17 @@ import { api, unwrap } from '../../api/client';
 import { Empty } from '../../components/StateView';
 import { Badge, Button, Card, PageHead } from '../../components/ui';
 import { humanize, Region, when } from '../cases/shared';
-import { S2Actions, scriptHref, short, StatusBadge, SyntheticBanner } from './shared';
+import { useAuth } from '../../auth/AuthContext';
+import { NewScriptForm } from './ScriptEditor';
+import { scriptHref, short, StatusBadge, SyntheticBanner } from './shared';
 
-const STATUSES = ['DRAFT', 'SUBMITTED_FOR_REVIEW', 'APPROVED', 'SCHEDULED', 'PUBLISHED', 'SUPERSEDED', 'WITHDRAWN'] as const;
+const STATUSES = ['DRAFT', 'SUBMITTED_FOR_REVIEW', 'APPROVED', 'SCHEDULED', 'PUBLISHED', 'SUPERSEDED', 'WITHDRAWN', 'ABANDONED'] as const;
 type Status = (typeof STATUSES)[number];
 
 export function ScriptLibraryPage() {
   const [params, setParams] = useSearchParams();
+  const { can } = useAuth();
+  const [creating, setCreating] = useState(false);
   const query = {
     status: params.getAll('status') as Status[],
     language: params.get('language') ?? undefined,
@@ -37,12 +41,13 @@ export function ScriptLibraryPage() {
   return (
     <>
       <PageHead eyebrow="Controlled questionnaires" title="Script Studio"
-        description="Versioned callback scripts: modules, questions, expected answers, controls and the assignment rules that select them. Read-only in Stage 0."
+        description="Versioned callback scripts: modules, questions, expected answers, controls and the assignment rules that select them. Drafts are edited here and published only after an independent S&C checker approves them."
         actions={<>
           <Link className="btn" to="/assignment-rules">View assignment rules</Link>
-          <S2Actions id="ss-s2" labels={['New script draft']} />
+          {can('script.edit') ? <Button variant="primary" icon="plus" onClick={() => setCreating(true)} disabled={creating} data-testid="new-script">New script</Button> : null}
         </>} />
       <SyntheticBanner />
+      {creating ? <NewScriptForm onCancel={() => setCreating(false)} /> : null}
 
       <Card pad={false} title="Script library" subtitle="Every version in your markets, with its lifecycle status. Filters run on the server."
         aside={library.data ? <Badge tone="gray" noDot>{`${library.data.total} version${library.data.total === 1 ? '' : 's'}`}</Badge> : undefined}>

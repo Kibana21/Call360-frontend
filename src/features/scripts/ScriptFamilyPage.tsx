@@ -1,19 +1,23 @@
-// Script Detail (`/scripts/:scriptFamilyId?version=…`, F6): the family (API-061), its version history (API-062) and
-// one version's ordered sections → modules → questions with expected-answer policies and linked controls (API-063).
-// Read-only; every version carries the synthetic-content banner.
+// Script Detail (`/scripts/:scriptFamilyId?version=…`, F6 + S2-A): the family (API-061), its version history (API-062)
+// and one version's ordered sections → modules → questions (API-063). S2-A adds the draft editor, review & publish
+// (maker-checker), the semantic version diff and the change history (ScriptEditor.tsx). Every version carries the
+// synthetic-content banner.
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../../auth/AuthContext';
 import { api, unwrap } from '../../api/client';
 import { Empty } from '../../components/StateView';
 import { Badge, Card, PageHead } from '../../components/ui';
 import { humanize, Region, when } from '../cases/shared';
+import { NewDraftButton, VersionWorkspace } from './ScriptEditor';
 import {
-  describeCondition, S2Actions, scriptHref, show, StatusBadge, SyntheticBanner,
+  ContentApprovalBadge, describeCondition, PublishedCaveat, scriptHref, show, StatusBadge, SyntheticBanner,
   type ScriptQuestion, type ScriptVersionDetail, type ScriptVersionSummary,
 } from './shared';
 
 export function ScriptFamilyPage() {
   const { scriptFamilyId = '' } = useParams();
+  const { can } = useAuth();
   const [params] = useSearchParams();
   const path = { params: { path: { script_family_id: scriptFamilyId } } };
   const family = useQuery({ queryKey: ['script-family', scriptFamilyId], queryFn: async () => unwrap(await api.GET('/api/v1/scripts/{script_family_id}', path)) });
@@ -32,7 +36,7 @@ export function ScriptFamilyPage() {
         description={family.data ? `${family.data.code} · ${family.data.name} · ${family.data.market} · ${humanize(family.data.purpose)}` : 'Script family and version history'}
         actions={<>
           <Link className="btn" to="/scripts">Back to Script Studio</Link>
-          <S2Actions id="sd-s2" labels={['New draft', 'Edit', 'Submit', 'Approve', 'Publish', 'Diff', 'Simulate']} />
+          {can('script.edit') && versions.isSuccess ? <NewDraftButton familyId={scriptFamilyId} versions={items} /> : null}
         </>} />
       <SyntheticBanner />
       <Region query={family} label="the script family">
@@ -53,7 +57,7 @@ export function ScriptFamilyPage() {
               {summary ? <VersionHeader v={summary} d={detail.data} /> : null}
               {summary ? (
                 <Region query={detail} label="the script version">
-                  {() => <Sections d={detail.data!} />}
+                  {() => <VersionWorkspace d={detail.data!} family={{ id: scriptFamilyId }} versions={items} readView={<Sections d={detail.data!} />} />}
                 </Region>
               ) : null}
             </div>
@@ -81,15 +85,16 @@ function VersionHeader({ v, d }: { v: ScriptVersionSummary; d: ScriptVersionDeta
   return (
     <section className="card card-pad" aria-labelledby="sv-title" data-testid="version-header">
       <div className="row wrap"><StatusBadge status={v.status} /><Badge tone="blue">{v.family}</Badge><Badge tone="gray">{`v${v.version_label}`}</Badge>
-        <Badge tone="amber">{humanize(v.content_approval_status)}</Badge></div>
+        <ContentApprovalBadge status={v.content_approval_status} /></div>
       <h2 id="sv-title" style={{ fontSize: 22, margin: '13px 0 6px', letterSpacing: '-.4px' }}>{v.family_name} v{v.version_label}</h2>
       <p className="small muted" style={{ margin: 0 }}>Language {v.language} · validation {v.validation_status ? humanize(v.validation_status) : '—'}
         {v.published_at ? ` · published ${when(v.published_at)} SGT` : ''}</p>
+      <PublishedCaveat status={v.status} approval={v.content_approval_status} />
       <div className="info-grid sd-tiles" style={{ marginTop: 18 }}>
         <div className="info-tile"><label>Questions</label><strong>{v.questions} total · {v.mandatory_questions} mandatory</strong></div>
         <div className="info-tile"><label>Effective</label><strong>{v.effective_from ? when(v.effective_from).split(',')[0] : 'Not set'}{v.effective_to ? ` – ${when(v.effective_to).split(',')[0]}` : ' – open'}</strong></div>
         <div className="info-tile"><label>Assigned cases</label><strong>{v.cases_assigned}</strong></div>
-        <div className="info-tile"><label>Author / reviewer</label><strong>{v.author_ref ?? '—'} / {v.reviewer_ref ?? '—'}</strong></div>
+        <div className="info-tile"><label>Author / reviewer</label><strong data-testid="author-reviewer">{person(d, v.author_ref)} / {person(d, d?.reviewer_ref ?? v.reviewer_ref)}</strong></div>
         <div className="info-tile"><label>Supersedes</label><strong>{v.supersedes_label ? `v${v.supersedes_label}` : '—'}</strong></div>
         <div className="info-tile"><label>Selected by rules</label><strong>{v.rules_targeting.length ? v.rules_targeting.map((r, i) => (
           <span key={r}>{i ? ', ' : ''}<Link className="link" to={`/assignment-rules?rule=${encodeURIComponent(r)}`}>{r}</Link></span>)) : 'None'}</strong></div>
@@ -137,14 +142,15 @@ function QuestionView({ q, section }: { q: ScriptQuestion; section: number }) {
         <span style={{ flex: 1, minWidth: 0 }}>
           <span className="row wrap" style={{ gap: 6 }}><span className="mono strong small">{q.question_code}</span>
             {q.mandatory ? <Badge tone="red">Mandatory</Badge> : <Badge tone="gray">Optional</Badge>}
-            <Badge tone="blue">{humanize(q.answer_type)}</Badge><Badge tone="gray">{humanize(q.delivery_mode)}</Badge></span>
+            <Badge tone="blue">{humanize(q.answer_type)}</Badge><Badge tone="gray">{humanize(q.delivery_mode)}</Badge>
+            {q.mandatory && !q.controls.length ? <Badge tone="amber">No mapped control · checker review</Badge> : null}</span>
           <span className="small" style={{ display: 'block', marginTop: 6 }}>{q.wording}</span>
         </span>
       </summary>
       <div className="question-body">
         <dl className="kv xsmall">
           <dt>Intent</dt><dd>{q.intent ?? '—'}</dd>
-          <dt>Revision</dt><dd>r{q.revision} · {humanize(q.content_approval_status)}</dd>
+          <dt>Revision</dt><dd>r{q.revision} · {q.content_approval_status === 'APPROVED_BY_SC' ? 'Approved by S&C' : 'Synthetic, not production-approved'}</dd>
           <dt>Expected-answer policy</dt><dd>{humanize(q.expected_answer_policy)}</dd>
           <dt>Expected value</dt><dd>{show(q.expected_value)}</dd>
           {q.policy_fact_key ? <><dt>Compared with policy fact</dt><dd className="mono">{q.policy_fact_key}</dd></> : null}
@@ -175,3 +181,8 @@ function QuestionView({ q, section }: { q: ScriptQuestion; section: number }) {
   );
 }
 
+/** A principal reference as a display name when the server resolved it (seeded versions carry synthetic labels). */
+function person(d: ScriptVersionDetail | undefined, ref: string | null | undefined): string {
+  if (!ref) return '—';
+  return d?.people?.[ref] ?? ref;
+}

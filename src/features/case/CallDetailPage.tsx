@@ -19,6 +19,7 @@ import { Empty, ErrorState, Forbidden, Loading } from '../../components/StateVie
 import { Badge, Button, Card, PageHead, StageChip, type Tone } from '../../components/ui';
 import { BAND_LABELS, count, failure, humanize, OUTCOME_LABELS, Region, when } from '../cases/shared';
 import { FactSnapshot, Risk, short, show } from './evidence';
+import { ScriptAssignmentPanel } from './ScriptAssignmentPanel';
 
 const OUTCOME_TONES: Record<string, Tone> = {
   VERIFIED_COMPLIANT: 'green', VERIFIED_WITH_FINDINGS: 'amber', NOT_VERIFIED: 'gray', CANCELLED: 'gray', OPEN: 'blue',
@@ -243,8 +244,8 @@ export function CallDetailPage() {
                 {!sessionId ? <Empty title="No session selected" /> : <Region query={session} label="session">{() => <SessionPins s={session.data!} />}</Region>}
               </Card>
               {selectedAttempt?.transport === 'BROWSER' ? <VoiceSessionTimeline sessionId={selectedAttempt.id} title={`Browser voice session · ${selectedAttempt.attempt_ref}`} /> : null}
-              <Card title="Why this script" subtitle="Recorded assignment and rule trace">
-                <Region query={assignment} label="script assignment">{() => <WhyScript items={assignment.data!.items} />}</Region>
+              <Card title="Script assignment" subtitle="Deterministic selection from published assignment rules (S2-C)">
+                <ScriptAssignmentPanel caseId={caseId} recorded={<Region query={assignment} label="script assignment">{() => <WhyScript items={assignment.data!.items} />}</Region>} />
               </Card>
               <Card title="Findings" subtitle="Severity is a compliance finding attribute, not selection risk">
                 <Region query={findings} label="findings">{() => <Findings items={findings.data!.items} material={findings.data!.material_severities} />}</Region>
@@ -377,9 +378,9 @@ function WhyScript({ items }: { items: ScriptAssignment[] }) {
         <div className="xsmall muted mono" style={{ marginTop: 4 }}>manifest {short(a.script_manifest_sha256)}</div></div>
       <div className="rules-flow">{(trace.resolved_sections ?? []).map((s, i) => <span key={s} className="row" style={{ gap: 9 }}>{i ? <span className="arrow">+</span> : null}<span className="rule-chip">{humanize(s)}</span></span>)}</div>
       <dl className="kv xsmall">
-        <dt>Matched rule</dt><dd>{a.matched_rule ? <Link className="link" to={`/assignment-rules?rule=${encodeURIComponent(a.matched_rule)}`}>{a.matched_rule}</Link> : trace.matched ?? '—'}</dd>
+        <dt>Matched rule</dt><dd>{a.matched_rule ? <Link className="link" to={`/assignment-rules?rule=${encodeURIComponent(a.matched_rule)}`} data-testid="cd-matched-rule">{a.matched_rule}</Link> : trace.matched ?? '—'}</dd>
         <dt>Precedence</dt><dd>{trace.precedence ?? '—'}</dd>
-        <dt>Inputs</dt><dd>{Object.entries(a.input_snapshot).filter(([k]) => !k.endsWith('_id')).map(([k, v]) => `${humanize(k)} ${show(v)}`).join(' · ')}</dd>
+        <dt>Inputs</dt><dd>{Object.entries(((a.input_snapshot as { inputs?: Record<string, unknown> }).inputs ?? a.input_snapshot) as Record<string, unknown>).filter(([k]) => !k.endsWith('_id')).map(([k, v]) => `${humanize(k)} ${show(v)}`).join(' · ')}</dd>
         {trace.excluded?.length ? <><dt>Not applied</dt><dd>{trace.excluded.map((x) => `${x.rule} (${x.reason})`).join('; ')}</dd></> : null}
         <dt>Assigned</dt><dd>{when(a.assigned_at)} SGT · {a.assigned_by}</dd>
       </dl>

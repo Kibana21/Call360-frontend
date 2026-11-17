@@ -52,6 +52,17 @@ const NA = (what: string) => () => json(200, { session_id: 'ss1', availability: 
   ...(what === 'media' ? { media_status: 'NOT_REQUIRED', can_retrieve_audio: false,
     recording: { status: 'NOT_RECORDED', consent: 'NOT_ASKED', consent_at: null, notice_version: null, tracks: [] } } : {}),
   message: what === 'media' ? 'Recording not available — no audio is captured before Stage S1' : 'Transcript not available — transcripts are captured from Stage S1' });
+const PREVIEW = (status: string, over: Record<string, unknown> = {}) => ({
+  case_id: 'c1', case_ref: 'CB-2026-10482', state: 'VALIDATED', status, blocked_reason: null, can_apply: status !== 'ASSIGNED', note: 'Synthetic test-only scripts.',
+  current: status === 'ASSIGNED' ? { script_assignment_id: 'sa', script_version_id: pin.script_version_id, script_family_id: 'f1', script_label: 'SALES_VERIFICATION_SG v1.1',
+    manifest_sha256: pin.manifest_sha256, matched_rule: 'SG-SALES-VERIFY v2', origin: 'SEED', assigned_at: T, assigned_by: 'SYSTEM:seed', explanation: null, input_sha256: 'c'.repeat(64) } : null,
+  preview: { outcome: 'SELECTED', reason: 'SG-SALES-VERIFY v2 is the highest-precedence matching rule', would_assign: status === 'READY_TO_ASSIGN', script_version_id: 'v11', script_family_id: 'f1',
+    script_label: 'SALES_VERIFICATION_SG v1.1', determinable_script_label: null, winning_rules: ['SG-SALES-VERIFY v2'], explanation: 'Assign SALES_VERIFICATION_SG v1.1 when the market is Singapore.',
+    contact_resolution: { status: 'SINGLE', selected: { selection_id: 's1', role: 'OWNER', label: 'Example P. 001' }, considered: [], explanation: '' }, trace: [], inputs: {},
+    would_release: ['AWAITING_SCRIPT_ASSIGNMENT'], would_place: [], remaining_blocking: [], decision_sha256: 'e'.repeat(64), evaluated_at: T },
+  holds: status === 'ASSIGNED' ? [] : [{ hold_reason: 'AWAITING_SCRIPT_ASSIGNMENT', is_blocking: true, placed_at: T, source: 'INTAKE', placed_reason: 'Intake-created case' }],
+  attempts: [], ...over,
+});
 const ok = {
   'GET /api/v1/me': () => json(200, USER_ME),
   'GET /api/v1/cases/c1': () => json(200, DETAIL),
@@ -59,6 +70,7 @@ const ok = {
   'GET /api/v1/cases/c1/script-assignment': () => json(200, { items: [{ id: 'sa', script: pin, script_manifest_sha256: pin.manifest_sha256, matched_rule: 'SG-SALES-VERIFY v2',
     rule_trace: { resolved_sections: ['COMMON_SALES_CONDUCT', 'ILP', 'ELEVATED_RISK'], precedence: 'priority, then specificity' }, input_snapshot: { risk_band: 'HIGH' },
     input_sha256: 'c', risk_assessment_id: 'r1', policy_fact_snapshot_id: 'pfs', origin: 'SEED', assigned_at: T, assigned_by: 'SYSTEM:seed', superseded: false }] }),
+  'GET /api/v1/cases/c1/script-assignment/preview': () => json(200, PREVIEW('ASSIGNED')),
   'GET /api/v1/cases/c1/findings': () => json(200, { material_severities: ['CRITICAL', 'HIGH'], items: [{ id: 'f1', finding_ref: 'FND-2026-00001', category: 'FACT_MISMATCH',
     severity: 'HIGH', status: 'OPEN', origin: 'RULE_EVALUATION', record_origin: 'SYNTHETIC_SEED', evidence_refs: {}, question_execution_id: 'Q-PREMIUM-TERM-YEARS',
     question_code: 'Q-PREMIUM-TERM-YEARS', survey_run_id: 'run1', raised_at: T, review_assigned_at: null, review_closed_at: null }] }),
@@ -168,6 +180,39 @@ describe('Call Detail', () => {
     renderAt(<App />, '/cases/c1');
     expect(await screen.findByText(/Synthetic intake case/)).toBeInTheDocument();
     expect(screen.queryByText(/Seeded synthetic evidence/)).toBeNull();
+  });
+
+  it('previews the deterministic assignment and applies it with the decision checksum and an Idempotency-Key (S2-C)', async () => {
+    const OPS = { ...USER_ME, permissions: [...USER_ME.permissions, 'script.assign'] };
+    let sent: { body: unknown; key: string | null } | null = null;
+    stubApi({ ...ok, 'GET /api/v1/me': () => json(200, OPS),
+      'GET /api/v1/cases/c1/script-assignment': () => json(200, { items: [] }),
+      'GET /api/v1/cases/c1/script-assignment/preview': () => json(200, PREVIEW('READY_TO_ASSIGN')),
+      'POST /api/v1/cases/c1/script-assignment/apply': async (r) => { sent = { body: await r.json(), key: r.headers.get('Idempotency-Key') };
+        return json(200, { case_id: 'c1', status: 'ASSIGNED', current: null, attempt: { id: 'at1', outcome: 'SELECTED', applied: true, reason: 'pinned', script_label: 'SALES_VERIFICATION_SG v1.1',
+          winning_rules: ['SG-SALES-VERIFY v2'], holds_released: ['AWAITING_SCRIPT_ASSIGNMENT'], holds_placed: [], trigger: 'CASE', actor: 'Ops', evaluated_at: T, decision_sha256: 'e'.repeat(64) } }); } });
+    renderAt(<App />, '/cases/c1');
+    const panel = await screen.findByTestId('script-assignment');
+    expect(panel).toHaveTextContent('Ready to assign');
+    expect(screen.getByTestId('preview-script')).toHaveTextContent('SALES_VERIFICATION_SG v1.1');
+    expect(screen.getByTestId('preview-contact')).toHaveTextContent('Owner');
+    expect(screen.getByTestId('assignment-holds')).toHaveTextContent('Awaiting script assignment');
+    await userEvent.click(screen.getByTestId('apply-open'));
+    await userEvent.click(screen.getByTestId('apply-assignment'));
+    await waitFor(() => expect(sent).not.toBeNull());
+    expect(sent!.body).toEqual({ expected_decision_sha256: 'e'.repeat(64) });
+    expect(sent!.key).toMatch(/^assign-/);
+  });
+
+  it('shows why an ambiguous case stays blocked and offers no pin (S2-C)', async () => {
+    stubApi({ ...ok, 'GET /api/v1/cases/c1/script-assignment': () => json(200, { items: [] }),
+      'GET /api/v1/cases/c1/script-assignment/preview': () => json(200, PREVIEW('BLOCKED', { can_apply: false, preview: { ...PREVIEW('BLOCKED').preview, outcome: 'AMBIGUOUS', script_label: null,
+        would_assign: false, winning_rules: ['A v1', 'B v1'], reason: '2 rules match with equal priority 2 and specificity 2', would_release: [], would_place: ['AWAITING_SCRIPT_REVIEW'],
+        remaining_blocking: ['AWAITING_SCRIPT_ASSIGNMENT'] } })) });
+    renderAt(<App />, '/cases/c1');
+    expect(await screen.findByTestId('preview-blocked')).toHaveTextContent('Ambiguous: 2 rules match with equal priority');
+    expect(screen.getByTestId('preview-remaining')).toHaveTextContent('Awaiting script assignment');
+    expect(screen.queryByTestId('apply-open')).toBeNull(); // USER_ME lacks script.assign
   });
 
   it('shows a loading state first', async () => {

@@ -1,98 +1,154 @@
-// Assignment Rules (`/assignment-rules`, F6): recorded rule versions (API-064) with predicate, priority, specificity,
-// target script version, effective dates, checker, and the cases each rule assigned. Read-only: rules are shown,
-// never evaluated here; automatic assignment and hold release are Stage S2.
-import { useQuery } from '@tanstack/react-query';
-import { useEffect, useRef } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+// Assignment Rules (`/assignment-rules`, F6 → S2-B): the prioritised rule registry (live version per rule, open drafts,
+// live conflicts), New rule / Copy rule, how precedence works, and a side-effect-free simulation of the live rules or
+// of open drafts. Editing, review and publication happen on Rule Detail (`/assignment-rules/:ruleCode`). Automatic
+// case assignment and hold release are Stage S2-C; nothing here assigns a case.
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useState, type FormEvent } from 'react';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { api, unwrap } from '../../api/client';
+import { useAuth } from '../../auth/AuthContext';
 import { Icon } from '../../components/Icon';
 import { Empty } from '../../components/StateView';
-import { Badge, Card, PageHead } from '../../components/ui';
+import { Badge, Button, Card, PageHead } from '../../components/ui';
 import { Region, when } from '../cases/shared';
-import { describeCondition, S2Actions, scriptHref, short, StatusBadge, SyntheticBanner, type AssignmentRule } from './shared';
-
-const ruleName = (r: AssignmentRule) => `${r.rule_code} v${r.version}`;
+import { AssignmentBatch } from '../rules/AssignmentBatch';
+import { RuleSimulation } from '../rules/RuleSimulation';
+import { ConditionChips, ConflictList, ruleHref, RuleStatus, useRuleOptions, type RuleSummary } from '../rules/shared';
+import { ErrorBox, errorText, Field } from './ScriptEditor';
+import { SyntheticBanner } from './shared';
 
 export function AssignmentRulesPage() {
-  const [params] = useSearchParams();
-  const focus = params.get('rule');
-  const rules = useQuery({ queryKey: ['assignment-rules'], queryFn: async () => unwrap(await api.GET('/api/v1/script-assignment-rules')) });
+  const [params, setParams] = useSearchParams();
+  const { can } = useAuth();
+  const opts = useRuleOptions();
+  const reg = useQuery({ queryKey: ['rule-registry'], queryFn: async () => unwrap(await api.GET('/api/v1/assignment-rules')) });
+  const [picked, setPicked] = useState<string[]>([]);
+  const legacy = params.get('rule'); // F6 deep links: "SG-SALES-VERIFY v2"
+  if (legacy && reg.data) {
+    const [code, v] = legacy.split(' v');
+    const item = reg.data.items.find((i) => i.rule_code === code);
+    const ver = item?.versions.find((x) => String(x.version) === v);
+    if (item) return <Navigate replace to={ruleHref(item.rule_code, ver ? `version=${ver.id}` : undefined)} />;
+  }
+  const showNew = params.get('new') === '1';
+  const items = reg.data?.items ?? [];
+  const openDrafts = items.flatMap((i) => (i.open_draft && i.open_draft.status !== 'PUBLISHED' ? [{ code: i.rule_code, d: i.open_draft }] : []));
+  const ordered = [...items].sort((a, b) => (a.live?.priority ?? 1000) - (b.live?.priority ?? 1000) || (b.live?.specificity ?? 0) - (a.live?.specificity ?? 0) || a.rule_code.localeCompare(b.rule_code));
   return (
     <>
       <PageHead eyebrow="Policy-to-script mapping" title="Assignment Rules"
-        description="The recorded rules that selected a script version for each callback case, with their priority, predicate, target and effective dates. Read-only in Stage 0."
+        description="Deterministically select the published script version for a callback case from approved policy, sale, SBQ risk and contact facts. Rules are drafted, simulated, approved by a different S&C checker and published as immutable versions."
         actions={<>
           <Link className="btn" to="/scripts">Script Studio</Link>
-          <S2Actions id="ar-s2" labels={['Test assignment', 'New mapping rule']} />
+          <a className="btn" href="#rule-sim" data-testid="test-assignment"><Icon name="target" size="sm" />Test assignment</a>
+          {can('script.edit') ? <Button variant="primary" icon="plus" onClick={() => setParams({ new: '1' })} data-testid="new-rule">New mapping rule</Button> : null}
         </>} />
       <SyntheticBanner />
+      {showNew && can('script.edit') ? <NewRuleForm copyFrom={params.get('copy')} items={items} onCancel={() => setParams({})} /> : null}
       <div className="layout cols-2" style={{ marginBottom: 18 }}>
-        <Card title="How a recorded assignment reads" subtitle="Shown from stored traces; nothing is evaluated on this page">
-          <div className="rules-flow"><span className="rule-chip">Case inputs snapshot</span><Icon name="chev" size="sm" />
-            <span className="rule-chip">Rule predicate</span><Icon name="chev" size="sm" /><span className="rule-chip">Priority, then specificity</span>
-            <Icon name="chev" size="sm" /><span className="rule-chip" style={{ color: 'var(--red)' }}>Pinned script version</span></div>
-          <div className="explain" style={{ marginTop: 16 }}>Each case keeps its matched rule version, input snapshot and hash, script version and manifest SHA-256.
-            Changing a rule or script later never rewrites an existing assignment. Automatic evaluation for new cases arrives in Stage S2;
-            until then intake cases stay on hold “Awaiting script assignment”.</div>
+        <Card title="How script assignment works" subtitle="The same deterministic logic is used for simulation now and for assignment in S2-C">
+          <div className="rules-flow"><span className="rule-chip">Policy / Sale</span><Icon name="chev" size="sm" /><span className="rule-chip">SBQ Risk</span>
+            <Icon name="chev" size="sm" /><span className="rule-chip">Prioritised rules</span><Icon name="chev" size="sm" /><span className="rule-chip" style={{ color: 'var(--red)' }}>Published script</span></div>
+          <ol className="small" style={{ margin: '14px 0 0', paddingLeft: 18, lineHeight: 1.7 }} data-testid="precedence">
+            {(opts.data?.precedence ?? []).map((p) => <li key={p}>{p}</li>)}
+          </ol>
         </Card>
-        <Card title="Rule summary" subtitle="Rule versions in your markets">
-          <Region query={rules} label="rule summary">
-            {() => {
-              const items = rules.data!.items;
-              const by = (s: string) => items.filter((r) => r.status === s).length;
-              return (
+        <Card title="Rule summary" subtitle="Rules in your markets">
+          <Region query={reg} label="rule summary">
+            {() => (
+              <div className="stack" style={{ gap: 12 }}>
                 <div className="info-grid" style={{ gridTemplateColumns: 'repeat(2,minmax(0,1fr))' }}>
-                  <div className="info-tile"><label>Rule versions</label><strong>{items.length}</strong></div>
-                  <div className="info-tile"><label>Published</label><strong>{by('PUBLISHED')}</strong></div>
-                  <div className="info-tile"><label>Superseded / withdrawn</label><strong>{by('SUPERSEDED')} / {by('WITHDRAWN')}</strong></div>
-                  <div className="info-tile"><label>Cases assigned</label><strong>{items.reduce((n, r) => n + r.cases_assigned, 0)}</strong></div>
+                  <div className="info-tile"><label>Rules</label><strong>{items.length}</strong></div>
+                  <div className="info-tile"><label>Live (published)</label><strong>{items.filter((i) => i.live).length}</strong></div>
+                  <div className="info-tile"><label>Open drafts</label><strong>{openDrafts.length}</strong></div>
+                  <div className="info-tile"><label>Cases assigned (recorded)</label><strong>{items.reduce((n, i) => n + i.versions.reduce((m, v) => m + v.cases_assigned, 0), 0)}</strong></div>
                 </div>
-              );
-            }}
+                <div><div className="section-label">Live rule conflicts</div><ConflictList conflicts={reg.data!.conflicts} /></div>
+              </div>
+            )}
           </Region>
         </Card>
       </div>
-      <Card title="Rule registry" subtitle="Lower priority number wins; specificity breaks ties. Open a rule for the cases it assigned." pad={false}>
-        <Region query={rules} label="assignment rules">
-          {() => rules.data!.items.length === 0 ? <Empty title="No assignment rules in your markets" /> : (
-            <div className="stack" style={{ padding: 16 }} data-testid="rule-registry">
-              {rules.data!.items.map((r) => <RuleRow key={r.id} r={r} open={focus === ruleName(r)} />)}
-            </div>
+      <Card title="Rule registry" subtitle="Ordered by precedence: lower priority number first, then higher specificity" pad={false}>
+        <Region query={reg} label="assignment rules">
+          {() => items.length === 0 ? <Empty title="No assignment rules in your markets" /> : (
+            <div className="table-wrap" tabIndex={0} role="region" aria-label="Rule registry"><table className="data-table" data-testid="rule-registry">
+              <thead><tr><th>Priority</th><th>Rule</th><th>Conditions</th><th>Output script</th><th>Version</th><th>Status</th><th>Cases</th><th /></tr></thead>
+              <tbody>{ordered.map((i) => <RegistryRow key={i.rule_code} i={i} />)}</tbody>
+            </table></div>
           )}
         </Region>
       </Card>
+      <div id="rule-sim" style={{ marginTop: 18 }}>
+        {openDrafts.length ? (
+          <fieldset className="softbox" style={{ margin: '0 0 12px' }} data-testid="sim-draft-picker">
+            <legend className="small strong">Include open drafts in the simulation (optional)</legend>
+            <div className="row wrap" style={{ gap: 10 }}>
+              {openDrafts.map(({ code, d }) => (
+                <label key={d.id} className="row small" style={{ gap: 6 }}>
+                  <input type="checkbox" checked={picked.includes(d.id)} onChange={(e) => setPicked(e.target.checked ? [...picked, d.id] : picked.filter((x) => x !== d.id))} />
+                  <span className="mono">{code}</span> v{d.planned_version} <RuleStatus status={d.status} />
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        ) : null}
+        <RuleSimulation draftIds={picked} o={opts.data} title="Test assignment (simulation)" />
+      </div>
+      <div style={{ marginTop: 18 }}><AssignmentBatch /></div>
     </>
   );
 }
 
-function RuleRow({ r, open }: { r: AssignmentRule; open: boolean }) {
-  const ref = useRef<HTMLDetailsElement>(null);
-  useEffect(() => { if (open) ref.current?.scrollIntoView?.({ block: 'center' }); }, [open]);
+function RegistryRow({ i }: { i: RuleSummary }) {
+  const o = useRuleOptions().data;
+  const v = i.live ?? i.versions[i.versions.length - 1] ?? null;
   return (
-    <details ref={ref} className={`softbox rule-row${open ? ' focused' : ''}`} open={open} data-testid={`rule-${r.rule_code}-v${r.version}`}>
-      <summary className="row between wrap" style={{ cursor: 'pointer', gap: 12 }}>
-        <span className="row wrap" style={{ gap: 8 }}>
-          <span className="mono strong small">{ruleName(r)}</span><StatusBadge status={r.status} />
-          <span className="xsmall muted">priority {r.priority} · specificity {r.specificity}</span>
-        </span>
-        <span className="small">→ <span className="strong">{r.target.family} v{r.target.version_label}</span> · {r.cases_assigned} case{r.cases_assigned === 1 ? '' : 's'}</span>
-      </summary>
-      <dl className="kv xsmall" style={{ marginTop: 12 }}>
-        <dt>Applies when</dt><dd>{describeCondition(r.predicate)}</dd>
-        <dt>Target script</dt><dd><Link className="link" to={scriptHref(r.target_family_id, r.target.script_version_id)}>{r.target.family} v{r.target.version_label}</Link>{' '}
-          <StatusBadge status={r.target.status} /> <span className="mono">{short(r.target.manifest_sha256)}</span></dd>
-        <dt>Effective</dt><dd>{r.effective_from ? when(r.effective_from) : 'Not set'} – {r.effective_to ? when(r.effective_to) : 'open'}</dd>
-        <dt>Author / checker</dt><dd>{r.author_ref ?? '—'} / {r.checker_ref ?? '—'}</dd>
-        <dt>Checksum</dt><dd className="mono">{short(r.checksum)}</dd>
-        <dt>Market</dt><dd>{r.market}</dd>
-      </dl>
-      <div className="section-label" style={{ marginTop: 12 }}>Cases assigned by this rule {r.cases_assigned > r.recent_cases.length ? `(latest ${r.recent_cases.length} of ${r.cases_assigned})` : ''}</div>
-      {r.recent_cases.length ? (
-        <div className="row wrap" style={{ gap: 6 }} data-testid="rule-cases">
-          {r.recent_cases.map((c) => <Link key={c.case_id} className="tag mono" to={`/cases/${c.case_id}`}>{c.case_ref}</Link>)}
-        </div>
-      ) : <p className="xsmall muted" style={{ margin: 0 }}>No case was assigned by this rule version.</p>}
-      {r.status !== 'PUBLISHED' ? <p className="xsmall muted" style={{ marginBottom: 0 }}><Badge tone="gray" noDot>Historical</Badge> Kept for the cases it assigned; not used for new assignments.</p> : null}
-    </details>
+    <tr data-testid={`rule-${i.rule_code}`}>
+      <td><b>{v ? `#${v.priority}` : '—'}</b><div className="xsmall muted">specificity {v?.specificity ?? '—'}</div></td>
+      <td><Link className="link" to={ruleHref(i.rule_code)}>{i.name}</Link><div className="xsmall muted mono">{i.rule_code}</div>
+        {v?.is_fallback ? <Badge tone="blue">Fallback</Badge> : null}</td>
+      <td style={{ whiteSpace: 'normal', maxWidth: 380 }}>{v ? <ConditionChips conditions={v.conditions} o={o} /> : <span className="muted">Draft only</span>}</td>
+      <td>{v?.target.label ?? '—'}</td>
+      <td>{v ? `v${v.version}` : '—'}{i.open_draft ? <div><Link className="xsmall link" to={ruleHref(i.rule_code, `draft=${i.open_draft.id}`)}>v{i.open_draft.planned_version} {i.open_draft.status === 'DRAFT' ? 'draft' : 'in review'}</Link></div> : null}</td>
+      <td>{i.live ? <RuleStatus status="PUBLISHED" /> : v ? <RuleStatus status={v.status} /> : <RuleStatus status={i.open_draft?.status ?? 'DRAFT'} />}
+        {i.live ? <div className="xsmall muted">since {when(i.live.effective_from).split(',')[0]}</div> : null}</td>
+      <td>{i.versions.reduce((n, x) => n + x.cases_assigned, 0)}</td>
+      <td><Link className="btn tiny" to={ruleHref(i.rule_code)}>Details</Link></td>
+    </tr>
+  );
+}
+
+function NewRuleForm({ copyFrom, items, onCancel }: { copyFrom: string | null; items: RuleSummary[]; onCancel: () => void }) {
+  const nav = useNavigate();
+  const versions = items.flatMap((i) => i.versions.map((v) => ({ id: v.id, label: `${v.rule_code} v${v.version} · ${v.name}` })));
+  const [code, setCode] = useState('');
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [copy, setCopy] = useState(copyFrom ?? '');
+  const create = useMutation({
+    mutationFn: async () => unwrap(await api.POST('/api/v1/assignment-rules', { body: { code, name, description, market: 'SG', copy_from_rule_version_id: copy || null } })),
+    onSuccess: (r) => nav(ruleHref(r.rule_code, `draft=${r.draft_id}`)),
+  });
+  return (
+    <form className="card card-pad stack" style={{ gap: 12, marginBottom: 16 }} aria-labelledby="nr-h" data-testid="new-rule-form" onSubmit={(e: FormEvent) => { e.preventDefault(); create.mutate(); }}>
+      <h2 id="nr-h" style={{ margin: 0, fontSize: 16 }}>New mapping rule</h2>
+      <p className="xsmall muted" style={{ margin: 0 }}>Creates draft version 1 for Singapore. Configure its conditions, target script and dates next, then simulate and submit for an S&C checker.</p>
+      <div className="input-grid">
+        <Field id="nr-code" label="Rule code" hint="Permanent identity: capital letters, digits, '_' or '-' (e.g. SG-ILP-HIGH)">
+          {(p) => <input {...p} className="field labelled" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} required minLength={3} maxLength={40} />}
+        </Field>
+        <Field id="nr-name" label="Rule name">{(p) => <input {...p} className="field labelled" value={name} onChange={(e) => setName(e.target.value)} required minLength={3} maxLength={120} />}</Field>
+        <Field id="nr-desc" label="Purpose (optional)">{(p) => <input {...p} className="field labelled" value={description} onChange={(e) => setDescription(e.target.value)} maxLength={1000} />}</Field>
+        <Field id="nr-copy" label="Copy conditions and settings from (optional)">
+          {(p) => <select {...p} className="field labelled" value={copy} onChange={(e) => setCopy(e.target.value)} data-testid="nr-copy"><option value="">Start empty (market only)</option>{versions.map((v) => <option key={v.id} value={v.id}>{v.label}</option>)}</select>}
+        </Field>
+      </div>
+      <ErrorBox error={create.error ? errorText(create.error) : null} />
+      <div className="row" style={{ gap: 8 }}>
+        <Button type="submit" variant="primary" icon="plus" disabled={create.isPending} data-testid="new-rule-create">{create.isPending ? 'Creating…' : 'Create rule draft'}</Button>
+        <Button onClick={onCancel}>Cancel</Button>
+      </div>
+    </form>
   );
 }

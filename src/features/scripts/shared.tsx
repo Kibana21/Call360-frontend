@@ -10,10 +10,28 @@ export type ScriptQuestion = components['schemas']['ScriptQuestionOut'];
 export type AssignmentRule = components['schemas']['AssignmentRuleOut'];
 
 const STATUS_TONES: Record<string, Tone> = {
-  PUBLISHED: 'green', DRAFT: 'amber', SUBMITTED_FOR_REVIEW: 'purple', APPROVED: 'blue', SCHEDULED: 'blue', SUPERSEDED: 'gray', WITHDRAWN: 'red',
+  PUBLISHED: 'green', DRAFT: 'amber', SUBMITTED_FOR_REVIEW: 'purple', APPROVED: 'blue', SCHEDULED: 'blue', SUPERSEDED: 'gray', WITHDRAWN: 'red', ABANDONED: 'gray',
 };
 export function StatusBadge({ status }: { status: string }) {
   return <Badge tone={STATUS_TONES[status] ?? 'gray'}>{humanize(status)}</Badge>;
+}
+
+/** Content approval, never shown as production approval for synthetic content (S2-A.1). */
+export function ContentApprovalBadge({ status }: { status: string }) {
+  return status === 'APPROVED_BY_SC'
+    ? <Badge tone="green">Approved by S&C</Badge>
+    : <Badge tone="amber">Synthetic · not production-approved</Badge>;
+}
+
+/** A published synthetic version is published for local testing only, not approved compliance wording. */
+export function PublishedCaveat({ status, approval }: { status: string; approval: string }) {
+  if (approval === 'APPROVED_BY_SC' || !['PUBLISHED', 'SUPERSEDED', 'APPROVED'].includes(status)) return null;
+  return (
+    <p className="xsmall" role="note" data-testid="published-caveat" style={{ margin: '8px 0 0' }}>
+      <strong>{status === 'APPROVED' ? 'Approved' : 'Published'} in Script Studio for synthetic testing only.</strong> This is not production-approved
+      compliance wording and must not be used with customers.
+    </p>
+  );
 }
 
 export const scriptHref = (familyId: string, versionId?: string) => `/scripts/${familyId}${versionId ? `?version=${versionId}` : ''}`;
