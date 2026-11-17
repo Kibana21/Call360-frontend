@@ -718,6 +718,14 @@
       },
       "AttemptOut": {
         "properties": {
+          "attempt_kind": {
+            "enum": [
+              "CONTACT_ATTEMPT",
+              "TEST_SESSION"
+            ],
+            "title": "Attempt Kind",
+            "type": "string"
+          },
           "attempt_ref": {
             "title": "Attempt Ref",
             "type": "string"
@@ -774,6 +782,17 @@
             "format": "uuid",
             "title": "Id",
             "type": "string"
+          },
+          "media_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Media Status"
           },
           "record_origin": {
             "title": "Record Origin",
@@ -841,6 +860,8 @@
           "ended_at",
           "failure_reason",
           "record_origin",
+          "attempt_kind",
+          "media_status",
           "session"
         ],
         "title": "AttemptOut",
@@ -1199,37 +1220,6 @@
           "after"
         ],
         "title": "AuditEventOut",
-        "type": "object"
-      },
-      "Availability": {
-        "properties": {
-          "availability": {
-            "const": "NOT_AVAILABLE",
-            "title": "Availability",
-            "type": "string"
-          },
-          "message": {
-            "title": "Message",
-            "type": "string"
-          },
-          "reason": {
-            "const": "NO_CAPTURE_BEFORE_S1",
-            "title": "Reason",
-            "type": "string"
-          },
-          "session_id": {
-            "format": "uuid",
-            "title": "Session Id",
-            "type": "string"
-          }
-        },
-        "required": [
-          "session_id",
-          "availability",
-          "reason",
-          "message"
-        ],
-        "title": "Availability",
         "type": "object"
       },
       "CaseDetail": {
@@ -6853,6 +6843,512 @@
         "title": "Reason",
         "type": "object"
       },
+      "RecordingChunkAck": {
+        "properties": {
+          "duplicate": {
+            "title": "Duplicate",
+            "type": "boolean"
+          },
+          "stored": {
+            "title": "Stored",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "stored",
+          "duplicate"
+        ],
+        "title": "RecordingChunkAck",
+        "type": "object"
+      },
+      "RecordingChunkIn": {
+        "additionalProperties": false,
+        "properties": {
+          "captured_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captured At"
+          },
+          "data_b64": {
+            "maxLength": 86000,
+            "title": "Data B64",
+            "type": "string"
+          },
+          "sample_count": {
+            "maximum": 32000.0,
+            "minimum": 1.0,
+            "title": "Sample Count",
+            "type": "integer"
+          },
+          "segment": {
+            "maximum": 999.0,
+            "minimum": 1.0,
+            "title": "Segment",
+            "type": "integer"
+          },
+          "seq": {
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "Seq",
+            "type": "integer"
+          },
+          "sha256": {
+            "maxLength": 64,
+            "minLength": 64,
+            "title": "Sha256",
+            "type": "string"
+          },
+          "start_sample": {
+            "minimum": 0.0,
+            "title": "Start Sample",
+            "type": "integer"
+          },
+          "track": {
+            "enum": [
+              "MIC",
+              "PROVIDER_PLAYBACK"
+            ],
+            "title": "Track",
+            "type": "string"
+          }
+        },
+        "required": [
+          "track",
+          "segment",
+          "seq",
+          "start_sample",
+          "sample_count",
+          "sha256",
+          "data_b64"
+        ],
+        "title": "RecordingChunkIn",
+        "type": "object"
+      },
+      "RecordingCloseIn": {
+        "additionalProperties": false,
+        "properties": {
+          "tracks": {
+            "items": {
+              "$ref": "#/components/schemas/RecordingCloseTrack"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Tracks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tracks"
+        ],
+        "title": "RecordingCloseIn",
+        "type": "object"
+      },
+      "RecordingCloseTrack": {
+        "additionalProperties": false,
+        "properties": {
+          "chunks": {
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Chunks",
+            "type": "integer"
+          },
+          "failed": {
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 10000,
+            "title": "Failed",
+            "type": "array"
+          },
+          "reason": {
+            "enum": [
+              "STOPPED",
+              "MIC_DEVICE_LOST",
+              "CONNECTION_LOST",
+              "PAGE_CLOSED",
+              "UPLOAD_FAILED",
+              "CAPTURE_ERROR"
+            ],
+            "title": "Reason",
+            "type": "string"
+          },
+          "segment": {
+            "maximum": 999.0,
+            "minimum": 1.0,
+            "title": "Segment",
+            "type": "integer"
+          },
+          "track": {
+            "enum": [
+              "MIC",
+              "PROVIDER_PLAYBACK"
+            ],
+            "title": "Track",
+            "type": "string"
+          }
+        },
+        "required": [
+          "track",
+          "segment",
+          "chunks",
+          "reason"
+        ],
+        "title": "RecordingCloseTrack",
+        "type": "object"
+      },
+      "RecordingGap": {
+        "properties": {
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "samples": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Samples"
+          },
+          "segment": {
+            "title": "Segment",
+            "type": "integer"
+          },
+          "seq": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seq"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "segment"
+        ],
+        "title": "RecordingGap",
+        "type": "object"
+      },
+      "RecordingNotice": {
+        "description": "S1-C test-only recording notice (D-45). Not approved AIA/MAS consent wording.",
+        "properties": {
+          "approved_policy": {
+            "const": false,
+            "default": false,
+            "title": "Approved Policy",
+            "type": "boolean"
+          },
+          "default_decision": {
+            "const": "DECLINED",
+            "default": "DECLINED",
+            "title": "Default Decision",
+            "type": "string"
+          },
+          "retention_hours": {
+            "title": "Retention Hours",
+            "type": "integer"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "text",
+          "sha256",
+          "retention_hours"
+        ],
+        "title": "RecordingNotice",
+        "type": "object"
+      },
+      "RecordingSummary": {
+        "properties": {
+          "consent": {
+            "enum": [
+              "GRANTED",
+              "DECLINED",
+              "NOT_ASKED"
+            ],
+            "title": "Consent",
+            "type": "string"
+          },
+          "consent_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consent At"
+          },
+          "notice_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notice Version"
+          },
+          "status": {
+            "enum": [
+              "NOT_RECORDED",
+              "RECORDING",
+              "COMPLETE",
+              "PARTIAL",
+              "FAILED",
+              "PURGED"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "tracks": {
+            "items": {
+              "$ref": "#/components/schemas/RecordingTrack"
+            },
+            "title": "Tracks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "status",
+          "consent",
+          "consent_at",
+          "notice_version",
+          "tracks"
+        ],
+        "title": "RecordingSummary",
+        "type": "object"
+      },
+      "RecordingTimeline": {
+        "description": "Recording time ↔ playback mapping for both tracks (samples at ``sample_rate``). The evidence WAV holds stored\nchunks only; gaps are timeline spans, never filled audio.",
+        "properties": {
+          "sample_rate": {
+            "title": "Sample Rate",
+            "type": "integer"
+          },
+          "segments": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineSegment"
+            },
+            "title": "Segments",
+            "type": "array"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          },
+          "total_samples": {
+            "title": "Total Samples",
+            "type": "integer"
+          },
+          "tracks": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TimelineTrack"
+            },
+            "title": "Tracks",
+            "type": "object"
+          }
+        },
+        "required": [
+          "session_id",
+          "sample_rate",
+          "total_samples",
+          "segments",
+          "tracks"
+        ],
+        "title": "RecordingTimeline",
+        "type": "object"
+      },
+      "RecordingTrack": {
+        "description": "One recorded track's manifest metadata (EVD-003). Never an object key or storage path.",
+        "properties": {
+          "asset_ref": {
+            "title": "Asset Ref",
+            "type": "string"
+          },
+          "bytes_stored": {
+            "title": "Bytes Stored",
+            "type": "integer"
+          },
+          "capture_ended_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capture Ended At"
+          },
+          "chunks_stored": {
+            "title": "Chunks Stored",
+            "type": "integer"
+          },
+          "codec": {
+            "title": "Codec",
+            "type": "string"
+          },
+          "content_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Sha256"
+          },
+          "coverage": {
+            "enum": [
+              "PENDING",
+              "COMPLETE",
+              "PARTIAL",
+              "NONE"
+            ],
+            "title": "Coverage",
+            "type": "string"
+          },
+          "duration_ms": {
+            "title": "Duration Ms",
+            "type": "integer"
+          },
+          "finalized_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finalized At"
+          },
+          "gaps": {
+            "items": {
+              "$ref": "#/components/schemas/RecordingGap"
+            },
+            "title": "Gaps",
+            "type": "array"
+          },
+          "manifest_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manifest Sha256"
+          },
+          "media_status": {
+            "title": "Media Status",
+            "type": "string"
+          },
+          "purged_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purged At"
+          },
+          "retention_until": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retention Until"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "track": {
+            "enum": [
+              "MIC",
+              "PROVIDER_PLAYBACK"
+            ],
+            "title": "Track",
+            "type": "string"
+          }
+        },
+        "required": [
+          "track",
+          "asset_ref",
+          "media_status",
+          "coverage",
+          "codec",
+          "started_at",
+          "capture_ended_at",
+          "finalized_at",
+          "chunks_stored",
+          "duration_ms",
+          "bytes_stored",
+          "gaps",
+          "content_sha256",
+          "manifest_sha256",
+          "retention_until",
+          "purged_at"
+        ],
+        "title": "RecordingTrack",
+        "type": "object"
+      },
       "RefreshResponse": {
         "properties": {
           "access_expires_at": {
@@ -10288,6 +10784,56 @@
         "title": "SessionLink",
         "type": "object"
       },
+      "SessionMedia": {
+        "description": "API-046 from S1-C: the session's recording evidence. ``availability`` is the derived evidence vocabulary\n(EXT-002): AVAILABLE (audio stored and you may retrieve it), RESTRICTED (stored, but your role lacks\n``recording.read``), NOT_AVAILABLE (not recorded, purged or no capture), FAILED (consent granted, nothing\nstored).",
+        "properties": {
+          "availability": {
+            "enum": [
+              "AVAILABLE",
+              "RESTRICTED",
+              "NOT_AVAILABLE",
+              "FAILED"
+            ],
+            "title": "Availability",
+            "type": "string"
+          },
+          "can_retrieve_audio": {
+            "title": "Can Retrieve Audio",
+            "type": "boolean"
+          },
+          "media_status": {
+            "title": "Media Status",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "recording": {
+            "$ref": "#/components/schemas/RecordingSummary"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "availability",
+          "reason",
+          "message",
+          "media_status",
+          "recording",
+          "can_retrieve_audio"
+        ],
+        "title": "SessionMedia",
+        "type": "object"
+      },
       "SessionStatus": {
         "properties": {
           "absolute_expires_at": {
@@ -10324,6 +10870,101 @@
           "absolute_expires_at"
         ],
         "title": "SessionStatus",
+        "type": "object"
+      },
+      "SessionTranscript": {
+        "description": "API-045 from S1-D: transcript status, provenance and counts (no text) for any reader of the case. ``status``\nmaps to the approved ``conversation_session.transcript_status``: PENDING/PROCESSING → PENDING, COMPLETE →\nFINALIZED (QUALITY_FLAGGED when uncertain speech is present), PARTIAL → PARTIAL, FAILED/UNAVAILABLE →\nUNAVAILABLE. COMPLETE means every stored track was processed over complete recording coverage; it never means\ncorrect, reviewed or certified (``review_status`` is always NOT_REVIEWED in S1).",
+        "properties": {
+          "availability": {
+            "enum": [
+              "AVAILABLE",
+              "RESTRICTED",
+              "PENDING",
+              "FAILED",
+              "NOT_AVAILABLE"
+            ],
+            "title": "Availability",
+            "type": "string"
+          },
+          "can_read_text": {
+            "title": "Can Read Text",
+            "type": "boolean"
+          },
+          "can_retry": {
+            "title": "Can Retry",
+            "type": "boolean"
+          },
+          "language": {
+            "const": "en",
+            "title": "Language",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "recording_status": {
+            "title": "Recording Status",
+            "type": "string"
+          },
+          "review_status": {
+            "const": "NOT_REVIEWED",
+            "title": "Review Status",
+            "type": "string"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          },
+          "session_transcript_status": {
+            "title": "Session Transcript Status",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "PENDING",
+              "PROCESSING",
+              "COMPLETE",
+              "PARTIAL",
+              "FAILED",
+              "UNAVAILABLE"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "tracks": {
+            "items": {
+              "$ref": "#/components/schemas/TranscriptTrack"
+            },
+            "title": "Tracks",
+            "type": "array"
+          },
+          "uncertain": {
+            "title": "Uncertain",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "session_id",
+          "availability",
+          "status",
+          "reason",
+          "message",
+          "session_transcript_status",
+          "review_status",
+          "uncertain",
+          "language",
+          "recording_status",
+          "can_read_text",
+          "can_retry",
+          "tracks"
+        ],
+        "title": "SessionTranscript",
         "type": "object"
       },
       "Sla": {
@@ -10587,6 +11228,59 @@
         "title": "Timeline",
         "type": "object"
       },
+      "TimelineGap": {
+        "properties": {
+          "estimated": {
+            "title": "Estimated",
+            "type": "boolean"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "segment": {
+            "title": "Segment",
+            "type": "integer"
+          },
+          "seqs": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Seqs",
+            "type": "array"
+          },
+          "timeline_end": {
+            "title": "Timeline End",
+            "type": "integer"
+          },
+          "timeline_start": {
+            "title": "Timeline Start",
+            "type": "integer"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "segment",
+          "seqs",
+          "timeline_start",
+          "timeline_end",
+          "estimated",
+          "reason"
+        ],
+        "title": "TimelineGap",
+        "type": "object"
+      },
       "TimelineItem": {
         "properties": {
           "actor_ref": {
@@ -10657,6 +11351,665 @@
           "route"
         ],
         "title": "TimelineItem",
+        "type": "object"
+      },
+      "TimelineSegment": {
+        "properties": {
+          "length": {
+            "title": "Length",
+            "type": "integer"
+          },
+          "segment": {
+            "title": "Segment",
+            "type": "integer"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "timeline_start": {
+            "title": "Timeline Start",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "segment",
+          "timeline_start",
+          "length",
+          "started_at"
+        ],
+        "title": "TimelineSegment",
+        "type": "object"
+      },
+      "TimelineSpan": {
+        "properties": {
+          "sample_count": {
+            "title": "Sample Count",
+            "type": "integer"
+          },
+          "segment": {
+            "title": "Segment",
+            "type": "integer"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "start_sample": {
+            "title": "Start Sample",
+            "type": "integer"
+          },
+          "timeline_start": {
+            "title": "Timeline Start",
+            "type": "integer"
+          },
+          "wav_offset": {
+            "title": "Wav Offset",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "segment",
+          "seq",
+          "start_sample",
+          "sample_count",
+          "timeline_start",
+          "wav_offset"
+        ],
+        "title": "TimelineSpan",
+        "type": "object"
+      },
+      "TimelineTrack": {
+        "properties": {
+          "asset_ref": {
+            "title": "Asset Ref",
+            "type": "string"
+          },
+          "content_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Sha256"
+          },
+          "coverage": {
+            "title": "Coverage",
+            "type": "string"
+          },
+          "gaps": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineGap"
+            },
+            "title": "Gaps",
+            "type": "array"
+          },
+          "media_status": {
+            "title": "Media Status",
+            "type": "string"
+          },
+          "spans": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineSpan"
+            },
+            "title": "Spans",
+            "type": "array"
+          },
+          "stored_samples": {
+            "title": "Stored Samples",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "asset_ref",
+          "media_status",
+          "coverage",
+          "content_sha256",
+          "stored_samples",
+          "spans",
+          "gaps"
+        ],
+        "title": "TimelineTrack",
+        "type": "object"
+      },
+      "TranscriptProblem": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "track": {
+            "title": "Track",
+            "type": "string"
+          }
+        },
+        "required": [
+          "track",
+          "code"
+        ],
+        "title": "TranscriptProblem",
+        "type": "object"
+      },
+      "TranscriptRetryOut": {
+        "properties": {
+          "queued_tracks": {
+            "items": {
+              "enum": [
+                "MIC",
+                "PROVIDER_PLAYBACK"
+              ],
+              "type": "string"
+            },
+            "title": "Queued Tracks",
+            "type": "array"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "PENDING",
+              "PROCESSING",
+              "COMPLETE",
+              "PARTIAL",
+              "FAILED",
+              "UNAVAILABLE"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "queued_tracks",
+          "status"
+        ],
+        "title": "TranscriptRetryOut",
+        "type": "object"
+      },
+      "TranscriptRun": {
+        "description": "One transcription of one stored track with its full provenance (D-49). Immutable once DONE or FAILED.",
+        "properties": {
+          "attempts": {
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "config": {
+            "additionalProperties": true,
+            "title": "Config",
+            "type": "object"
+          },
+          "config_sha256": {
+            "title": "Config Sha256",
+            "type": "string"
+          },
+          "engine": {
+            "title": "Engine",
+            "type": "string"
+          },
+          "engine_version": {
+            "title": "Engine Version",
+            "type": "string"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "input_content_sha256": {
+            "title": "Input Content Sha256",
+            "type": "string"
+          },
+          "language": {
+            "const": "en",
+            "title": "Language",
+            "type": "string"
+          },
+          "metrics": {
+            "additionalProperties": true,
+            "title": "Metrics",
+            "type": "object"
+          },
+          "model_id": {
+            "title": "Model Id",
+            "type": "string"
+          },
+          "model_revision": {
+            "title": "Model Revision",
+            "type": "string"
+          },
+          "model_sha256": {
+            "title": "Model Sha256",
+            "type": "string"
+          },
+          "purged_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purged At"
+          },
+          "requested_at": {
+            "format": "date-time",
+            "title": "Requested At",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "run_ref": {
+            "title": "Run Ref",
+            "type": "string"
+          },
+          "source_event_seq": {
+            "title": "Source Event Seq",
+            "type": "integer"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "status": {
+            "enum": [
+              "PENDING",
+              "PROCESSING",
+              "DONE",
+              "FAILED"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "text_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text Sha256"
+          },
+          "track": {
+            "enum": [
+              "MIC",
+              "PROVIDER_PLAYBACK"
+            ],
+            "title": "Track",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_ref",
+          "track",
+          "revision",
+          "status",
+          "attempts",
+          "error_code",
+          "language",
+          "engine",
+          "engine_version",
+          "model_id",
+          "model_revision",
+          "model_sha256",
+          "config",
+          "config_sha256",
+          "input_content_sha256",
+          "text_sha256",
+          "source_event_seq",
+          "requested_at",
+          "started_at",
+          "finished_at",
+          "metrics",
+          "purged_at"
+        ],
+        "title": "TranscriptRun",
+        "type": "object"
+      },
+      "TranscriptSegmentOut": {
+        "description": "One recognised (SPEECH) or rejected (UNRECOGNIZED, never with text) stretch of one track. Times are on the\nsession recording timeline; ``wav_offset_ms`` is the position in that track's evidence WAV.",
+        "properties": {
+          "avg_logprob": {
+            "title": "Avg Logprob",
+            "type": "number"
+          },
+          "confidence": {
+            "enum": [
+              "NORMAL",
+              "LOW"
+            ],
+            "title": "Confidence",
+            "type": "string"
+          },
+          "end_sample": {
+            "title": "End Sample",
+            "type": "integer"
+          },
+          "flags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Flags",
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "SPEECH",
+              "UNRECOGNIZED"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "no_speech_prob": {
+            "title": "No Speech Prob",
+            "type": "number"
+          },
+          "ordinal": {
+            "title": "Ordinal",
+            "type": "integer"
+          },
+          "rec_segment": {
+            "title": "Rec Segment",
+            "type": "integer"
+          },
+          "run_ref": {
+            "title": "Run Ref",
+            "type": "string"
+          },
+          "speaker": {
+            "enum": [
+              "CALLER_MIC",
+              "MOCK_PROVIDER"
+            ],
+            "title": "Speaker",
+            "type": "string"
+          },
+          "speaker_label": {
+            "title": "Speaker Label",
+            "type": "string"
+          },
+          "start_sample": {
+            "title": "Start Sample",
+            "type": "integer"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text"
+          },
+          "text_available": {
+            "title": "Text Available",
+            "type": "boolean"
+          },
+          "time_alignment": {
+            "title": "Time Alignment",
+            "type": "string"
+          },
+          "timeline_end_ms": {
+            "title": "Timeline End Ms",
+            "type": "integer"
+          },
+          "timeline_start_ms": {
+            "title": "Timeline Start Ms",
+            "type": "integer"
+          },
+          "track": {
+            "enum": [
+              "MIC",
+              "PROVIDER_PLAYBACK"
+            ],
+            "title": "Track",
+            "type": "string"
+          },
+          "uncertain_words": {
+            "title": "Uncertain Words",
+            "type": "integer"
+          },
+          "wav_offset_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wav Offset Ms"
+          },
+          "word_count": {
+            "title": "Word Count",
+            "type": "integer"
+          },
+          "words": {
+            "items": {
+              "$ref": "#/components/schemas/TranscriptWord"
+            },
+            "title": "Words",
+            "type": "array"
+          }
+        },
+        "required": [
+          "track",
+          "speaker",
+          "speaker_label",
+          "run_ref",
+          "ordinal",
+          "kind",
+          "confidence",
+          "rec_segment",
+          "start_sample",
+          "end_sample",
+          "timeline_start_ms",
+          "timeline_end_ms",
+          "wav_offset_ms",
+          "time_alignment",
+          "avg_logprob",
+          "no_speech_prob",
+          "word_count",
+          "uncertain_words",
+          "text",
+          "text_available",
+          "words",
+          "flags"
+        ],
+        "title": "TranscriptSegmentOut",
+        "type": "object"
+      },
+      "TranscriptSegments": {
+        "properties": {
+          "problems": {
+            "items": {
+              "$ref": "#/components/schemas/TranscriptProblem"
+            },
+            "title": "Problems",
+            "type": "array"
+          },
+          "review_status": {
+            "const": "NOT_REVIEWED",
+            "title": "Review Status",
+            "type": "string"
+          },
+          "segments": {
+            "items": {
+              "$ref": "#/components/schemas/TranscriptSegmentOut"
+            },
+            "title": "Segments",
+            "type": "array"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "PENDING",
+              "PROCESSING",
+              "COMPLETE",
+              "PARTIAL",
+              "FAILED",
+              "UNAVAILABLE"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "timeline": {
+            "$ref": "#/components/schemas/RecordingTimeline"
+          }
+        },
+        "required": [
+          "session_id",
+          "status",
+          "review_status",
+          "segments",
+          "problems",
+          "timeline"
+        ],
+        "title": "TranscriptSegments",
+        "type": "object"
+      },
+      "TranscriptTrack": {
+        "properties": {
+          "low_confidence_segments": {
+            "title": "Low Confidence Segments",
+            "type": "integer"
+          },
+          "revisions": {
+            "title": "Revisions",
+            "type": "integer"
+          },
+          "run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TranscriptRun"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "speaker": {
+            "enum": [
+              "CALLER_MIC",
+              "MOCK_PROVIDER"
+            ],
+            "title": "Speaker",
+            "type": "string"
+          },
+          "speaker_label": {
+            "title": "Speaker Label",
+            "type": "string"
+          },
+          "speech_segments": {
+            "title": "Speech Segments",
+            "type": "integer"
+          },
+          "track": {
+            "enum": [
+              "MIC",
+              "PROVIDER_PLAYBACK"
+            ],
+            "title": "Track",
+            "type": "string"
+          },
+          "uncertain_words": {
+            "title": "Uncertain Words",
+            "type": "integer"
+          },
+          "unrecognized_segments": {
+            "title": "Unrecognized Segments",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "track",
+          "speaker",
+          "speaker_label",
+          "run",
+          "revisions",
+          "speech_segments",
+          "unrecognized_segments",
+          "low_confidence_segments",
+          "uncertain_words"
+        ],
+        "title": "TranscriptTrack",
+        "type": "object"
+      },
+      "TranscriptWord": {
+        "properties": {
+          "probability": {
+            "title": "Probability",
+            "type": "number"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "timeline_end_ms": {
+            "title": "Timeline End Ms",
+            "type": "integer"
+          },
+          "timeline_start_ms": {
+            "title": "Timeline Start Ms",
+            "type": "integer"
+          },
+          "uncertain": {
+            "title": "Uncertain",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "text",
+          "timeline_start_ms",
+          "timeline_end_ms",
+          "probability",
+          "uncertain"
+        ],
+        "title": "TranscriptWord",
         "type": "object"
       },
       "TrendPoint": {
@@ -10881,6 +12234,16 @@
             "title": "Reason",
             "type": "string"
           },
+          "recording_notice": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecordingNotice"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "stage": {
             "title": "Stage",
             "type": "string"
@@ -10909,7 +12272,8 @@
           "capabilities",
           "data_policy",
           "test_message",
-          "callable_cases"
+          "callable_cases",
+          "recording_notice"
         ],
         "title": "VoicePreflight",
         "type": "object"
@@ -10921,6 +12285,33 @@
             "format": "uuid",
             "title": "Case Id",
             "type": "string"
+          },
+          "consent_notice_version": {
+            "anyOf": [
+              {
+                "maxLength": 24,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consent Notice Version"
+          },
+          "recording_consent": {
+            "anyOf": [
+              {
+                "enum": [
+                  "GRANTED",
+                  "DECLINED"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recording Consent"
           }
         },
         "required": [
@@ -11000,6 +12391,12 @@
       "VoiceSessionOut": {
         "description": "A short-lived, case-bound test session (S1-A; persisted from S1-B). ``session_id`` is the persisted browser\ncontact attempt. The credential is single-use and expires quickly; it is sent as the first WebSocket message,\nnever in a URL.",
         "properties": {
+          "attempt_kind": {
+            "const": "TEST_SESSION",
+            "default": "TEST_SESSION",
+            "title": "Attempt Kind",
+            "type": "string"
+          },
           "attempt_ref": {
             "title": "Attempt Ref",
             "type": "string"
@@ -11049,10 +12446,12 @@
             "title": "Provider",
             "type": "string"
           },
-          "recording": {
-            "const": "DISABLED",
-            "default": "DISABLED",
-            "title": "Recording",
+          "recording_consent": {
+            "enum": [
+              "GRANTED",
+              "DECLINED"
+            ],
+            "title": "Recording Consent",
             "type": "string"
           },
           "resumed": {
@@ -11101,6 +12500,7 @@
           "provider",
           "script",
           "contact",
+          "recording_consent",
           "test_message",
           "sample_rate",
           "frame_ms",
@@ -11111,6 +12511,12 @@
       },
       "VoiceSessionStatus": {
         "properties": {
+          "attempt_kind": {
+            "const": "TEST_SESSION",
+            "default": "TEST_SESSION",
+            "title": "Attempt Kind",
+            "type": "string"
+          },
           "attempt_ref": {
             "title": "Attempt Ref",
             "type": "string"
@@ -11179,10 +12585,7 @@
             "type": "integer"
           },
           "recording": {
-            "const": "DISABLED",
-            "default": "DISABLED",
-            "title": "Recording",
-            "type": "string"
+            "$ref": "#/components/schemas/RecordingSummary"
           },
           "responses": {
             "title": "Responses",
@@ -11253,7 +12656,8 @@
           "events_total",
           "started_by",
           "yours",
-          "can_resume"
+          "can_resume",
+          "recording"
         ],
         "title": "VoiceSessionStatus",
         "type": "object"
@@ -18277,6 +19681,7 @@
     },
     "/api/v1/sessions/{session_id}/media": {
       "get": {
+        "description": "API-046 (S1-C): recording evidence metadata for any reader of the case; audio needs ``recording.read``.",
         "operationId": "session_media",
         "parameters": [
           {
@@ -18295,7 +19700,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Availability"
+                  "$ref": "#/components/schemas/SessionMedia"
                 }
               }
             },
@@ -18358,8 +19763,200 @@
         ]
       }
     },
+    "/api/v1/sessions/{session_id}/media/timeline": {
+      "get": {
+        "description": "Recording time ↔ evidence-WAV mapping for both tracks, with gaps as spans (metadata only, no audio).",
+        "operationId": "session_media_timeline",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordingTimeline"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Session Media Timeline",
+        "tags": [
+          "call-detail"
+        ]
+      }
+    },
+    "/api/v1/sessions/{session_id}/media/{track}/audio": {
+      "get": {
+        "description": "Audited retrieval of one recorded track (D-46). The WAV holds the stored chunks in order; gaps are listed in the\nmanifest and never filled. ``X-Call360-Content-SHA256`` equals the stored content checksum.",
+        "operationId": "session_media_audio",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "track",
+            "required": true,
+            "schema": {
+              "enum": [
+                "MIC",
+                "PROVIDER_PLAYBACK"
+              ],
+              "title": "Track",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "purpose",
+            "required": false,
+            "schema": {
+              "default": "DOWNLOAD",
+              "enum": [
+                "DOWNLOAD",
+                "PLAYBACK"
+              ],
+              "title": "Purpose",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "audio/wav": {}
+            },
+            "description": "WAV of the stored chunks, in order"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Session Media Audio",
+        "tags": [
+          "call-detail"
+        ]
+      }
+    },
     "/api/v1/sessions/{session_id}/transcript": {
       "get": {
+        "description": "API-045 (S1-D): transcript status, provenance and counts for any reader of the case — never text.",
         "operationId": "session_transcript",
         "parameters": [
           {
@@ -18378,7 +19975,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Availability"
+                  "$ref": "#/components/schemas/SessionTranscript"
                 }
               }
             },
@@ -18436,6 +20033,174 @@
           }
         },
         "summary": "Session Transcript",
+        "tags": [
+          "call-detail"
+        ]
+      }
+    },
+    "/api/v1/sessions/{session_id}/transcript/retry": {
+      "post": {
+        "description": "Queue a new transcription revision for each track whose latest run FAILED. Idempotent: tracks that are\nqueued, processing or done are left alone. The failed revision stays as it is.",
+        "operationId": "session_transcript_retry",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscriptRetryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Session Transcript Retry",
+        "tags": [
+          "call-detail"
+        ]
+      }
+    },
+    "/api/v1/sessions/{session_id}/transcript/segments": {
+      "get": {
+        "description": "Machine transcript text with speaker, timeline and evidence-WAV times, uncertainty and provenance (D-50).\nEvery read is audited; text never appears in logs, events or error messages.",
+        "operationId": "session_transcript_segments",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscriptSegments"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Session Transcript Segments",
         "tags": [
           "call-detail"
         ]
@@ -18875,6 +20640,212 @@
           }
         },
         "summary": "Get Session",
+        "tags": [
+          "voice"
+        ]
+      }
+    },
+    "/api/v1/voice/sessions/{session_id}/recording/chunks": {
+      "post": {
+        "operationId": "voice_recording_chunk",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordingChunkIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordingChunkAck"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Upload Recording Chunk",
+        "tags": [
+          "voice"
+        ]
+      }
+    },
+    "/api/v1/voice/sessions/{session_id}/recording/close": {
+      "post": {
+        "operationId": "voice_recording_close",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordingCloseIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecordingSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Close Recording",
         "tags": [
           "voice"
         ]

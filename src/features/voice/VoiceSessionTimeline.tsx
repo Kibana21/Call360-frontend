@@ -6,6 +6,7 @@ import { api, unwrap } from '../../api/client';
 import type { components } from '../../api/generated/schema';
 import { Badge, Card, type Tone } from '../../components/ui';
 import { Region } from '../cases/shared';
+import { RecordingEvidence } from './RecordingEvidence';
 
 export type VoiceSessionStatus = components['schemas']['VoiceSessionStatus'];
 
@@ -25,6 +26,11 @@ const EVENT_TEXT: Record<string, string> = {
   BARGE_IN: 'Interrupted by the caller — playback cleared', USER_TURN_ENDED: 'Caller finished speaking', MIC_MUTED: 'Microphone muted',
   MIC_UNMUTED: 'Microphone unmuted', CLIENT_NOTICE: 'Browser notice', DISCONNECTED: 'Connection lost', STOP_REQUESTED: 'Stop requested',
   ENDED: 'Session ended', ABANDONED: 'Abandoned', FAILED: 'Never connected',
+  RECORDING_CONSENT_GRANTED: 'Recording consent granted (test notice)', RECORDING_CONSENT_DECLINED: 'Recording declined — not recorded',
+  RECORDING_STARTED: 'Recording segment started', RECORDING_TRACK_CLOSED: 'Browser closed a recorded track',
+  RECORDING_FINALIZED: 'Recording track finalised', RECORDING_PURGED: 'Recorded audio deleted (local retention)',
+  TRANSCRIPT_STARTED: 'Transcription started (local model)', TRANSCRIPT_COMPLETED: 'Machine transcript stored',
+  TRANSCRIPT_FAILED: 'Transcription failed', TRANSCRIPT_PURGED: 'Transcript text deleted (local retention)',
 };
 
 export function SessionStatusBadge({ status }: { status: string }) {
@@ -38,7 +44,8 @@ export function VoiceSessionTimeline({ sessionId, live = false, title = 'Persist
   const q = useQuery({
     queryKey: ['voice-session', sessionId],
     queryFn: async () => unwrap(await api.GET('/api/v1/voice/sessions/{session_id}', { params: { path: { session_id: sessionId } } })),
-    refetchInterval: live ? 2000 : false,
+    // Keep refreshing while live, and afterwards while the recording is still uploading or being finalised (S1-C).
+    refetchInterval: (query) => (live || query.state.data?.recording.status === 'RECORDING' ? 2000 : false),
   });
   const wasLive = useRef(live);
   useEffect(() => { // when the session stops being live, fetch its final stored state once more
@@ -51,7 +58,7 @@ export function VoiceSessionTimeline({ sessionId, live = false, title = 'Persist
     return undefined;
   }, [live, q]);
   return (
-    <Card title={title} subtitle="Stored by the server: status, references and the ordered event ledger (no audio or speech)">
+    <Card title={title} subtitle="Stored by the server: status, references and the ordered event ledger (the ledger never holds audio or speech)">
       <Region query={q} label="voice session">
         {() => {
           const s = q.data!;
@@ -68,16 +75,21 @@ export function VoiceSessionTimeline({ sessionId, live = false, title = 'Persist
                 <dt>Final reason</dt><dd data-testid="voice-session-reason">{s.end_reason ? END_REASON_TEXT[s.end_reason] ?? s.end_reason : '—'}</dd>
                 <dt>Responses · interruptions</dt><dd><span data-testid="voice-session-responses">{s.responses}</span> · <span data-testid="voice-session-interruptions">{s.interruptions}</span></dd>
                 <dt>Identity · compliance</dt><dd>Not performed · Not evaluated</dd>
-                <dt>Recording · transcript</dt><dd>Disabled · Not available</dd>
+                <dt>Kind</dt><dd><Badge tone="purple">Test session</Badge> <span className="xsmall muted">mock audio test, not a customer contact</span></dd>
+                <dt>Transcript</dt><dd>{s.recording.status === 'NOT_RECORDED' ? 'None — the session was not recorded' : 'Machine transcript of the recorded tracks in Call Detail (after the recording is finalised)'}</dd>
               </dl>
+              <div className="section-label">Recording evidence</div>
+              <RecordingEvidence rec={s.recording} />
               <div className="section-label">Event timeline ({s.events_total})</div>
-              <ol className="voice-ledger" data-testid="voice-session-events">
+              <ol className="voice-ledger" data-testid="voice-session-events" tabIndex={0} aria-label="Session event timeline (scrollable)">
                 {(s.events ?? []).map((e) => (
                   <li key={e.seq}>
                     <span className="mono xsmall muted">#{e.seq} {time(e.occurred_at)}</span>{' '}
                     <span className="small">{EVENT_TEXT[e.event_type] ?? e.event_type}</span>
                     {e.details.reason ? <span className="xsmall muted"> · {END_REASON_TEXT[String(e.details.reason)] ?? String(e.details.reason)}</span> : null}
                     {e.details.response ? <span className="xsmall muted"> · response {String(e.details.response)}</span> : null}
+                    {e.details.track ? <span className="xsmall muted"> · {String(e.details.track).toLowerCase().replace('_', ' ')}{e.details.coverage ? ` ${String(e.details.coverage).toLowerCase()}` : ''}</span> : null}
+                    {e.details.segment && !e.details.track ? <span className="xsmall muted"> · segment {String(e.details.segment)}</span> : null}
                     <span className="xsmall muted"> · {e.source.toLowerCase()}</span>
                     {e.out_of_order ? <Badge tone="amber">arrived late</Badge> : null}
                   </li>

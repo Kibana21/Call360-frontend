@@ -33,7 +33,7 @@ const DETAIL = {
 const attempt = (n: number, status: string, session: unknown = null) => ({
   id: `a${n}`, attempt_ref: `AT-2026-10482-${n}`, case_id: 'c1', sequence: n, transport: 'SYNTHETIC', direction: 'OUTBOUND', status,
   contact_snapshot: { channel: 'PHONE', masked_value: 'SYN-TEL-SG-••••01' }, contacted_party: 'Example P. 001', scheduled_at: T, started_at: T, ended_at: T,
-  failure_reason: null, record_origin: 'SYNTHETIC_SEED', session,
+  failure_reason: null, record_origin: 'SYNTHETIC_SEED', attempt_kind: 'CONTACT_ATTEMPT', media_status: session ? 'NOT_REQUIRED' : null, session,
 });
 const ATTEMPTS = { items: [attempt(1, 'NO_ANSWER'), attempt(2, 'BUSY'),
   attempt(3, 'CONNECTED', { session_id: 'ss1', session_ref: 'SS-2026-10482', state: 'COMPLETED', survey_run_id: 'run1', survey_run_status: 'COMPLETED' })] };
@@ -49,6 +49,8 @@ const RUN = { id: 'run1', session_id: 'ss1', session_ref: 'SS-2026-10482', case_
   questions: [q('Q-REP-DISCLOSED', {}), q('Q-PREMIUM-TERM-YEARS', { position: 4, expected_answer_policy: 'NUMERIC_MATCH_POLICY_FACT', policy_fact_key: 'premium_term_years',
     typed_value: { value: 5 }, rule_expected: { value: 10 }, rule_observed: { value: 5 }, rule_result: 'MISMATCH', control_satisfied: false, findings: ['FND-2026-00001'] })] };
 const NA = (what: string) => () => json(200, { session_id: 'ss1', availability: 'NOT_AVAILABLE', reason: 'NO_CAPTURE_BEFORE_S1',
+  ...(what === 'media' ? { media_status: 'NOT_REQUIRED', can_retrieve_audio: false,
+    recording: { status: 'NOT_RECORDED', consent: 'NOT_ASKED', consent_at: null, notice_version: null, tracks: [] } } : {}),
   message: what === 'media' ? 'Recording not available — no audio is captured before Stage S1' : 'Transcript not available — transcripts are captured from Stage S1' });
 const ok = {
   'GET /api/v1/me': () => json(200, USER_ME),

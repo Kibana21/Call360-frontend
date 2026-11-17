@@ -65,6 +65,8 @@ describe('Voice Studio (S1-A)', () => {
     provider: 'MOCK', data_policy: 'SYNTHETIC_ONLY', test_message: ['Hello. This is a Call360 synthetic audio test.'],
     capabilities: [capability('VOICE_SESSION', start ? 'AVAILABLE' : 'NOT_AVAILABLE'), capability('RECORDING', 'DISABLED'), capability('IDENTITY', 'NOT_PERFORMED')],
     callable_cases: start ? [{ case_id: 'c1', case_ref: 'CB-2026-10003', state: 'READY' }] : [],
+    recording_notice: start ? { version: 'S1C-TEST-1', text: 'Synthetic test recording (local development only).', sha256: 'a'.repeat(64),
+      default_decision: 'DECLINED', retention_hours: 168, approved_policy: false } : null,
   });
   const CASE = (callable: boolean) => ({ case_id: 'c1', case_ref: 'CB-2026-10003', callable, callable_blockers: callable ? [] : ['HOLD:AWAITING_SCRIPT_ASSIGNMENT'] });
 
@@ -99,6 +101,28 @@ describe('Voice Studio (S1-A)', () => {
     renderAt(<App />, '/voice-studio?case=c1');
     expect(await screen.findByTestId('voice-not-callable')).toHaveTextContent('HOLD:AWAITING_SCRIPT_ASSIGNMENT');
     expect(screen.queryByTestId('voice-start')).toBeNull();
+  });
+
+  it('S1-C: recording defaults to off and is requested only by an explicit choice, separate from the microphone', async () => {
+    const getUserMedia = vi.fn(async () => ({ getTracks: () => [], getAudioTracks: () => [] }));
+    Object.defineProperty(navigator, 'mediaDevices', { value: { getUserMedia }, configurable: true });
+    const bodies: unknown[] = [];
+    stubApi({ 'GET /api/v1/me': () => json(200, { ...USER, permissions: [...USER.permissions, 'voice.session.start'] }),
+      'GET /api/v1/voice/preflight': () => json(200, PRE(true)), 'GET /api/v1/cases/c1': () => json(200, CASE(true)),
+      'POST /api/v1/voice/sessions': (req) => { void req.clone().json().then((b) => bodies.push(b)); return json(409, { code: 'X', message: 'stop here' }); } });
+    renderAt(<App />, '/voice-studio?case=c1');
+    expect(await screen.findByTestId('recording-notice')).toHaveTextContent('Synthetic test recording');
+    expect(screen.getByTestId('consent-no')).toBeChecked(); // default: do not record
+    expect(screen.getByTestId('voice-start')).toHaveTextContent('Start without recording');
+    await userEvent.click(screen.getByTestId('voice-start'));
+    await screen.findByTestId('voice-error');
+    await userEvent.click(screen.getByTestId('consent-yes'));
+    expect(screen.getByTestId('voice-start')).toHaveTextContent('Start and record');
+    await userEvent.click(screen.getByTestId('voice-start'));
+    await screen.findByTestId('voice-error');
+    await vi.waitFor(() => expect(bodies).toHaveLength(2));
+    expect(bodies[0]).toEqual({ case_id: 'c1', recording_consent: 'DECLINED' });
+    expect(bodies[1]).toEqual({ case_id: 'c1', recording_consent: 'GRANTED', consent_notice_version: 'S1C-TEST-1' });
   });
 
   it('explains microphone failures', () => {

@@ -12,7 +12,7 @@ const kpi = (id: string, label: string, over: Record<string, unknown> = {}) => (
   range: { from: '2026-10-17', to: '2026-11-16' }, time_zone: 'Asia/Singapore', filter_scope: { markets: ['SG'] },
   dedup_rule: 'COUNT(DISTINCT callback_case.id)', eligibility_rule: `${label} rule`, exclusions: {},
   exemptions_applied: [], materiality_policy_version: null, reopen_handling: 'NOT_SUPPORTED_IN_S0',
-  data_as_of: '2026-11-15T04:00:00Z', reporting_version: 'S0-KPI-2', synthetic_badge: true,
+  data_as_of: '2026-11-15T04:00:00Z', reporting_version: 'S0-KPI-3', synthetic_badge: true,
   drilldown: { numerator: null, denominator: null }, breakdown: {}, ...over,
 });
 const KPIS = {

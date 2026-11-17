@@ -1,6 +1,5 @@
 // Voice Studio (`/voice-studio`): the backend's voice capability state (API-078) and, in S1-A, a local synthetic
-// audio test with the mock provider on a callable Singapore case (`?case=<id>`, e.g. from Call Detail). Recording,
-// transcripts, script-controlled questions and any verification stay unavailable.
+// audio test with the mock provider on a callable Singapore case (`?case=<id>`, e.g. from Call Detail). Transcripts, script-controlled questions and any verification stay unavailable.
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -10,6 +9,7 @@ import { Icon } from '../../components/Icon';
 import { Forbidden } from '../../components/StateView';
 import { Badge, Card, PageHead } from '../../components/ui';
 import { Region } from '../cases/shared';
+import { RecordingBadge } from './RecordingEvidence';
 import { VoiceCallPanel } from './VoiceCallPanel';
 import { END_REASON_TEXT, SessionStatusBadge, VoiceSessionTimeline } from './VoiceSessionTimeline';
 
@@ -40,9 +40,9 @@ export function VoiceStudioPage() {
   return (
     <>
       <PageHead eyebrow="Browser callback" title="Voice Studio"
-        description="Local, full-duplex browser audio with a mock voice provider (S1-A). The mock speaks only a fixed synthetic test message; it asks no questions and verifies nothing." />
+        description="Local, full-duplex browser audio with a mock voice provider (S1-A), persisted sessions (S1-B) optional consent-gated recording (S1-C) and, after a recorded session, a local machine transcript with synchronised playback in Call Detail (S1-D). The mock speaks only a fixed synthetic test message; it asks no questions and verifies nothing." />
       <div className="topnotice" role="note"><div className="row"><Icon name="info" size="sm" />
-        <span><strong>TEST MODE · synthetic data only.</strong> No real customer is called, nothing is recorded, and no session can verify a customer or a case. Stage 0 governance sign-off is still pending.</span></div></div>
+        <span><strong>TEST MODE · synthetic data only.</strong> No real customer is called, audio is recorded only if you choose to record a session, and no session can verify a customer or a case. Stage 0 governance sign-off is still pending.</span></div></div>
       <Region query={pre} label="voice availability">
         {() => {
           const p = pre.data!;
@@ -69,14 +69,14 @@ export function VoiceStudioPage() {
                 </div>
               ) : null}
               {canStart && chosen?.callable ? <VoiceCallPanel key={chosen.id} caseId={chosen.id} caseRef={chosen.ref} testMessage={p.test_message}
-                resumeId={resumable?.session_id} onResumeHandled={() => setResumeDismissed(resumable?.session_id ?? null)} /> : null}
+                notice={p.recording_notice ?? null} resumeId={resumable?.session_id} onResumeHandled={() => setResumeDismissed(resumable?.session_id ?? null)} /> : null}
               {chosen && history.data ? (
                 <Card title={`Voice session history · ${chosen.ref}`} subtitle="Persisted browser test sessions for this case, newest first" pad={false}>
                   {history.data.items.length === 0 ? <p className="small muted" style={{ padding: '0 19px 16px' }}>No sessions yet.</p> : (
                     <div className="table-wrap">
                       <table className="data-table" data-testid="voice-history">
                         <caption className="sr-only">Voice sessions for {chosen.ref}</caption>
-                        <thead><tr><th scope="col">Session</th><th scope="col">Status</th><th scope="col">Started</th><th scope="col">Final reason</th>
+                        <thead><tr><th scope="col">Session</th><th scope="col">Status</th><th scope="col">Started</th><th scope="col">Final reason</th><th scope="col">Recording</th>
                           <th scope="col">Interruptions</th><th scope="col">Events</th><th scope="col"><span className="sr-only">Timeline</span></th></tr></thead>
                         <tbody>
                           {history.data.items.map((h) => (
@@ -85,6 +85,7 @@ export function VoiceStudioPage() {
                               <td><SessionStatusBadge status={h.status} /></td>
                               <td>{h.started_at ? new Date(h.started_at).toLocaleString('en-SG') : '—'}</td>
                               <td>{h.end_reason ? END_REASON_TEXT[h.end_reason] ?? h.end_reason : '—'}</td>
+                              <td><RecordingBadge status={h.recording.status} /></td>
                               <td>{h.interruptions}</td><td>{h.events_total}</td>
                               <td style={{ textAlign: 'right' }}><button type="button" className="linkbtn" onClick={() => setOpenId(openId === h.session_id ? null : h.session_id)}
                                 aria-expanded={openId === h.session_id} aria-label={`Timeline of ${h.attempt_ref}`}>{openId === h.session_id ? 'Hide' : 'Timeline'}</button></td>

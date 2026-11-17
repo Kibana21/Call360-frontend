@@ -1072,8 +1072,52 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Session Media */
+        /**
+         * Session Media
+         * @description API-046 (S1-C): recording evidence metadata for any reader of the case; audio needs ``recording.read``.
+         */
         get: operations["session_media"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sessions/{session_id}/media/timeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Session Media Timeline
+         * @description Recording time ↔ evidence-WAV mapping for both tracks, with gaps as spans (metadata only, no audio).
+         */
+        get: operations["session_media_timeline"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sessions/{session_id}/media/{track}/audio": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Session Media Audio
+         * @description Audited retrieval of one recorded track (D-46). The WAV holds the stored chunks in order; gaps are listed in the
+         *     manifest and never filled. ``X-Call360-Content-SHA256`` equals the stored content checksum.
+         */
+        get: operations["session_media_audio"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1089,8 +1133,53 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Session Transcript */
+        /**
+         * Session Transcript
+         * @description API-045 (S1-D): transcript status, provenance and counts for any reader of the case — never text.
+         */
         get: operations["session_transcript"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sessions/{session_id}/transcript/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Session Transcript Retry
+         * @description Queue a new transcription revision for each track whose latest run FAILED. Idempotent: tracks that are
+         *     queued, processing or done are left alone. The failed revision stays as it is.
+         */
+        post: operations["session_transcript_retry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sessions/{session_id}/transcript/segments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Session Transcript Segments
+         * @description Machine transcript text with speaker, timeline and evidence-WAV times, uncertainty and provenance (D-50).
+         *     Every read is audited; text never appears in logs, events or error messages.
+         */
+        get: operations["session_transcript_segments"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1162,6 +1251,40 @@ export interface paths {
         get: operations["voice_session_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/voice/sessions/{session_id}/recording/chunks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload Recording Chunk */
+        post: operations["voice_recording_chunk"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/voice/sessions/{session_id}/recording/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close Recording */
+        post: operations["voice_recording_close"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1511,6 +1634,11 @@ export interface components {
         };
         /** AttemptOut */
         AttemptOut: {
+            /**
+             * Attempt Kind
+             * @enum {string}
+             */
+            attempt_kind: "CONTACT_ATTEMPT" | "TEST_SESSION";
             /** Attempt Ref */
             attempt_ref: string;
             /**
@@ -1535,6 +1663,8 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            /** Media Status */
+            media_status: string | null;
             /** Record Origin */
             record_origin: string;
             /** Scheduled At */
@@ -1662,26 +1792,6 @@ export interface components {
             session_id: string | null;
             /** Source Ip */
             source_ip: string | null;
-        };
-        /** Availability */
-        Availability: {
-            /**
-             * Availability
-             * @constant
-             */
-            availability: "NOT_AVAILABLE";
-            /** Message */
-            message: string;
-            /**
-             * Reason
-             * @constant
-             */
-            reason: "NO_CAPTURE_BEFORE_S1";
-            /**
-             * Session Id
-             * Format: uuid
-             */
-            session_id: string;
         };
         /** CaseDetail */
         CaseDetail: {
@@ -3574,6 +3684,186 @@ export interface components {
             /** Reason */
             reason: string;
         };
+        /** RecordingChunkAck */
+        RecordingChunkAck: {
+            /** Duplicate */
+            duplicate: boolean;
+            /** Stored */
+            stored: boolean;
+        };
+        /** RecordingChunkIn */
+        RecordingChunkIn: {
+            /** Captured At */
+            captured_at?: string | null;
+            /** Data B64 */
+            data_b64: string;
+            /** Sample Count */
+            sample_count: number;
+            /** Segment */
+            segment: number;
+            /** Seq */
+            seq: number;
+            /** Sha256 */
+            sha256: string;
+            /** Start Sample */
+            start_sample: number;
+            /**
+             * Track
+             * @enum {string}
+             */
+            track: "MIC" | "PROVIDER_PLAYBACK";
+        };
+        /** RecordingCloseIn */
+        RecordingCloseIn: {
+            /** Tracks */
+            tracks: components["schemas"]["RecordingCloseTrack"][];
+        };
+        /** RecordingCloseTrack */
+        RecordingCloseTrack: {
+            /** Chunks */
+            chunks: number;
+            /** Failed */
+            failed?: number[];
+            /**
+             * Reason
+             * @enum {string}
+             */
+            reason: "STOPPED" | "MIC_DEVICE_LOST" | "CONNECTION_LOST" | "PAGE_CLOSED" | "UPLOAD_FAILED" | "CAPTURE_ERROR";
+            /** Segment */
+            segment: number;
+            /**
+             * Track
+             * @enum {string}
+             */
+            track: "MIC" | "PROVIDER_PLAYBACK";
+        };
+        /** RecordingGap */
+        RecordingGap: {
+            /** Reason */
+            reason?: string | null;
+            /** Samples */
+            samples?: number | null;
+            /** Segment */
+            segment: number;
+            /** Seq */
+            seq?: number | null;
+            /** Type */
+            type: string;
+        };
+        /**
+         * RecordingNotice
+         * @description S1-C test-only recording notice (D-45). Not approved AIA/MAS consent wording.
+         */
+        RecordingNotice: {
+            /**
+             * Approved Policy
+             * @default false
+             * @constant
+             */
+            approved_policy: false;
+            /**
+             * Default Decision
+             * @default DECLINED
+             * @constant
+             */
+            default_decision: "DECLINED";
+            /** Retention Hours */
+            retention_hours: number;
+            /** Sha256 */
+            sha256: string;
+            /** Text */
+            text: string;
+            /** Version */
+            version: string;
+        };
+        /** RecordingSummary */
+        RecordingSummary: {
+            /**
+             * Consent
+             * @enum {string}
+             */
+            consent: "GRANTED" | "DECLINED" | "NOT_ASKED";
+            /** Consent At */
+            consent_at: string | null;
+            /** Notice Version */
+            notice_version: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "NOT_RECORDED" | "RECORDING" | "COMPLETE" | "PARTIAL" | "FAILED" | "PURGED";
+            /** Tracks */
+            tracks: components["schemas"]["RecordingTrack"][];
+        };
+        /**
+         * RecordingTimeline
+         * @description Recording time ↔ playback mapping for both tracks (samples at ``sample_rate``). The evidence WAV holds stored
+         *     chunks only; gaps are timeline spans, never filled audio.
+         */
+        RecordingTimeline: {
+            /** Sample Rate */
+            sample_rate: number;
+            /** Segments */
+            segments: components["schemas"]["TimelineSegment"][];
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+            /** Total Samples */
+            total_samples: number;
+            /** Tracks */
+            tracks: {
+                [key: string]: components["schemas"]["TimelineTrack"];
+            };
+        };
+        /**
+         * RecordingTrack
+         * @description One recorded track's manifest metadata (EVD-003). Never an object key or storage path.
+         */
+        RecordingTrack: {
+            /** Asset Ref */
+            asset_ref: string;
+            /** Bytes Stored */
+            bytes_stored: number;
+            /** Capture Ended At */
+            capture_ended_at: string | null;
+            /** Chunks Stored */
+            chunks_stored: number;
+            /** Codec */
+            codec: string;
+            /** Content Sha256 */
+            content_sha256: string | null;
+            /**
+             * Coverage
+             * @enum {string}
+             */
+            coverage: "PENDING" | "COMPLETE" | "PARTIAL" | "NONE";
+            /** Duration Ms */
+            duration_ms: number;
+            /** Finalized At */
+            finalized_at: string | null;
+            /** Gaps */
+            gaps: components["schemas"]["RecordingGap"][];
+            /** Manifest Sha256 */
+            manifest_sha256: string | null;
+            /** Media Status */
+            media_status: string;
+            /** Purged At */
+            purged_at: string | null;
+            /** Retention Until */
+            retention_until: string | null;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /**
+             * Track
+             * @enum {string}
+             */
+            track: "MIC" | "PROVIDER_PLAYBACK";
+        };
         /** RefreshResponse */
         RefreshResponse: {
             /**
@@ -4714,6 +5004,34 @@ export interface components {
             /** Survey Run Status */
             survey_run_status: string | null;
         };
+        /**
+         * SessionMedia
+         * @description API-046 from S1-C: the session's recording evidence. ``availability`` is the derived evidence vocabulary
+         *     (EXT-002): AVAILABLE (audio stored and you may retrieve it), RESTRICTED (stored, but your role lacks
+         *     ``recording.read``), NOT_AVAILABLE (not recorded, purged or no capture), FAILED (consent granted, nothing
+         *     stored).
+         */
+        SessionMedia: {
+            /**
+             * Availability
+             * @enum {string}
+             */
+            availability: "AVAILABLE" | "RESTRICTED" | "NOT_AVAILABLE" | "FAILED";
+            /** Can Retrieve Audio */
+            can_retrieve_audio: boolean;
+            /** Media Status */
+            media_status: string;
+            /** Message */
+            message: string;
+            /** Reason */
+            reason: string;
+            recording: components["schemas"]["RecordingSummary"];
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+        };
         /** SessionStatus */
         SessionStatus: {
             /**
@@ -4741,6 +5059,57 @@ export interface components {
              * Format: uuid
              */
             session_id: string;
+        };
+        /**
+         * SessionTranscript
+         * @description API-045 from S1-D: transcript status, provenance and counts (no text) for any reader of the case. ``status``
+         *     maps to the approved ``conversation_session.transcript_status``: PENDING/PROCESSING → PENDING, COMPLETE →
+         *     FINALIZED (QUALITY_FLAGGED when uncertain speech is present), PARTIAL → PARTIAL, FAILED/UNAVAILABLE →
+         *     UNAVAILABLE. COMPLETE means every stored track was processed over complete recording coverage; it never means
+         *     correct, reviewed or certified (``review_status`` is always NOT_REVIEWED in S1).
+         */
+        SessionTranscript: {
+            /**
+             * Availability
+             * @enum {string}
+             */
+            availability: "AVAILABLE" | "RESTRICTED" | "PENDING" | "FAILED" | "NOT_AVAILABLE";
+            /** Can Read Text */
+            can_read_text: boolean;
+            /** Can Retry */
+            can_retry: boolean;
+            /**
+             * Language
+             * @constant
+             */
+            language: "en";
+            /** Message */
+            message: string;
+            /** Reason */
+            reason: string;
+            /** Recording Status */
+            recording_status: string;
+            /**
+             * Review Status
+             * @constant
+             */
+            review_status: "NOT_REVIEWED";
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+            /** Session Transcript Status */
+            session_transcript_status: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "PENDING" | "PROCESSING" | "COMPLETE" | "PARTIAL" | "FAILED" | "UNAVAILABLE";
+            /** Tracks */
+            tracks: components["schemas"]["TranscriptTrack"][];
+            /** Uncertain */
+            uncertain: boolean;
         };
         /** Sla */
         Sla: {
@@ -4839,6 +5208,23 @@ export interface components {
             /** Items */
             items: components["schemas"]["TimelineItem"][];
         };
+        /** TimelineGap */
+        TimelineGap: {
+            /** Estimated */
+            estimated: boolean;
+            /** Reason */
+            reason: string | null;
+            /** Segment */
+            segment: number;
+            /** Seqs */
+            seqs: number[];
+            /** Timeline End */
+            timeline_end: number;
+            /** Timeline Start */
+            timeline_start: number;
+            /** Type */
+            type: string;
+        };
         /** TimelineItem */
         TimelineItem: {
             /** Actor Ref */
@@ -4863,6 +5249,265 @@ export interface components {
             route: string | null;
             /** Summary */
             summary: string;
+        };
+        /** TimelineSegment */
+        TimelineSegment: {
+            /** Length */
+            length: number;
+            /** Segment */
+            segment: number;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Timeline Start */
+            timeline_start: number;
+        };
+        /** TimelineSpan */
+        TimelineSpan: {
+            /** Sample Count */
+            sample_count: number;
+            /** Segment */
+            segment: number;
+            /** Seq */
+            seq: number;
+            /** Start Sample */
+            start_sample: number;
+            /** Timeline Start */
+            timeline_start: number;
+            /** Wav Offset */
+            wav_offset: number;
+        };
+        /** TimelineTrack */
+        TimelineTrack: {
+            /** Asset Ref */
+            asset_ref: string;
+            /** Content Sha256 */
+            content_sha256: string | null;
+            /** Coverage */
+            coverage: string;
+            /** Gaps */
+            gaps: components["schemas"]["TimelineGap"][];
+            /** Media Status */
+            media_status: string;
+            /** Spans */
+            spans: components["schemas"]["TimelineSpan"][];
+            /** Stored Samples */
+            stored_samples: number;
+        };
+        /** TranscriptProblem */
+        TranscriptProblem: {
+            /** Code */
+            code: string;
+            /** Track */
+            track: string;
+        };
+        /** TranscriptRetryOut */
+        TranscriptRetryOut: {
+            /** Queued Tracks */
+            queued_tracks: ("MIC" | "PROVIDER_PLAYBACK")[];
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "PENDING" | "PROCESSING" | "COMPLETE" | "PARTIAL" | "FAILED" | "UNAVAILABLE";
+        };
+        /**
+         * TranscriptRun
+         * @description One transcription of one stored track with its full provenance (D-49). Immutable once DONE or FAILED.
+         */
+        TranscriptRun: {
+            /** Attempts */
+            attempts: number;
+            /** Config */
+            config: {
+                [key: string]: unknown;
+            };
+            /** Config Sha256 */
+            config_sha256: string;
+            /** Engine */
+            engine: string;
+            /** Engine Version */
+            engine_version: string;
+            /** Error Code */
+            error_code: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /** Input Content Sha256 */
+            input_content_sha256: string;
+            /**
+             * Language
+             * @constant
+             */
+            language: "en";
+            /** Metrics */
+            metrics: {
+                [key: string]: unknown;
+            };
+            /** Model Id */
+            model_id: string;
+            /** Model Revision */
+            model_revision: string;
+            /** Model Sha256 */
+            model_sha256: string;
+            /** Purged At */
+            purged_at: string | null;
+            /**
+             * Requested At
+             * Format: date-time
+             */
+            requested_at: string;
+            /** Revision */
+            revision: number;
+            /** Run Ref */
+            run_ref: string;
+            /** Source Event Seq */
+            source_event_seq: number;
+            /** Started At */
+            started_at: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "PENDING" | "PROCESSING" | "DONE" | "FAILED";
+            /** Text Sha256 */
+            text_sha256: string | null;
+            /**
+             * Track
+             * @enum {string}
+             */
+            track: "MIC" | "PROVIDER_PLAYBACK";
+        };
+        /**
+         * TranscriptSegmentOut
+         * @description One recognised (SPEECH) or rejected (UNRECOGNIZED, never with text) stretch of one track. Times are on the
+         *     session recording timeline; ``wav_offset_ms`` is the position in that track's evidence WAV.
+         */
+        TranscriptSegmentOut: {
+            /** Avg Logprob */
+            avg_logprob: number;
+            /**
+             * Confidence
+             * @enum {string}
+             */
+            confidence: "NORMAL" | "LOW";
+            /** End Sample */
+            end_sample: number;
+            /** Flags */
+            flags: string[];
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "SPEECH" | "UNRECOGNIZED";
+            /** No Speech Prob */
+            no_speech_prob: number;
+            /** Ordinal */
+            ordinal: number;
+            /** Rec Segment */
+            rec_segment: number;
+            /** Run Ref */
+            run_ref: string;
+            /**
+             * Speaker
+             * @enum {string}
+             */
+            speaker: "CALLER_MIC" | "MOCK_PROVIDER";
+            /** Speaker Label */
+            speaker_label: string;
+            /** Start Sample */
+            start_sample: number;
+            /** Text */
+            text: string | null;
+            /** Text Available */
+            text_available: boolean;
+            /** Time Alignment */
+            time_alignment: string;
+            /** Timeline End Ms */
+            timeline_end_ms: number;
+            /** Timeline Start Ms */
+            timeline_start_ms: number;
+            /**
+             * Track
+             * @enum {string}
+             */
+            track: "MIC" | "PROVIDER_PLAYBACK";
+            /** Uncertain Words */
+            uncertain_words: number;
+            /** Wav Offset Ms */
+            wav_offset_ms: number | null;
+            /** Word Count */
+            word_count: number;
+            /** Words */
+            words: components["schemas"]["TranscriptWord"][];
+        };
+        /** TranscriptSegments */
+        TranscriptSegments: {
+            /** Problems */
+            problems: components["schemas"]["TranscriptProblem"][];
+            /**
+             * Review Status
+             * @constant
+             */
+            review_status: "NOT_REVIEWED";
+            /** Segments */
+            segments: components["schemas"]["TranscriptSegmentOut"][];
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "PENDING" | "PROCESSING" | "COMPLETE" | "PARTIAL" | "FAILED" | "UNAVAILABLE";
+            timeline: components["schemas"]["RecordingTimeline"];
+        };
+        /** TranscriptTrack */
+        TranscriptTrack: {
+            /** Low Confidence Segments */
+            low_confidence_segments: number;
+            /** Revisions */
+            revisions: number;
+            run: components["schemas"]["TranscriptRun"] | null;
+            /**
+             * Speaker
+             * @enum {string}
+             */
+            speaker: "CALLER_MIC" | "MOCK_PROVIDER";
+            /** Speaker Label */
+            speaker_label: string;
+            /** Speech Segments */
+            speech_segments: number;
+            /**
+             * Track
+             * @enum {string}
+             */
+            track: "MIC" | "PROVIDER_PLAYBACK";
+            /** Uncertain Words */
+            uncertain_words: number;
+            /** Unrecognized Segments */
+            unrecognized_segments: number;
+        };
+        /** TranscriptWord */
+        TranscriptWord: {
+            /** Probability */
+            probability: number;
+            /** Text */
+            text: string;
+            /** Timeline End Ms */
+            timeline_end_ms: number;
+            /** Timeline Start Ms */
+            timeline_start_ms: number;
+            /** Uncertain */
+            uncertain: boolean;
         };
         /** TrendPoint */
         TrendPoint: {
@@ -4944,6 +5589,7 @@ export interface components {
             provider: string | null;
             /** Reason */
             reason: string;
+            recording_notice: components["schemas"]["RecordingNotice"] | null;
             /** Stage */
             stage: string;
             /**
@@ -4961,6 +5607,10 @@ export interface components {
              * Format: uuid
              */
             case_id: string;
+            /** Consent Notice Version */
+            consent_notice_version?: string | null;
+            /** Recording Consent */
+            recording_consent?: ("GRANTED" | "DECLINED") | null;
         };
         /** VoiceSessionEvent */
         VoiceSessionEvent: {
@@ -4996,6 +5646,12 @@ export interface components {
          *     never in a URL.
          */
         VoiceSessionOut: {
+            /**
+             * Attempt Kind
+             * @default TEST_SESSION
+             * @constant
+             */
+            attempt_kind: "TEST_SESSION";
             /** Attempt Ref */
             attempt_ref: string;
             /**
@@ -5032,11 +5688,10 @@ export interface components {
             /** Provider */
             provider: string;
             /**
-             * Recording
-             * @default DISABLED
-             * @constant
+             * Recording Consent
+             * @enum {string}
              */
-            recording: "DISABLED";
+            recording_consent: "GRANTED" | "DECLINED";
             /**
              * Resumed
              * @default false
@@ -5063,6 +5718,12 @@ export interface components {
         };
         /** VoiceSessionStatus */
         VoiceSessionStatus: {
+            /**
+             * Attempt Kind
+             * @default TEST_SESSION
+             * @constant
+             */
+            attempt_kind: "TEST_SESSION";
             /** Attempt Ref */
             attempt_ref: string;
             /** Can Resume */
@@ -5096,12 +5757,7 @@ export interface components {
             identity_verification: "NOT_PERFORMED";
             /** Interruptions */
             interruptions: number;
-            /**
-             * Recording
-             * @default DISABLED
-             * @constant
-             */
-            recording: "DISABLED";
+            recording: components["schemas"]["RecordingSummary"];
             /** Responses */
             responses: number;
             /**
@@ -9822,7 +10478,144 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Availability"];
+                    "application/json": components["schemas"]["SessionMedia"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    session_media_timeline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordingTimeline"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    session_media_audio: {
+        parameters: {
+            query?: {
+                purpose?: "DOWNLOAD" | "PLAYBACK";
+            };
+            header?: never;
+            path: {
+                session_id: string;
+                track: "MIC" | "PROVIDER_PLAYBACK";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description WAV of the stored chunks, in order */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "audio/wav": unknown;
                 };
             };
             /** @description Unauthorized */
@@ -9889,7 +10682,141 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Availability"];
+                    "application/json": components["schemas"]["SessionTranscript"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    session_transcript_retry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TranscriptRetryOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    session_transcript_segments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TranscriptSegments"];
                 };
             };
             /** @description Unauthorized */
@@ -10252,6 +11179,166 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VoiceSessionStatus"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    voice_recording_chunk: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordingChunkIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordingChunkAck"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    voice_recording_close: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordingCloseIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordingSummary"];
                 };
             };
             /** @description Unauthorized */

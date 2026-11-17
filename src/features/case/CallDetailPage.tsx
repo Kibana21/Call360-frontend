@@ -1,6 +1,7 @@
 // Call Detail (`/cases/:caseId`), F3: read-only investigation of one Singapore callback case (API-037…047, API-063;
 // S0_SCREEN_SPEC "Call Detail"). Every value comes from the server; outcome, SLA and control satisfaction are the
-// backend's derivations. Recordings and transcripts do not exist before Stage S1 and are shown as NOT_AVAILABLE.
+// backend's derivations. Seeded S0 sessions have no recording or transcript (NOT_AVAILABLE); browser test sessions
+// from S1 show recording evidence, a synchronised player and the machine transcript (S1-C, S1-D).
 // Each region loads independently, so one failing region leaves the rest usable (partial state).
 import { useQuery } from '@tanstack/react-query';
 import { Fragment, type ReactNode } from 'react';
@@ -10,6 +11,8 @@ import {
   type ScriptAssignment, type SessionDetail, type SurveyRun, type TimelineItem,
 } from '../../api/client';
 import { useAuth } from '../../auth/AuthContext';
+import { RecordingEvidence } from '../voice/RecordingEvidence';
+import { PlaybackProvider, RecordingPlayer, TranscriptPanel } from '../voice/SessionPlayback';
 import { VoiceSessionTimeline } from '../voice/VoiceSessionTimeline';
 import { Icon, type IconName } from '../../components/Icon';
 import { Empty, ErrorState, Forbidden, Loading } from '../../components/StateView';
@@ -211,12 +214,25 @@ export function CallDetailPage() {
               <Region query={attempts} label="contact attempts">{() => <Attempts items={items} selected={selectedAttempt?.id} onSelect={(id) => setParam('attempt', id)} />}</Region>
             </Card>
             <div className="stack" style={{ gap: 15 }}>
+              <PlaybackProvider sessionId={sessionId ?? ''} canPlay={!!media.data?.can_retrieve_audio}
+                enabled={!!media.data && media.data.recording.tracks.some((t) => t.media_status === 'AVAILABLE')}>
               <Card title="Recording" subtitle={selectedAttempt?.session ? `Session ${selectedAttempt.session.session_ref}` : 'No conversation for this attempt'}>
-                <Unavailable q={media} none={!sessionId} fallback="Recording not available — no audio is captured before Stage S1" icon="headphones" testId="cd-recording" />
+                {media.data && media.data.recording.consent !== 'NOT_ASKED' ? (
+                  <div className="stack" style={{ gap: 8 }} data-testid="cd-recording">
+                    <div className="row" style={{ gap: 8 }} role="status"><Icon name="headphones" size="sm" /><strong>{media.data.message}</strong></div>
+                    <div className="xsmall muted">Evidence {media.data.availability.replace(/_/g, ' ').toLowerCase()} · media status {humanize(media.data.media_status)}
+                      {media.data.availability === 'RESTRICTED' ? ' · your role can see the manifest but cannot retrieve audio' : ''}.</div>
+                    {media.data.recording.tracks.some((t) => t.media_status === 'AVAILABLE') ? <RecordingPlayer /> : null}
+                    <RecordingEvidence rec={media.data.recording} downloadBase={media.data.can_retrieve_audio ? `/api/v1/sessions/${sessionId}/media` : null} />
+                  </div>
+                ) : <Unavailable q={media} none={!sessionId} fallback="Recording not available — no audio is captured before Stage S1" icon="headphones" testId="cd-recording" />}
               </Card>
-              <Card title="Transcript" subtitle="Recorded answers are shown under Question results">
-                <Unavailable q={transcript} none={!sessionId} fallback="Transcript not available — transcripts are captured from Stage S1" icon="chat" testId="cd-transcript" />
+              <Card title="Transcript" subtitle="Machine transcript of the recorded tracks, by speaker; recorded answers are under Question results">
+                {sessionId && transcript.data && transcript.data.reason !== 'NO_CAPTURE_BEFORE_S1'
+                  ? <TranscriptPanel sessionId={sessionId} />
+                  : <Unavailable q={transcript} none={!sessionId} fallback="Transcript not available — transcripts are captured from Stage S1" icon="chat" testId="cd-transcript" />}
               </Card>
+              </PlaybackProvider>
               <Card title="Question results" subtitle="Expected-answer policy → observed answer → seeded rule outcome" aside={run.data ? <ControlsBadge run={run.data} /> : null}>
                 {!runId ? <Empty title="No survey run for the selected attempt">Only connected attempts have a conversation session and survey run.</Empty>
                   : <Region query={run} label="survey run">{() => <QuestionCards run={run.data!} />}</Region>}
@@ -281,10 +297,11 @@ function Attempts({ items, selected, onSelect }: { items: Attempt[]; selected?: 
           <div className={`step-dot ${ATTEMPT_TONES[a.status] ?? ''}`} />
           <button type="button" className={`step-body attempt-btn${a.id === selected ? ' selected' : ''}`} aria-pressed={a.id === selected}
             onClick={() => onSelect(a.id)} data-testid={`attempt-${a.sequence}`}>
-            <strong>Attempt {a.sequence} · {humanize(a.status)}{a.transport === 'BROWSER' ? ' · Browser voice test' : ''}</strong>
+            <strong>Attempt {a.sequence} · {humanize(a.status)}{a.attempt_kind === 'TEST_SESSION' ? ' · Browser voice test' : ''}</strong>
+            {a.attempt_kind === 'TEST_SESSION' ? <span data-testid={`attempt-kind-${a.sequence}`}><Badge tone="purple">Test session — not a customer contact</Badge></span> : null}
             {a.started_at ? `${when(a.started_at)} SGT` : 'Not started'}
             <small>{show(a.contact_snapshot.channel)} {show(a.contact_snapshot.masked_value)} · {a.contacted_party ?? 'party not recorded'}</small>
-            <small>{a.session ? `Session ${a.session.session_ref} · ${humanize(a.session.state)}` : 'No conversation or recording created'}</small>
+            <small>{a.session ? `Session ${a.session.session_ref} · ${humanize(a.session.state)} · media ${humanize(a.media_status ?? 'NOT_REQUIRED')}` : 'No conversation or recording created'}</small>
             <small className="mono">{a.attempt_ref} · {humanize(a.record_origin)}</small>
           </button>
         </li>
