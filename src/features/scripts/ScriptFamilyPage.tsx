@@ -9,7 +9,7 @@ import { api, unwrap } from '../../api/client';
 import { Empty } from '../../components/StateView';
 import { Badge, Card, PageHead } from '../../components/ui';
 import { humanize, Region, when } from '../cases/shared';
-import { NewDraftButton, VersionWorkspace } from './ScriptEditor';
+import { METHOD_LABEL, NewDraftButton, VersionWorkspace, ruleSummary } from './ScriptEditor';
 import {
   ContentApprovalBadge, describeCondition, PublishedCaveat, scriptHref, show, StatusBadge, SyntheticBanner,
   type ScriptQuestion, type ScriptVersionDetail, type ScriptVersionSummary,
@@ -151,7 +151,9 @@ function QuestionView({ q, section }: { q: ScriptQuestion; section: number }) {
         <dl className="kv xsmall">
           <dt>Intent</dt><dd>{q.intent ?? '—'}</dd>
           <dt>Revision</dt><dd>r{q.revision} · {q.content_approval_status === 'APPROVED_BY_SC' ? 'Approved by S&C' : 'Synthetic, not production-approved'}</dd>
-          <dt>Expected-answer policy</dt><dd>{humanize(q.expected_answer_policy)}</dd>
+          <dt>Evaluation method</dt><dd>{METHOD_LABEL[q.expected_answer_policy] ?? humanize(q.expected_answer_policy)}</dd>
+          <dt>Evaluation rule</dt><dd data-testid={`read-rule-${q.question_code}`}>{ruleSummary(q)}</dd>
+          <dt>Lifecycle role</dt><dd>{humanize(q.lifecycle_role ?? 'VERIFICATION')} · on failure {humanize(q.on_failure ?? 'CONTINUE')}{q.discloses_policy_information ? ' · discloses policy information (after identity)' : ''}{q.deliver_on_termination ? ' · delivered on termination' : ''}</dd>
           <dt>Expected value</dt><dd>{show(q.expected_value)}</dd>
           {q.policy_fact_key ? <><dt>Compared with policy fact</dt><dd className="mono">{q.policy_fact_key}</dd></> : null}
           <dt>Acceptable variants</dt><dd>{show(q.acceptable_variants)}</dd>

@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { App } from '../../App';
 import { json, ME, renderAt, stubApi } from '../../test/render';
 import { describeCondition } from './shared';
+import { ruleSummary } from './ScriptEditor';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -87,7 +88,7 @@ describe('Script Studio', () => {
     expect(sections.map((s) => within(s).getByRole('heading').textContent)).toEqual(['1. Common', '2. Elevated risk']);
     expect(sections[1]).toHaveTextContent('SBQ risk band is High');
     const q = screen.getByTestId('question-Q-REP-DISCLOSED');
-    expect(q).toHaveTextContent('Exact boolean');
+    expect(q).toHaveTextContent('Expected yes / no');
     expect(within(q).getByTestId('question-controls')).toHaveTextContent('SYN-CTRL-01');
     expect(within(q).getByText(/Regulatory reference \(public, separate from the AIA control\)/)).toBeInTheDocument();
     expect(screen.getByTestId('immutable-note')).toHaveTextContent('Immutable version');
@@ -154,6 +155,69 @@ describe('Script Studio', () => {
     await userEvent.click(await screen.findByTestId('sv-tab-review'));
     expect(screen.getByTestId('maker-note')).toHaveTextContent('another S&C checker must review and publish it');
     expect(screen.queryByTestId('approve')).toBeNull();
+  });
+
+  it('configures lifecycle items within the system-enforced gate policies (S2-D.1)', async () => {
+    const posts: unknown[] = [];
+    const AUTHOR = { ...USER, permissions: [...USER.permissions, 'script.edit'] };
+    const LIFE = { stages: ['OPENING', 'IDENTITY', 'DISCLOSURE', 'CONSENT', 'VERIFICATION', 'CLOSING'], kind_stage: { IDENTITY: 'IDENTITY', COMMON: 'VERIFICATION' }, events: {}, assumptions: ['synthetic'],
+      roles: [{ role: 'IDENTITY_CHECK', stage: 'IDENTITY', answer_types: ['YES_NO'], on_failure: ['TERMINATE'], default_on_failure: 'TERMINATE', statement: false },
+        { role: 'RECORDING_CONSENT', stage: 'CONSENT', answer_types: ['YES_NO'], on_failure: ['CONTINUE_WITHOUT_RECORDING', 'TERMINATE'], default_on_failure: 'CONTINUE_WITHOUT_RECORDING', statement: false },
+        { role: 'VERIFICATION', stage: 'VERIFICATION', answer_types: ['YES_NO', 'NUMERIC', 'ENUM', 'FREE_TEXT', 'ACKNOWLEDGEMENT'], on_failure: ['CONTINUE', 'TERMINATE'], default_on_failure: 'CONTINUE', statement: false }] };
+    const draft = { ...DETAIL, status: 'DRAFT', manifest_sha256: null, validation_status: 'NOT_VALIDATED', row_version: 7, makers: [ME.principal.principal_id],
+      sections: [sec(1, 'SYN_ID', 'Identity (synthetic)', 'IDENTITY', null, [], 'DRAFT')] };
+    stubApi(base({
+      'GET /api/v1/me': () => json(200, AUTHOR), ...familyRoutes(draft, [summary('v11', '1.1', 'DRAFT')]),
+      'GET /api/v1/script-authoring/options': () => json(200, { ...OPTIONS, module_kinds: [...OPTIONS.module_kinds, 'IDENTITY'], lifecycle: LIFE }),
+      'POST /api/v1/script-versions/v11/sections/s-SYN_ID/questions': async (r) => { posts.push(await r.json()); return json(200, { script_version_id: 'v11', row_version: 8 }); },
+    }));
+    renderAt(<App />, '/scripts/f1?version=v11');
+    await userEvent.click(await screen.findByTestId('add-question'));
+    const lifecycle = await screen.findByTestId('lifecycle-fields');
+    expect(screen.getByTestId('q-role')).toHaveValue('IDENTITY_CHECK'); // the section's stage sets the default role
+    expect(screen.getByTestId('q-on-failure')).toBeDisabled(); // identity failure always terminates
+    expect(lifecycle).toHaveTextContent('System-enforced');
+    expect(screen.getByTestId('q-discloses')).toBeDisabled(); // no policy information in the identity stage
+    expect(screen.getByLabelText('Answer type')).toHaveDisplayValue('Yes no');
+    await userEvent.type(screen.getByLabelText('Question code'), 'Q-SYN-ID-NAME');
+    await userEvent.type(screen.getByLabelText(/Exact customer wording/), '[Synthetic] Am I speaking with the policy owner?');
+    await userEvent.type(screen.getByLabelText(/Intent/), 'Synthetic identity check');
+    await userEvent.click(screen.getByTestId('question-save'));
+    await waitFor(() => expect(posts).toHaveLength(1));
+    expect((posts[0] as { content: Record<string, unknown> }).content).toMatchObject({ lifecycle_role: 'IDENTITY_CHECK', on_failure: 'TERMINATE', answer_type: 'YES_NO', discloses_policy_information: false });
+  });
+
+  it('configures a structured evaluation rule: policy fact, unit, approved tolerance and its reference (S3-A)', async () => {
+    const posts: unknown[] = [];
+    const AUTHOR = { ...USER, permissions: [...USER.permissions, 'script.edit'] };
+    const EVAL = { operators: { EQ: 'equal to', GTE: 'at least' }, units: { YEARS: 'years', MONTHS: 'months', SGD: 'SGD' }, note: 'No tolerance or threshold is assumed.',
+      facts: { premium_term_years: { kind: 'NUMERIC', unit: 'YEARS', units: ['YEARS', 'MONTHS'], label: 'Premium term' }, premium_frequency: { kind: 'ENUM', values: ['ANNUAL'], label: 'Frequency' } } };
+    const draft = { ...DETAIL, status: 'DRAFT', manifest_sha256: null, validation_status: 'NOT_VALIDATED', row_version: 7, makers: [ME.principal.principal_id],
+      sections: [sec(1, 'SYN_CORE', 'Core (synthetic)', 'COMMON', null, [], 'DRAFT')] };
+    stubApi(base({
+      'GET /api/v1/me': () => json(200, AUTHOR), ...familyRoutes(draft, [summary('v11', '1.1', 'DRAFT')]),
+      'GET /api/v1/script-authoring/options': () => json(200, { ...OPTIONS, evaluation: EVAL }),
+      'POST /api/v1/script-versions/v11/sections/s-SYN_CORE/questions': async (r) => { posts.push(await r.json()); return json(200, { script_version_id: 'v11', row_version: 8 }); },
+    }));
+    renderAt(<App />, '/scripts/f1?version=v11');
+    await userEvent.click(await screen.findByTestId('add-question'));
+    await userEvent.selectOptions(await screen.findByLabelText('Answer type'), 'NUMERIC');
+    expect(screen.getByTestId('q-method')).toHaveValue('NUMERIC_MATCH_POLICY_FACT');
+    await userEvent.selectOptions(screen.getByTestId('q-fact'), 'premium_term_years');
+    expect(screen.getByTestId('q-fact')).not.toHaveTextContent('premium_frequency'); // only numeric facts for a numeric rule
+    await userEvent.selectOptions(screen.getByTestId('q-unit'), 'MONTHS');
+    await userEvent.clear(screen.getByTestId('q-tolerance'));
+    await userEvent.type(screen.getByTestId('q-tolerance'), '1');
+    await userEvent.type(await screen.findByTestId('q-tolerance-ref'), 'SYN-TOL-1');
+    expect(screen.getByTestId('evaluation-fields')).toHaveTextContent('No tolerance or threshold is assumed');
+    await userEvent.type(screen.getByLabelText('Question code'), 'Q-SYN-TERM');
+    await userEvent.type(screen.getByLabelText(/Exact customer wording/), '[Synthetic] For how many months will you pay premiums?');
+    await userEvent.type(screen.getByLabelText(/Intent/), 'Synthetic premium term');
+    await userEvent.click(screen.getByTestId('question-save'));
+    await waitFor(() => expect(posts).toHaveLength(1));
+    expect((posts[0] as { content: Record<string, unknown> }).content).toMatchObject({ expected_answer_policy: 'NUMERIC_MATCH_POLICY_FACT', policy_fact_key: 'premium_term_years',
+      evaluation: { operator: 'EQ', unit: 'MONTHS', tolerance: '1', tolerance_reference: 'SYN-TOL-1', value: null } });
+    expect(ruleSummary({ expected_answer_policy: 'NUMERIC_COMPARE', policy_fact_key: null, expected_value: { operator: 'GTE', value: '18', unit: 'COUNT', tolerance: '0' } })).toBe('Expected ≥ 18 COUNT');
   });
 
   it('describes stored conditions without evaluating them', () => {

@@ -565,6 +565,133 @@
         "title": "AdminUserPatch",
         "type": "object"
       },
+      "AnswerEvaluationItem": {
+        "properties": {
+          "answer": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer"
+          },
+          "expected": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
+          "mandatory": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mandatory"
+          },
+          "method": {
+            "title": "Method",
+            "type": "string"
+          },
+          "normalized_answer": {
+            "title": "Normalized Answer"
+          },
+          "question_code": {
+            "title": "Question Code",
+            "type": "string"
+          },
+          "question_revision_id": {
+            "title": "Question Revision Id",
+            "type": "string"
+          },
+          "result": {
+            "title": "Result",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "rule": {
+            "additionalProperties": true,
+            "title": "Rule",
+            "type": "object"
+          },
+          "rule_evaluation_equivalent": {
+            "title": "Rule Evaluation Equivalent",
+            "type": "string"
+          },
+          "rule_text": {
+            "title": "Rule Text",
+            "type": "string"
+          },
+          "stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage"
+          },
+          "wording": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wording"
+          }
+        },
+        "required": [
+          "question_code",
+          "question_revision_id",
+          "revision",
+          "method",
+          "rule",
+          "rule_text",
+          "answer",
+          "expected",
+          "result",
+          "explanation",
+          "rule_evaluation_equivalent"
+        ],
+        "title": "AnswerEvaluationItem",
+        "type": "object"
+      },
       "ApplyAssignmentIn": {
         "properties": {
           "expected_decision_sha256": {
@@ -1770,6 +1897,11 @@
             "title": "Delivery Modes",
             "type": "array"
           },
+          "evaluation": {
+            "additionalProperties": true,
+            "title": "Evaluation",
+            "type": "object"
+          },
           "expected_answer_policies": {
             "items": {
               "type": "string"
@@ -1782,6 +1914,11 @@
               "type": "string"
             },
             "title": "Fact Keys",
+            "type": "object"
+          },
+          "lifecycle": {
+            "additionalProperties": true,
+            "title": "Lifecycle",
             "type": "object"
           },
           "module_kinds": {
@@ -2132,6 +2269,49 @@
           "data_as_of"
         ],
         "title": "CaseFacets",
+        "type": "object"
+      },
+      "CaseFactsOut": {
+        "properties": {
+          "case_id": {
+            "format": "uuid",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "case_ref": {
+            "title": "Case Ref",
+            "type": "string"
+          },
+          "facts": {
+            "additionalProperties": true,
+            "title": "Facts",
+            "type": "object"
+          },
+          "risk_band": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Band"
+          },
+          "snapshot_id": {
+            "format": "uuid",
+            "title": "Snapshot Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "case_id",
+          "case_ref",
+          "snapshot_id",
+          "facts",
+          "risk_band"
+        ],
+        "title": "CaseFactsOut",
         "type": "object"
       },
       "CaseLink": {
@@ -3489,6 +3669,120 @@
           "retryable"
         ],
         "title": "ErrorResponse",
+        "type": "object"
+      },
+      "EvaluationReplay": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "matches": {
+            "title": "Matches",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "matches",
+          "detail"
+        ],
+        "title": "EvaluationReplay",
+        "type": "object"
+      },
+      "EvaluationRuleIn": {
+        "description": "S3-A structured evaluation rule (validated against the answer type, governed operators, units and facts).",
+        "properties": {
+          "accepted": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Accepted",
+            "type": "array"
+          },
+          "operator": {
+            "anyOf": [
+              {
+                "enum": [
+                  "EQ",
+                  "GTE",
+                  "LTE",
+                  "GT",
+                  "LT"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operator"
+          },
+          "tolerance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tolerance"
+          },
+          "tolerance_reference": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tolerance Reference"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "enum": [
+                  "YEARS",
+                  "MONTHS",
+                  "SGD",
+                  "COUNT"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "title": "EvaluationRuleIn",
         "type": "object"
       },
       "ExternalRefOut": {
@@ -8028,6 +8322,11 @@
             "title": "Customer Wording",
             "type": "string"
           },
+          "deliver_on_termination": {
+            "default": false,
+            "title": "Deliver On Termination",
+            "type": "boolean"
+          },
           "delivery_mode": {
             "enum": [
               "CONVERSATIONAL",
@@ -8036,6 +8335,11 @@
             ],
             "title": "Delivery Mode",
             "type": "string"
+          },
+          "discloses_policy_information": {
+            "default": false,
+            "title": "Discloses Policy Information",
+            "type": "boolean"
           },
           "enum_options": {
             "items": {
@@ -8056,6 +8360,16 @@
             ],
             "title": "Escalation Rule Ref"
           },
+          "evaluation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvaluationRuleIn"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "evidence_required": {
             "anyOf": [
               {
@@ -8070,8 +8384,11 @@
           "expected_answer_policy": {
             "enum": [
               "EXACT_BOOLEAN",
-              "NUMERIC_MATCH_POLICY_FACT",
               "ACKNOWLEDGEMENT",
+              "NUMERIC_COMPARE",
+              "NUMERIC_MATCH_POLICY_FACT",
+              "ENUM_MATCH",
+              "ENUM_MATCH_POLICY_FACT",
               "NARRATIVE_REVIEW",
               "COLLECT_ONLY"
             ],
@@ -8093,6 +8410,18 @@
             "title": "Intent",
             "type": "string"
           },
+          "lifecycle_role": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lifecycle Role"
+          },
           "mandatory": {
             "title": "Mandatory",
             "type": "boolean"
@@ -8113,6 +8442,18 @@
               }
             ],
             "title": "Not Applicable Predicate"
+          },
+          "on_failure": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "On Failure"
           },
           "policy_fact_key": {
             "anyOf": [
@@ -12900,6 +13241,855 @@
         "title": "SaleSummary",
         "type": "object"
       },
+      "ScenarioContent": {
+        "properties": {
+          "default_response": {
+            "default": "AFFIRMATIVE",
+            "enum": [
+              "AFFIRMATIVE",
+              "STRICT"
+            ],
+            "title": "Default Response",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "expectations": {
+            "$ref": "#/components/schemas/ScenarioExpectations"
+          },
+          "facts": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "title": "Facts",
+            "type": "object"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 3,
+            "title": "Name",
+            "type": "string"
+          },
+          "risk_band": {
+            "anyOf": [
+              {
+                "maxLength": 16,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Band"
+          },
+          "script_version_id": {
+            "format": "uuid",
+            "title": "Script Version Id",
+            "type": "string"
+          },
+          "source_case_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Case Id"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/ScenarioStep"
+            },
+            "maxItems": 100,
+            "title": "Steps",
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "script_version_id"
+        ],
+        "title": "ScenarioContent",
+        "type": "object"
+      },
+      "ScenarioCopyIn": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "title": "ScenarioCopyIn",
+        "type": "object"
+      },
+      "ScenarioExpectations": {
+        "properties": {
+          "applicable_questions": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 300,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applicable Questions"
+          },
+          "basis": {
+            "anyOf": [
+              {
+                "enum": [
+                  "INDEPENDENT",
+                  "GENERATED_BASELINE"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Basis"
+          },
+          "evaluations": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Evaluations",
+            "type": "object"
+          },
+          "gates": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Gates",
+            "type": "object"
+          },
+          "mandatory_complete": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mandatory Complete"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "maxLength": 20,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome"
+          },
+          "question_states": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Question States",
+            "type": "object"
+          },
+          "sequence": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 300,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sequence"
+          },
+          "termination_reason": {
+            "anyOf": [
+              {
+                "maxLength": 60,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Termination Reason"
+          }
+        },
+        "title": "ScenarioExpectations",
+        "type": "object"
+      },
+      "ScenarioList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ScenarioSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ScenarioList",
+        "type": "object"
+      },
+      "ScenarioOut": {
+        "properties": {
+          "content": {
+            "$ref": "#/components/schemas/ScenarioContent"
+          },
+          "copied_from_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Copied From Ref"
+          },
+          "family": {
+            "title": "Family",
+            "type": "string"
+          },
+          "family_id": {
+            "format": "uuid",
+            "title": "Family Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "revisions": {
+            "items": {
+              "$ref": "#/components/schemas/ScenarioRevisionSummary"
+            },
+            "title": "Revisions",
+            "type": "array"
+          },
+          "row_version": {
+            "title": "Row Version",
+            "type": "integer"
+          },
+          "runs": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Runs",
+            "type": "array"
+          },
+          "scenario_ref": {
+            "title": "Scenario Ref",
+            "type": "string"
+          },
+          "script_content_sha256": {
+            "title": "Script Content Sha256",
+            "type": "string"
+          },
+          "source_case_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Case Ref"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "version_label": {
+            "title": "Version Label",
+            "type": "string"
+          },
+          "version_status": {
+            "title": "Version Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "scenario_ref",
+          "name",
+          "status",
+          "row_version",
+          "family_id",
+          "family",
+          "copied_from_ref",
+          "revision",
+          "version_label",
+          "version_status",
+          "script_content_sha256",
+          "source_case_ref",
+          "content",
+          "revisions",
+          "runs"
+        ],
+        "title": "ScenarioOut",
+        "type": "object"
+      },
+      "ScenarioPreviewIn": {
+        "properties": {
+          "default_response": {
+            "default": "AFFIRMATIVE",
+            "enum": [
+              "AFFIRMATIVE",
+              "STRICT"
+            ],
+            "title": "Default Response",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "expectations": {
+            "$ref": "#/components/schemas/ScenarioExpectations"
+          },
+          "facts": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "title": "Facts",
+            "type": "object"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "risk_band": {
+            "anyOf": [
+              {
+                "maxLength": 16,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Band"
+          },
+          "script_version_id": {
+            "format": "uuid",
+            "title": "Script Version Id",
+            "type": "string"
+          },
+          "source_case_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Case Id"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/ScenarioStep"
+            },
+            "maxItems": 100,
+            "title": "Steps",
+            "type": "array"
+          }
+        },
+        "required": [
+          "script_version_id"
+        ],
+        "title": "ScenarioPreviewIn",
+        "type": "object"
+      },
+      "ScenarioPreviewOut": {
+        "properties": {
+          "actual": {
+            "additionalProperties": true,
+            "title": "Actual",
+            "type": "object"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "failures": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Failures",
+            "type": "array"
+          },
+          "problems": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Problems",
+            "type": "array"
+          },
+          "response_log": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Response Log",
+            "type": "array"
+          },
+          "stale_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Stale Reasons",
+            "type": "array"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "version_label": {
+            "title": "Version Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "version_label",
+          "problems",
+          "failures",
+          "error",
+          "stale_reasons",
+          "actual",
+          "response_log"
+        ],
+        "title": "ScenarioPreviewOut",
+        "type": "object"
+      },
+      "ScenarioReviseIn": {
+        "properties": {
+          "change_note": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Note"
+          },
+          "content": {
+            "$ref": "#/components/schemas/ScenarioContent"
+          },
+          "expected_row_version": {
+            "title": "Expected Row Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "expected_row_version",
+          "content"
+        ],
+        "title": "ScenarioReviseIn",
+        "type": "object"
+      },
+      "ScenarioRevisionSummary": {
+        "properties": {
+          "change_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Note"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "version_label": {
+            "title": "Version Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "revision",
+          "created_at",
+          "created_by",
+          "change_note",
+          "version_label"
+        ],
+        "title": "ScenarioRevisionSummary",
+        "type": "object"
+      },
+      "ScenarioRunIn": {
+        "properties": {
+          "compare_with_version_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compare With Version Id"
+          },
+          "scenario_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "title": "Scenario Ids",
+            "type": "array"
+          },
+          "script_version_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Script Version Id"
+          }
+        },
+        "required": [
+          "scenario_ids"
+        ],
+        "title": "ScenarioRunIn",
+        "type": "object"
+      },
+      "ScenarioStatusIn": {
+        "properties": {
+          "expected_row_version": {
+            "title": "Expected Row Version",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "ARCHIVED"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_row_version",
+          "status"
+        ],
+        "title": "ScenarioStatusIn",
+        "type": "object"
+      },
+      "ScenarioStep": {
+        "properties": {
+          "event": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event"
+          },
+          "kind": {
+            "enum": [
+              "ANSWER",
+              "UNCLEAR",
+              "REFUSED",
+              "UNKNOWN",
+              "CLARIFICATION",
+              "NOT_DELIVERED",
+              "DELIVERED",
+              "EVENT"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "question": {
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Question",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "question",
+          "kind"
+        ],
+        "title": "ScenarioStep",
+        "type": "object"
+      },
+      "ScenarioSummary": {
+        "properties": {
+          "current_revision": {
+            "title": "Current Revision",
+            "type": "integer"
+          },
+          "default_response": {
+            "title": "Default Response",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "family": {
+            "title": "Family",
+            "type": "string"
+          },
+          "family_id": {
+            "format": "uuid",
+            "title": "Family Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "last_run_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Run At"
+          },
+          "last_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Status"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "row_version": {
+            "title": "Row Version",
+            "type": "integer"
+          },
+          "scenario_ref": {
+            "title": "Scenario Ref",
+            "type": "string"
+          },
+          "script_version_id": {
+            "format": "uuid",
+            "title": "Script Version Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "steps": {
+            "title": "Steps",
+            "type": "integer"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "version_label": {
+            "title": "Version Label",
+            "type": "string"
+          },
+          "version_status": {
+            "title": "Version Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "scenario_ref",
+          "name",
+          "status",
+          "current_revision",
+          "row_version",
+          "updated_at",
+          "family_id",
+          "family",
+          "script_version_id",
+          "version_label",
+          "version_status",
+          "description",
+          "default_response",
+          "steps",
+          "last_status",
+          "last_run_at"
+        ],
+        "title": "ScenarioSummary",
+        "type": "object"
+      },
       "ScriptAssignmentList": {
         "properties": {
           "items": {
@@ -13423,9 +14613,19 @@
             "title": "Controls",
             "type": "array"
           },
+          "deliver_on_termination": {
+            "default": false,
+            "title": "Deliver On Termination",
+            "type": "boolean"
+          },
           "delivery_mode": {
             "title": "Delivery Mode",
             "type": "string"
+          },
+          "discloses_policy_information": {
+            "default": false,
+            "title": "Discloses Policy Information",
+            "type": "boolean"
           },
           "escalation_rule_ref": {
             "anyOf": [
@@ -13460,6 +14660,11 @@
             ],
             "title": "Intent"
           },
+          "lifecycle_role": {
+            "default": "VERIFICATION",
+            "title": "Lifecycle Role",
+            "type": "string"
+          },
           "mandatory": {
             "title": "Mandatory",
             "type": "boolean"
@@ -13475,6 +14680,11 @@
           },
           "not_applicable_predicate": {
             "title": "Not Applicable Predicate"
+          },
+          "on_failure": {
+            "default": "CONTINUE",
+            "title": "On Failure",
+            "type": "string"
           },
           "policy_fact_key": {
             "anyOf": [
@@ -14219,7 +15429,12 @@
                   "COMMON",
                   "PRODUCT",
                   "RISK",
-                  "LANGUAGE"
+                  "LANGUAGE",
+                  "OPENING",
+                  "IDENTITY",
+                  "DISCLOSURE",
+                  "CONSENT",
+                  "CLOSING"
                 ],
                 "type": "string"
               },
@@ -14725,6 +15940,399 @@
         "title": "SessionTranscript",
         "type": "object"
       },
+      "SimActionOut": {
+        "properties": {
+          "action_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Action Id"
+          },
+          "answer_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer Type"
+          },
+          "completes_on_delivery": {
+            "default": false,
+            "title": "Completes On Delivery",
+            "type": "boolean"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "mandatory": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mandatory"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "presented": {
+            "title": "Presented",
+            "type": "boolean"
+          },
+          "question_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Question Code"
+          },
+          "reprompts_allowed": {
+            "title": "Reprompts Allowed",
+            "type": "integer"
+          },
+          "reprompts_used": {
+            "title": "Reprompts Used",
+            "type": "integer"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage"
+          },
+          "statement": {
+            "title": "Statement",
+            "type": "boolean"
+          },
+          "verbatim_required": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verbatim Required"
+          },
+          "wording": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wording"
+          }
+        },
+        "required": [
+          "kind",
+          "action_id",
+          "question_code",
+          "wording",
+          "answer_type",
+          "options",
+          "mandatory",
+          "verbatim_required",
+          "presented",
+          "reprompts_used",
+          "reprompts_allowed",
+          "statement",
+          "note"
+        ],
+        "title": "SimActionOut",
+        "type": "object"
+      },
+      "SimAnswerIn": {
+        "properties": {
+          "action_id": {
+            "maxLength": 80,
+            "title": "Action Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "ANSWER",
+              "UNCLEAR",
+              "REFUSED",
+              "UNKNOWN"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "verbatim": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verbatim"
+          }
+        },
+        "required": [
+          "action_id",
+          "kind"
+        ],
+        "title": "SimAnswerIn",
+        "type": "object"
+      },
+      "SimBatchList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SimBatchSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "SimBatchList",
+        "type": "object"
+      },
+      "SimBatchOut": {
+        "properties": {
+          "batch_ref": {
+            "title": "Batch Ref",
+            "type": "string"
+          },
+          "comparison": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Comparison",
+            "type": "array"
+          },
+          "coverage": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Coverage",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/SimResultOut"
+            },
+            "title": "Results",
+            "type": "array"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "started_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started By"
+          },
+          "totals": {
+            "additionalProperties": true,
+            "title": "Totals",
+            "type": "object"
+          },
+          "version_a": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version A"
+          },
+          "version_b": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version B"
+          }
+        },
+        "required": [
+          "id",
+          "batch_ref",
+          "kind",
+          "totals",
+          "started_at",
+          "started_by",
+          "version_a",
+          "version_b",
+          "results",
+          "coverage",
+          "comparison",
+          "note"
+        ],
+        "title": "SimBatchOut",
+        "type": "object"
+      },
+      "SimBatchSummary": {
+        "properties": {
+          "batch_ref": {
+            "title": "Batch Ref",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "started_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started By"
+          },
+          "totals": {
+            "additionalProperties": true,
+            "title": "Totals",
+            "type": "object"
+          },
+          "version_a": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version A"
+          },
+          "version_b": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version B"
+          }
+        },
+        "required": [
+          "id",
+          "batch_ref",
+          "kind",
+          "totals",
+          "started_at",
+          "started_by",
+          "version_a",
+          "version_b"
+        ],
+        "title": "SimBatchSummary",
+        "type": "object"
+      },
       "SimCase": {
         "properties": {
           "baseline": {
@@ -14789,6 +16397,26 @@
         "title": "SimCase",
         "type": "object"
       },
+      "SimClarificationIn": {
+        "properties": {
+          "action_id": {
+            "maxLength": 80,
+            "title": "Action Id",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 300,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action_id",
+          "reason"
+        ],
+        "title": "SimClarificationIn",
+        "type": "object"
+      },
       "SimConditionResult": {
         "properties": {
           "actual": {
@@ -14829,6 +16457,34 @@
           "result"
         ],
         "title": "SimConditionResult",
+        "type": "object"
+      },
+      "SimContactOut": {
+        "properties": {
+          "assignment_contact": {
+            "title": "Assignment Contact",
+            "type": "boolean"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "selection_id": {
+            "title": "Selection Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "selection_id",
+          "role",
+          "label",
+          "assignment_contact"
+        ],
+        "title": "SimContactOut",
         "type": "object"
       },
       "SimDecision": {
@@ -14900,6 +16556,455 @@
         "title": "SimDecision",
         "type": "object"
       },
+      "SimDeliveryIn": {
+        "properties": {
+          "action_id": {
+            "maxLength": 80,
+            "title": "Action Id",
+            "type": "string"
+          },
+          "delivered": {
+            "title": "Delivered",
+            "type": "boolean"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "required": [
+          "action_id",
+          "delivered"
+        ],
+        "title": "SimDeliveryIn",
+        "type": "object"
+      },
+      "SimEligibleCase": {
+        "properties": {
+          "case_id": {
+            "format": "uuid",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "case_ref": {
+            "title": "Case Ref",
+            "type": "string"
+          },
+          "origin": {
+            "title": "Origin",
+            "type": "string"
+          },
+          "script_label": {
+            "title": "Script Label",
+            "type": "string"
+          },
+          "simulations": {
+            "title": "Simulations",
+            "type": "integer"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "case_id",
+          "case_ref",
+          "state",
+          "script_label",
+          "origin",
+          "simulations"
+        ],
+        "title": "SimEligibleCase",
+        "type": "object"
+      },
+      "SimEligibleCases": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SimEligibleCase"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "SimEligibleCases",
+        "type": "object"
+      },
+      "SimEndIn": {
+        "properties": {
+          "abandon": {
+            "default": false,
+            "title": "Abandon",
+            "type": "boolean"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "title": "SimEndIn",
+        "type": "object"
+      },
+      "SimEvaluationList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SimEvaluationSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "SimEvaluationList",
+        "type": "object"
+      },
+      "SimEvaluationOut": {
+        "properties": {
+          "case_ref": {
+            "title": "Case Ref",
+            "type": "string"
+          },
+          "content_sha256": {
+            "title": "Content Sha256",
+            "type": "string"
+          },
+          "content_source": {
+            "title": "Content Source",
+            "type": "string"
+          },
+          "controller_outcome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Controller Outcome"
+          },
+          "controller_status": {
+            "title": "Controller Status",
+            "type": "string"
+          },
+          "created": {
+            "default": false,
+            "title": "Created",
+            "type": "boolean"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By Name"
+          },
+          "engine_version": {
+            "title": "Engine Version",
+            "type": "string"
+          },
+          "evaluation_ref": {
+            "title": "Evaluation Ref",
+            "type": "string"
+          },
+          "events_evaluated": {
+            "title": "Events Evaluated",
+            "type": "integer"
+          },
+          "events_sha256": {
+            "title": "Events Sha256",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "input_sha256": {
+            "title": "Input Sha256",
+            "type": "string"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "policy_fact_snapshot_id": {
+            "format": "uuid",
+            "title": "Policy Fact Snapshot Id",
+            "type": "string"
+          },
+          "policy_fact_snapshot_sha256": {
+            "title": "Policy Fact Snapshot Sha256",
+            "type": "string"
+          },
+          "replay": {
+            "$ref": "#/components/schemas/EvaluationReplay"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/AnswerEvaluationItem"
+            },
+            "title": "Results",
+            "type": "array"
+          },
+          "run_id": {
+            "format": "uuid",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "script_label": {
+            "title": "Script Label",
+            "type": "string"
+          },
+          "script_version_id": {
+            "format": "uuid",
+            "title": "Script Version Id",
+            "type": "string"
+          },
+          "sim_ref": {
+            "title": "Sim Ref",
+            "type": "string"
+          },
+          "totals": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Totals",
+            "type": "object"
+          },
+          "version_status": {
+            "title": "Version Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "evaluation_ref",
+          "events_evaluated",
+          "engine_version",
+          "controller_status",
+          "controller_outcome",
+          "totals",
+          "created_at",
+          "created_by_name",
+          "run_id",
+          "sim_ref",
+          "case_ref",
+          "mode",
+          "script_version_id",
+          "script_label",
+          "version_status",
+          "content_sha256",
+          "content_source",
+          "policy_fact_snapshot_id",
+          "policy_fact_snapshot_sha256",
+          "input_sha256",
+          "events_sha256",
+          "results",
+          "replay",
+          "note"
+        ],
+        "title": "SimEvaluationOut",
+        "type": "object"
+      },
+      "SimEvaluationSummary": {
+        "properties": {
+          "controller_outcome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Controller Outcome"
+          },
+          "controller_status": {
+            "title": "Controller Status",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By Name"
+          },
+          "engine_version": {
+            "title": "Engine Version",
+            "type": "string"
+          },
+          "evaluation_ref": {
+            "title": "Evaluation Ref",
+            "type": "string"
+          },
+          "events_evaluated": {
+            "title": "Events Evaluated",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "totals": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Totals",
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "evaluation_ref",
+          "events_evaluated",
+          "engine_version",
+          "controller_status",
+          "controller_outcome",
+          "totals",
+          "created_at",
+          "created_by_name"
+        ],
+        "title": "SimEvaluationSummary",
+        "type": "object"
+      },
+      "SimEventIn": {
+        "properties": {
+          "kind": {
+            "enum": [
+              "WRONG_PERSON",
+              "CALLBACK_REQUESTED",
+              "DECLINED_TO_CONTINUE",
+              "INTERRUPTED"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "SimEventIn",
+        "type": "object"
+      },
+      "SimEventOut": {
+        "properties": {
+          "action_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Action Id"
+          },
+          "actor": {
+            "title": "Actor",
+            "type": "string"
+          },
+          "data": {
+            "additionalProperties": true,
+            "title": "Data",
+            "type": "object"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "question_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Question Code"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "seq",
+          "event_type",
+          "question_code",
+          "action_id",
+          "data",
+          "actor",
+          "occurred_at"
+        ],
+        "title": "SimEventOut",
+        "type": "object"
+      },
       "SimExisting": {
         "properties": {
           "assigned_at": {
@@ -14939,6 +17044,536 @@
           "assigned_at"
         ],
         "title": "SimExisting",
+        "type": "object"
+      },
+      "SimPlanOut": {
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "case_id": {
+            "format": "uuid",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "case_ref": {
+            "title": "Case Ref",
+            "type": "string"
+          },
+          "contacts": {
+            "items": {
+              "$ref": "#/components/schemas/SimContactOut"
+            },
+            "title": "Contacts",
+            "type": "array"
+          },
+          "content_approval_status": {
+            "title": "Content Approval Status",
+            "type": "string"
+          },
+          "facts": {
+            "additionalProperties": true,
+            "title": "Facts",
+            "type": "object"
+          },
+          "identity_gate_configured": {
+            "default": false,
+            "title": "Identity Gate Configured",
+            "type": "boolean"
+          },
+          "live_eligibility": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Live Eligibility"
+          },
+          "manifest_sha256": {
+            "title": "Manifest Sha256",
+            "type": "string"
+          },
+          "mode": {
+            "default": "TEXT_SIMULATION",
+            "title": "Mode",
+            "type": "string"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/SimPlanQuestion"
+            },
+            "title": "Questions",
+            "type": "array"
+          },
+          "risk_band": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Band"
+          },
+          "script_family_id": {
+            "format": "uuid",
+            "title": "Script Family Id",
+            "type": "string"
+          },
+          "script_label": {
+            "title": "Script Label",
+            "type": "string"
+          },
+          "script_version_id": {
+            "format": "uuid",
+            "title": "Script Version Id",
+            "type": "string"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/SimPlanSection"
+            },
+            "title": "Sections",
+            "type": "array"
+          },
+          "stages": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Stages",
+            "type": "array"
+          },
+          "version_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version Status"
+          }
+        },
+        "required": [
+          "case_id",
+          "case_ref",
+          "script_label",
+          "script_version_id",
+          "script_family_id",
+          "manifest_sha256",
+          "content_approval_status",
+          "facts",
+          "risk_band",
+          "sections",
+          "questions",
+          "contacts",
+          "note"
+        ],
+        "title": "SimPlanOut",
+        "type": "object"
+      },
+      "SimPlanQuestion": {
+        "properties": {
+          "answer_type": {
+            "title": "Answer Type",
+            "type": "string"
+          },
+          "applicable": {
+            "title": "Applicable",
+            "type": "boolean"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "deliver_on_termination": {
+            "default": false,
+            "title": "Deliver On Termination",
+            "type": "boolean"
+          },
+          "delivery_mode": {
+            "title": "Delivery Mode",
+            "type": "string"
+          },
+          "discloses_policy_information": {
+            "default": false,
+            "title": "Discloses Policy Information",
+            "type": "boolean"
+          },
+          "mandatory": {
+            "title": "Mandatory",
+            "type": "boolean"
+          },
+          "max_reprompts": {
+            "title": "Max Reprompts",
+            "type": "integer"
+          },
+          "on_failure": {
+            "default": "CONTINUE",
+            "title": "On Failure",
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "role": {
+            "default": "VERIFICATION",
+            "title": "Role",
+            "type": "string"
+          },
+          "section": {
+            "title": "Section",
+            "type": "string"
+          },
+          "section_name": {
+            "title": "Section Name",
+            "type": "string"
+          },
+          "skip_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skip Reason"
+          },
+          "stage": {
+            "default": "VERIFICATION",
+            "title": "Stage",
+            "type": "string"
+          },
+          "wording": {
+            "title": "Wording",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "revision",
+          "section",
+          "section_name",
+          "position",
+          "wording",
+          "answer_type",
+          "options",
+          "mandatory",
+          "delivery_mode",
+          "max_reprompts",
+          "applicable",
+          "skip_reason"
+        ],
+        "title": "SimPlanQuestion",
+        "type": "object"
+      },
+      "SimPlanSection": {
+        "properties": {
+          "condition": {
+            "title": "Condition",
+            "type": "string"
+          },
+          "included": {
+            "title": "Included",
+            "type": "boolean"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "module_code": {
+            "title": "Module Code",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "stage": {
+            "default": "VERIFICATION",
+            "title": "Stage",
+            "type": "string"
+          }
+        },
+        "required": [
+          "module_code",
+          "name",
+          "kind",
+          "position",
+          "included",
+          "condition"
+        ],
+        "title": "SimPlanSection",
+        "type": "object"
+      },
+      "SimQuestionState": {
+        "properties": {
+          "answer": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer"
+          },
+          "answer_type": {
+            "title": "Answer Type",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "mandatory": {
+            "title": "Mandatory",
+            "type": "boolean"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "reprompts_allowed": {
+            "title": "Reprompts Allowed",
+            "type": "integer"
+          },
+          "reprompts_used": {
+            "title": "Reprompts Used",
+            "type": "integer"
+          },
+          "requests": {
+            "title": "Requests",
+            "type": "integer"
+          },
+          "role": {
+            "default": "VERIFICATION",
+            "title": "Role",
+            "type": "string"
+          },
+          "section": {
+            "title": "Section",
+            "type": "string"
+          },
+          "stage": {
+            "default": "VERIFICATION",
+            "title": "Stage",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "section",
+          "position",
+          "mandatory",
+          "answer_type",
+          "status",
+          "requests",
+          "reprompts_used",
+          "reprompts_allowed",
+          "answer",
+          "reason"
+        ],
+        "title": "SimQuestionState",
+        "type": "object"
+      },
+      "SimResultOut": {
+        "properties": {
+          "actual": {
+            "additionalProperties": true,
+            "title": "Actual",
+            "type": "object"
+          },
+          "content_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Sha256"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "events": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "failures": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Failures",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "plan_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Sha256"
+          },
+          "problems": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Problems",
+            "type": "array"
+          },
+          "response_log": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Response Log",
+            "type": "array"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "scenario_id": {
+            "format": "uuid",
+            "title": "Scenario Id",
+            "type": "string"
+          },
+          "scenario_name": {
+            "title": "Scenario Name",
+            "type": "string"
+          },
+          "scenario_ref": {
+            "title": "Scenario Ref",
+            "type": "string"
+          },
+          "script_version_id": {
+            "format": "uuid",
+            "title": "Script Version Id",
+            "type": "string"
+          },
+          "side": {
+            "title": "Side",
+            "type": "string"
+          },
+          "stale": {
+            "title": "Stale",
+            "type": "boolean"
+          },
+          "stale_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Stale Reasons",
+            "type": "array"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "version_label": {
+            "title": "Version Label",
+            "type": "string"
+          },
+          "version_status": {
+            "title": "Version Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "side",
+          "scenario_id",
+          "scenario_ref",
+          "scenario_name",
+          "revision",
+          "script_version_id",
+          "version_label",
+          "version_status",
+          "content_sha256",
+          "plan_sha256",
+          "status",
+          "stale",
+          "stale_reasons",
+          "problems",
+          "failures",
+          "error",
+          "actual",
+          "response_log",
+          "events"
+        ],
+        "title": "SimResultOut",
         "type": "object"
       },
       "SimRule": {
@@ -15124,6 +17759,304 @@
           "conditions"
         ],
         "title": "SimRuleTrace",
+        "type": "object"
+      },
+      "SimRunList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SimRunSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "SimRunList",
+        "type": "object"
+      },
+      "SimRunOut": {
+        "properties": {
+          "case_id": {
+            "format": "uuid",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "case_ref": {
+            "title": "Case Ref",
+            "type": "string"
+          },
+          "contact_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Role"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "lifecycle": {
+            "additionalProperties": true,
+            "title": "Lifecycle",
+            "type": "object"
+          },
+          "manifest_sha256": {
+            "title": "Manifest Sha256",
+            "type": "string"
+          },
+          "next_action": {
+            "$ref": "#/components/schemas/SimActionOut"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/SimQuestionState"
+            },
+            "title": "Questions",
+            "type": "array"
+          },
+          "replayed": {
+            "default": false,
+            "title": "Replayed",
+            "type": "boolean"
+          },
+          "script_label": {
+            "title": "Script Label",
+            "type": "string"
+          },
+          "script_version_id": {
+            "format": "uuid",
+            "title": "Script Version Id",
+            "type": "string"
+          },
+          "sim_ref": {
+            "title": "Sim Ref",
+            "type": "string"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "summary": {
+            "additionalProperties": true,
+            "title": "Summary",
+            "type": "object"
+          },
+          "trace": {
+            "items": {
+              "$ref": "#/components/schemas/SimEventOut"
+            },
+            "title": "Trace",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "sim_ref",
+          "case_id",
+          "case_ref",
+          "script_label",
+          "script_version_id",
+          "manifest_sha256",
+          "contact_role",
+          "status",
+          "outcome",
+          "started_at",
+          "ended_at",
+          "next_action",
+          "summary",
+          "questions",
+          "trace",
+          "note"
+        ],
+        "title": "SimRunOut",
+        "type": "object"
+      },
+      "SimRunSummary": {
+        "properties": {
+          "contact_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Role"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "mode": {
+            "default": "TEXT_SIMULATION",
+            "title": "Mode",
+            "type": "string"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome"
+          },
+          "script_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Script Label"
+          },
+          "sim_ref": {
+            "title": "Sim Ref",
+            "type": "string"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "started_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started By"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "sim_ref",
+          "status",
+          "outcome",
+          "started_at",
+          "ended_at",
+          "contact_role",
+          "started_by"
+        ],
+        "title": "SimRunSummary",
+        "type": "object"
+      },
+      "SimSkipIn": {
+        "properties": {
+          "action_id": {
+            "maxLength": 80,
+            "title": "Action Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action_id"
+        ],
+        "title": "SimSkipIn",
+        "type": "object"
+      },
+      "SimStartIn": {
+        "properties": {
+          "case_id": {
+            "format": "uuid",
+            "title": "Case Id",
+            "type": "string"
+          },
+          "contact_selection_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Selection Id"
+          },
+          "script_version_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Script Version Id"
+          }
+        },
+        "required": [
+          "case_id"
+        ],
+        "title": "SimStartIn",
         "type": "object"
       },
       "SimSummary": {
@@ -17049,6 +19982,281 @@
           "synthetic_badge"
         ],
         "title": "WorkQueueList",
+        "type": "object"
+      },
+      "WorkbenchOptions": {
+        "properties": {
+          "condition_facts": {
+            "additionalProperties": {
+              "items": {},
+              "type": "array"
+            },
+            "title": "Condition Facts",
+            "type": "object"
+          },
+          "default_responses": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Default Responses",
+            "type": "array"
+          },
+          "evaluation_facts": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evaluation Facts",
+            "type": "array"
+          },
+          "evaluation_results": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evaluation Results",
+            "type": "array"
+          },
+          "events": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Events",
+            "type": "object"
+          },
+          "expectation_bases": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Expectation Bases",
+            "type": "array"
+          },
+          "gate_statuses": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Gate Statuses",
+            "type": "array"
+          },
+          "gates": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Gates",
+            "type": "array"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "outcomes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Outcomes",
+            "type": "array"
+          },
+          "question_states": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Question States",
+            "type": "array"
+          },
+          "risk_bands": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Risk Bands",
+            "type": "array"
+          },
+          "step_kinds": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Step Kinds",
+            "type": "array"
+          },
+          "termination_reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Termination Reasons",
+            "type": "array"
+          }
+        },
+        "required": [
+          "step_kinds",
+          "events",
+          "outcomes",
+          "termination_reasons",
+          "gates",
+          "gate_statuses",
+          "question_states",
+          "default_responses",
+          "condition_facts",
+          "risk_bands",
+          "note"
+        ],
+        "title": "WorkbenchOptions",
+        "type": "object"
+      },
+      "WorkbenchPlanIn": {
+        "properties": {
+          "facts": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "title": "Facts",
+            "type": "object"
+          },
+          "risk_band": {
+            "anyOf": [
+              {
+                "maxLength": 16,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Band"
+          },
+          "script_version_id": {
+            "format": "uuid",
+            "title": "Script Version Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "script_version_id"
+        ],
+        "title": "WorkbenchPlanIn",
+        "type": "object"
+      },
+      "WorkbenchPlanOut": {
+        "properties": {
+          "content_approval_status": {
+            "title": "Content Approval Status",
+            "type": "string"
+          },
+          "content_sha256": {
+            "title": "Content Sha256",
+            "type": "string"
+          },
+          "live_eligibility": {
+            "additionalProperties": true,
+            "title": "Live Eligibility",
+            "type": "object"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/SimPlanQuestion"
+            },
+            "title": "Questions",
+            "type": "array"
+          },
+          "script_label": {
+            "title": "Script Label",
+            "type": "string"
+          },
+          "script_version_id": {
+            "format": "uuid",
+            "title": "Script Version Id",
+            "type": "string"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/SimPlanSection"
+            },
+            "title": "Sections",
+            "type": "array"
+          },
+          "version_status": {
+            "title": "Version Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "script_version_id",
+          "script_label",
+          "version_status",
+          "content_approval_status",
+          "content_sha256",
+          "live_eligibility",
+          "sections",
+          "questions"
+        ],
+        "title": "WorkbenchPlanOut",
+        "type": "object"
+      },
+      "WorkbenchVersion": {
+        "properties": {
+          "content_approval_status": {
+            "title": "Content Approval Status",
+            "type": "string"
+          },
+          "family": {
+            "title": "Family",
+            "type": "string"
+          },
+          "family_id": {
+            "format": "uuid",
+            "title": "Family Id",
+            "type": "string"
+          },
+          "family_name": {
+            "title": "Family Name",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "version_label": {
+            "title": "Version Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "version_label",
+          "status",
+          "content_approval_status",
+          "family_id",
+          "family",
+          "family_name"
+        ],
+        "title": "WorkbenchVersion",
+        "type": "object"
+      },
+      "WorkbenchVersions": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/WorkbenchVersion"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "WorkbenchVersions",
         "type": "object"
       }
     }
@@ -22184,6 +25392,99 @@
         ]
       }
     },
+    "/api/v1/cases/{case_id}/script-simulations": {
+      "get": {
+        "operationId": "case_simulations",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimRunList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Case Simulations",
+        "tags": [
+          "script-simulation"
+        ]
+      }
+    },
     "/api/v1/cases/{case_id}/timeline": {
       "get": {
         "operationId": "case_timeline",
@@ -25264,6 +28565,1421 @@
         "summary": "Options",
         "tags": [
           "script-studio"
+        ]
+      }
+    },
+    "/api/v1/script-simulations": {
+      "post": {
+        "description": "Start a new text simulation (restarting = starting a new run; earlier runs are kept).",
+        "operationId": "simulation_start",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimStartIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimRunOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Simulation Start",
+        "tags": [
+          "script-simulation"
+        ]
+      }
+    },
+    "/api/v1/script-simulations/cases": {
+      "get": {
+        "description": "Cases in your markets that have a pinned script (newest assignment first); with ``include_unassigned``, any\nsynthetic case with a policy fact snapshot (for testing a chosen script version).",
+        "operationId": "simulation_cases",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 40,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_unassigned",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Unassigned",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimEligibleCases"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Simulation Cases",
+        "tags": [
+          "script-simulation"
+        ]
+      }
+    },
+    "/api/v1/script-simulations/plan": {
+      "get": {
+        "description": "The modules and questions the controller would run for the case, with each applicability reason.",
+        "operationId": "simulation_plan",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "script_version_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Script Version Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimPlanOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Simulation Plan",
+        "tags": [
+          "script-simulation"
+        ]
+      }
+    },
+    "/api/v1/script-simulations/{run_id}": {
+      "get": {
+        "description": "Current state, next permitted action, mandatory progress and the full event trace.",
+        "operationId": "simulation_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimRunOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Simulation Get",
+        "tags": [
+          "script-simulation"
+        ]
+      }
+    },
+    "/api/v1/script-simulations/{run_id}/answer": {
+      "post": {
+        "description": "Submit the answer to the current action (a duplicate of the same answer is replayed, not re-applied).",
+        "operationId": "simulation_answer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimAnswerIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimRunOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Simulation Answer",
+        "tags": [
+          "script-simulation"
+        ]
+      }
+    },
+    "/api/v1/script-simulations/{run_id}/as-scenario": {
+      "get": {
+        "description": "S2-E: structured scenario content reproducing an interactive run (responses that differ from the default\nresponse) with its actual result as expectations. Nothing is saved; review it, then save it as a scenario.",
+        "operationId": "simulation_as_scenario",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioPreviewIn"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Simulation As Scenario",
+        "tags": [
+          "script-simulation"
+        ]
+      }
+    },
+    "/api/v1/script-simulations/{run_id}/clarification": {
+      "post": {
+        "description": "The customer needs clarification: re-prompt within the approved limit, else the question is unresolved.",
+        "operationId": "simulation_clarification",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimClarificationIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimRunOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Simulation Clarification",
+        "tags": [
+          "script-simulation"
+        ]
+      }
+    },
+    "/api/v1/script-simulations/{run_id}/delivery": {
+      "post": {
+        "description": "Report whether the requested question was presented (simulated delivery).",
+        "operationId": "simulation_delivery",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimDeliveryIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimRunOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Simulation Delivery",
+        "tags": [
+          "script-simulation"
+        ]
+      }
+    },
+    "/api/v1/script-simulations/{run_id}/end": {
+      "post": {
+        "description": "End (COMPLETED only when every applicable mandatory question is completed) or abandon the run.",
+        "operationId": "simulation_end",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimEndIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimRunOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Simulation End",
+        "tags": [
+          "script-simulation"
+        ]
+      }
+    },
+    "/api/v1/script-simulations/{run_id}/evaluations": {
+      "get": {
+        "operationId": "simulation_evaluations",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimEvaluationList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Simulation Evaluations",
+        "tags": [
+          "script-simulation"
+        ]
+      },
+      "post": {
+        "description": "Evaluate the run's answers as recorded so far. Identical inputs return the existing evaluation (``created`` is\nfalse); new answers create a new evaluation and earlier ones are kept.",
+        "operationId": "simulation_evaluate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimEvaluationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Simulation Evaluate",
+        "tags": [
+          "script-simulation"
+        ]
+      }
+    },
+    "/api/v1/script-simulations/{run_id}/evaluations/{evaluation_id}": {
+      "get": {
+        "description": "One evaluation with its evidence trace and a replay check (re-derived from the stored inputs).",
+        "operationId": "simulation_evaluation_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "evaluation_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Evaluation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimEvaluationOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Simulation Evaluation Get",
+        "tags": [
+          "script-simulation"
+        ]
+      }
+    },
+    "/api/v1/script-simulations/{run_id}/event": {
+      "post": {
+        "description": "Report a conversation event (simulated): wrong person, callback requested, declined to continue or\ninterrupted. Each terminates the conversation; only closing statements marked for termination are then offered.",
+        "operationId": "simulation_event",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimEventIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimRunOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Simulation Event",
+        "tags": [
+          "script-simulation"
+        ]
+      }
+    },
+    "/api/v1/script-simulations/{run_id}/skip": {
+      "post": {
+        "description": "Always refused: questions are skipped only by approved conditions (shown for completeness and testing).",
+        "operationId": "simulation_skip",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimSkipIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimRunOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Simulation Skip",
+        "tags": [
+          "script-simulation"
         ]
       }
     },
@@ -28419,6 +33135,1372 @@
         "summary": "Session Transcript Segments",
         "tags": [
           "call-detail"
+        ]
+      }
+    },
+    "/api/v1/simulation-runs": {
+      "get": {
+        "description": "Recent test runs (newest first), optionally those that included a scenario.",
+        "operationId": "scenario_run_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "scenario_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scenario Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimBatchList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Scenario Run List",
+        "tags": [
+          "simulation-workbench"
+        ]
+      },
+      "post": {
+        "description": "Run one or more scenarios (each against its own version, or all against one version; with a second version\nthis is a comparison). Results are recorded with the exact content snapshot and scenario revision used.",
+        "operationId": "scenario_run",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScenarioRunIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimBatchOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Scenario Run",
+        "tags": [
+          "simulation-workbench"
+        ]
+      }
+    },
+    "/api/v1/simulation-runs/{batch_id}": {
+      "get": {
+        "description": "A test run: each result with its explained failures, coverage per script snapshot and any comparison.",
+        "operationId": "scenario_run_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "batch_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Batch Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimBatchOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Scenario Run Get",
+        "tags": [
+          "simulation-workbench"
+        ]
+      }
+    },
+    "/api/v1/simulation-scenarios": {
+      "get": {
+        "description": "The scenario library (newest change first) with each scenario's latest result.",
+        "operationId": "scenario_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "family_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Family Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 60,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Archived",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Scenario List",
+        "tags": [
+          "simulation-workbench"
+        ]
+      },
+      "post": {
+        "description": "Create a scenario (revision 1). Steps and expectations are structured data, never code.",
+        "operationId": "scenario_create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScenarioContent"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Scenario Create",
+        "tags": [
+          "simulation-workbench"
+        ]
+      }
+    },
+    "/api/v1/simulation-scenarios/preview": {
+      "post": {
+        "description": "Dry run of unsaved scenario content against the controller (nothing is written).",
+        "operationId": "scenario_preview",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScenarioPreviewIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioPreviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Scenario Preview",
+        "tags": [
+          "simulation-workbench"
+        ]
+      }
+    },
+    "/api/v1/simulation-scenarios/{scenario_id}": {
+      "get": {
+        "description": "A scenario (current or a given revision), its revision history and recent results.",
+        "operationId": "scenario_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scenario_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Scenario Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "revision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Revision"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Scenario Get",
+        "tags": [
+          "simulation-workbench"
+        ]
+      },
+      "put": {
+        "description": "Save a new revision (earlier revisions and their results are kept unchanged).",
+        "operationId": "scenario_revise",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scenario_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Scenario Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScenarioReviseIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Scenario Revise",
+        "tags": [
+          "simulation-workbench"
+        ]
+      }
+    },
+    "/api/v1/simulation-scenarios/{scenario_id}/copy": {
+      "post": {
+        "description": "Copy the current revision into a new scenario (for reuse or another version).",
+        "operationId": "scenario_copy",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scenario_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Scenario Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScenarioCopyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Scenario Copy",
+        "tags": [
+          "simulation-workbench"
+        ]
+      }
+    },
+    "/api/v1/simulation-scenarios/{scenario_id}/status": {
+      "post": {
+        "description": "Archive or restore a scenario (never deleted).",
+        "operationId": "scenario_status",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scenario_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Scenario Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScenarioStatusIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Scenario Status",
+        "tags": [
+          "simulation-workbench"
+        ]
+      }
+    },
+    "/api/v1/simulation-workbench/case-facts": {
+      "get": {
+        "description": "The applicability facts and SBQ band of a synthetic case's latest snapshot (to seed a scenario).",
+        "operationId": "workbench_case_facts",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseFactsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Workbench Case Facts",
+        "tags": [
+          "simulation-workbench"
+        ]
+      }
+    },
+    "/api/v1/simulation-workbench/options": {
+      "get": {
+        "description": "Structured vocabulary for scenarios: step kinds, events, outcomes, termination reasons, gates and facts.",
+        "operationId": "workbench_options",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkbenchOptions"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Workbench Options",
+        "tags": [
+          "simulation-workbench"
+        ]
+      }
+    },
+    "/api/v1/simulation-workbench/plan": {
+      "post": {
+        "description": "Read-only: the modules and questions a version would run for the given synthetic facts and SBQ band.",
+        "operationId": "workbench_plan",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkbenchPlanIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkbenchPlanOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Workbench Plan",
+        "tags": [
+          "simulation-workbench"
+        ]
+      }
+    },
+    "/api/v1/simulation-workbench/versions": {
+      "get": {
+        "description": "Every script version you can test: drafts (labelled), in review, published and superseded.",
+        "operationId": "workbench_versions",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkbenchVersions"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Workbench Versions",
+        "tags": [
+          "simulation-workbench"
         ]
       }
     },

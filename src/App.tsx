@@ -22,6 +22,7 @@ import { SystemPage } from './features/admin/SystemPage';
 import { ReviewWorkbenchPage } from './features/reviews/ReviewWorkbenchPage';
 import { VoiceStudioPage } from './features/voice/VoiceStudioPage';
 import { RuleDetailPage } from './features/rules/RuleDetailPage';
+import { TextSimulatorPage } from './features/simulator/TextSimulatorPage';
 import { AssignmentRulesPage } from './features/scripts/AssignmentRulesPage';
 import { ScriptFamilyPage } from './features/scripts/ScriptFamilyPage';
 import { ScriptLibraryPage } from './features/scripts/ScriptLibraryPage';
@@ -51,6 +52,7 @@ export function App() {
           <Route path="scripts/:scriptFamilyId" element={<RequirePermission permission="script.read"><ScriptFamilyPage /></RequirePermission>} />
           <Route path="assignment-rules" element={<RequirePermission permission="script.read"><AssignmentRulesPage /></RequirePermission>} />
           <Route path="assignment-rules/:ruleCode" element={<RequirePermission permission="script.read"><RuleDetailPage /></RequirePermission>} />
+          <Route path="simulator" element={<RequirePermission permission="script.read"><TextSimulatorPage /></RequirePermission>} />
           <Route path="reviews" element={<RequirePermission permission="queue.read"><ReviewWorkbenchPage /></RequirePermission>} />
           <Route path="voice-studio" element={<RequirePermission permission="voice.preflight.read"><VoiceStudioPage /></RequirePermission>} />
           <Route path="intake" element={<RequirePermission permission="intake.read"><IntakePage /></RequirePermission>} />

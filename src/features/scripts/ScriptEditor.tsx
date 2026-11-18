@@ -317,10 +317,13 @@ function QuestionEditor({ d, s, q, index, count, o, ch, onMove }: {
             <span className="xsmall muted">r{q.revision}</span>
             {q.mandatory ? <Badge tone="red">Mandatory</Badge> : <Badge tone="gray">Optional</Badge>}
             <Badge tone="blue">{humanize(q.answer_type)}</Badge><Badge tone="gray">{humanize(q.delivery_mode)}</Badge>
-            <Badge tone="purple">{humanize(q.expected_answer_policy)}</Badge>
-            {q.controls.length ? <Badge tone="green">{`${q.controls.length} control${q.controls.length === 1 ? '' : 's'}`}</Badge>
+            <Badge tone="purple">{METHOD_LABEL[q.expected_answer_policy] ?? humanize(q.expected_answer_policy)}</Badge>
+            {q.lifecycle_role && q.lifecycle_role !== 'VERIFICATION' ? <Badge tone="blue">{humanize(q.lifecycle_role)}</Badge> : null}
+            {q.discloses_policy_information ? <Badge tone="amber">Discloses policy info · after identity</Badge> : null}
+            {q.lifecycle_role && !['VERIFICATION', 'DISCLOSURE'].includes(q.lifecycle_role) ? null : q.controls.length ? <Badge tone="green">{`${q.controls.length} control${q.controls.length === 1 ? '' : 's'}`}</Badge>
               : q.mandatory ? <Badge tone="amber">Mandatory · no mapped control (flagged for checker)</Badge> : <Badge tone="gray">No control</Badge>}</span>
           <span className="small" style={{ display: 'block', marginTop: 6 }}>{q.wording}</span>
+          <span className="xsmall muted" style={{ display: 'block' }} data-testid={`rule-${q.question_code}`}>Evaluation rule: {ruleSummary(q)}</span>
           {q.branch_condition ? <span className="xsmall muted">Asked when {describeCondition(q.branch_condition)}</span> : null}
         </span>
         <span className="row wrap" style={{ gap: 4, alignSelf: 'flex-start' }}>
@@ -381,7 +384,7 @@ function AddQuestion({ d, s, o, ch, mode, onDone }: { d: ScriptVersionDetail; s:
       <Field id={`nq-code-${s.section_id}`} label="Question code" hint="Stable key, e.g. Q-CHARGES-EXPLAINED">
         {(p) => <input {...p} className="field labelled" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} />}
       </Field>
-      <QuestionForm o={o} initial={EMPTY} code={code} branch={null} pending={ch.pending} onCancel={onDone}
+      <QuestionForm o={o} initial={emptyFor(o, s.module_kind)} code={code} branch={null} pending={ch.pending} onCancel={onDone}
         onSave={(content, branch) => add({ expected_row_version: d.row_version, question_code: code, content, branch_condition: branch })} />
     </div>
   );
@@ -391,25 +394,48 @@ function AddQuestion({ d, s, o, ch, mode, onDone }: { d: ScriptVersionDetail; s:
 interface QState {
   intent: string; category: string; customer_wording: string; delivery_mode: string; answer_type: string; enum_options: string;
   mandatory: boolean; expected_answer_policy: string; expected_boolean: '' | 'yes' | 'no'; policy_fact_key: string;
+  ev_operator: string; ev_value: string; ev_unit: string; ev_tolerance: string; ev_tolerance_ref: string; ev_accepted: string[];
   acceptable_variants: string; unacceptable_outcomes: string; not_applicable_predicate: Cond; evidence_required: boolean;
   escalation_rule_ref: string; max_reprompts: number;
+  lifecycle_role: string; on_failure: string; discloses_policy_information: boolean; deliver_on_termination: boolean;
+}
+type Lifecycle = { stages: string[]; kind_stage: Record<string, string>; assumptions: string[];
+  roles: { role: string; stage: string; answer_types: string[]; on_failure: string[]; default_on_failure: string; statement: boolean }[] };
+const lifecycleOf = (o: Options) => (o.lifecycle ?? {}) as Partial<Lifecycle>;
+/** S2-D.1: a new item in a lifecycle section starts with that stage's first role (and its fixed answer type). */
+function emptyFor(o: Options, kind: string): QState {
+  const lc = lifecycleOf(o);
+  const stage = lc.kind_stage?.[kind] ?? 'VERIFICATION';
+  const r = (lc.roles ?? []).find((x) => x.stage === stage);
+  if (!r || r.role === 'VERIFICATION') return EMPTY;
+  const atype = r.answer_types[0] ?? EMPTY.answer_type;
+  return { ...EMPTY, lifecycle_role: r.role, on_failure: r.default_on_failure, answer_type: atype,
+    expected_answer_policy: atype === 'ACKNOWLEDGEMENT' ? 'ACKNOWLEDGEMENT' : 'COLLECT_ONLY', expected_boolean: '',
+    category: 'OTHER', delivery_mode: r.statement ? 'CONTROLLED_TTS' : EMPTY.delivery_mode };
 }
 const EMPTY: QState = {
   intent: '', category: 'SALES_CONDUCT', customer_wording: '', delivery_mode: 'CONVERSATIONAL', answer_type: 'YES_NO', enum_options: '',
   mandatory: true, expected_answer_policy: 'EXACT_BOOLEAN', expected_boolean: 'yes', policy_fact_key: '', acceptable_variants: '',
+  ev_operator: 'EQ', ev_value: '', ev_unit: '', ev_tolerance: '0', ev_tolerance_ref: '', ev_accepted: [],
   unacceptable_outcomes: '', not_applicable_predicate: null, evidence_required: true, escalation_rule_ref: '', max_reprompts: 1,
+  lifecycle_role: 'VERIFICATION', on_failure: 'CONTINUE', discloses_policy_information: false, deliver_on_termination: false,
 };
 const lines = (v: unknown) => (Array.isArray(v) ? v.join('\n') : '');
 function fromQuestion(q: ScriptQuestion): QState {
   const schema = (q.answer_schema ?? {}) as { enum?: string[] };
-  const exp = (q.expected_value ?? {}) as { value?: boolean };
+  const exp = (q.expected_value ?? {}) as { value?: boolean | string; operator?: string; unit?: string; tolerance?: string;
+    tolerance_reference?: string | null; accepted?: string[] };
   return {
     intent: q.intent ?? '', category: q.category, customer_wording: q.wording, delivery_mode: q.delivery_mode, answer_type: q.answer_type,
     enum_options: (schema.enum ?? []).join('\n'), mandatory: q.mandatory, expected_answer_policy: q.expected_answer_policy,
     expected_boolean: exp.value === true ? 'yes' : exp.value === false ? 'no' : '', policy_fact_key: q.policy_fact_key ?? '',
+    ev_operator: exp.operator ?? 'EQ', ev_value: typeof exp.value === 'string' ? exp.value : '', ev_unit: exp.unit ?? '',
+    ev_tolerance: exp.tolerance ?? '0', ev_tolerance_ref: exp.tolerance_reference ?? '', ev_accepted: exp.accepted ?? [],
     acceptable_variants: lines(q.acceptable_variants), unacceptable_outcomes: lines(q.unacceptable_outcomes),
     not_applicable_predicate: (q.not_applicable_predicate as Cond) ?? null, evidence_required: q.evidence_required,
     escalation_rule_ref: q.escalation_rule_ref ?? '', max_reprompts: q.max_reprompts,
+    lifecycle_role: q.lifecycle_role ?? 'VERIFICATION', on_failure: q.on_failure ?? 'CONTINUE',
+    discloses_policy_information: q.discloses_policy_information ?? false, deliver_on_termination: q.deliver_on_termination ?? false,
   };
 }
 const split = (s: string) => s.split('\n').map((x) => x.trim()).filter(Boolean);
@@ -419,16 +445,101 @@ function toContent(s: QState): QuestionContent {
     answer_type: s.answer_type as QuestionContent['answer_type'], enum_options: split(s.enum_options), mandatory: s.mandatory,
     expected_answer_policy: s.expected_answer_policy as QuestionContent['expected_answer_policy'],
     expected_boolean: s.expected_boolean === '' ? null : s.expected_boolean === 'yes', policy_fact_key: s.policy_fact_key || null,
+    evaluation: evaluationOf(s),
     acceptable_variants: split(s.acceptable_variants), unacceptable_outcomes: split(s.unacceptable_outcomes),
     not_applicable_predicate: s.not_applicable_predicate, evidence_required: s.evidence_required,
     escalation_rule_ref: s.escalation_rule_ref || null, max_reprompts: s.max_reprompts,
+    lifecycle_role: s.lifecycle_role, on_failure: s.on_failure,
+    discloses_policy_information: s.discloses_policy_information, deliver_on_termination: s.deliver_on_termination,
   };
 }
-// Which expected-answer policies fit an answer type (the server enforces the same pairs).
+// Which evaluation methods (expected-answer policies) fit an answer type (the server enforces the same pairs, S3-A).
 const POLICY_FOR: Record<string, string[]> = {
-  YES_NO: ['EXACT_BOOLEAN', 'COLLECT_ONLY'], NUMERIC: ['NUMERIC_MATCH_POLICY_FACT', 'COLLECT_ONLY'], ENUM: ['COLLECT_ONLY'],
-  FREE_TEXT: ['NARRATIVE_REVIEW', 'COLLECT_ONLY'], ACKNOWLEDGEMENT: ['ACKNOWLEDGEMENT'],
+  YES_NO: ['EXACT_BOOLEAN', 'COLLECT_ONLY'], NUMERIC: ['NUMERIC_MATCH_POLICY_FACT', 'NUMERIC_COMPARE', 'COLLECT_ONLY'],
+  ENUM: ['ENUM_MATCH', 'ENUM_MATCH_POLICY_FACT', 'COLLECT_ONLY'], FREE_TEXT: ['NARRATIVE_REVIEW', 'COLLECT_ONLY'], ACKNOWLEDGEMENT: ['ACKNOWLEDGEMENT'],
 };
+type EvalOptions = { operators: Record<string, string>; units: Record<string, string>; note?: string;
+  facts: Record<string, { kind: string; label: string; unit?: string; units?: string[]; values?: string[] }> };
+const evalOf = (o: Options) => ((o as { evaluation?: Partial<EvalOptions> }).evaluation ?? {}) as Partial<EvalOptions>;
+export const METHOD_LABEL: Record<string, string> = {
+  EXACT_BOOLEAN: 'Expected yes / no', ACKNOWLEDGEMENT: 'Expected acknowledgement', NUMERIC_COMPARE: 'Numeric comparison with an approved value',
+  NUMERIC_MATCH_POLICY_FACT: 'Numeric comparison with a policy fact', ENUM_MATCH: 'Expected choice', ENUM_MATCH_POLICY_FACT: 'Choice matches a policy fact',
+  COLLECT_ONLY: 'Capture only (not evaluated)', NARRATIVE_REVIEW: 'Human assessment required',
+};
+function evaluationOf(s: QState): QuestionContent['evaluation'] {
+  const m = s.expected_answer_policy;
+  if (m === 'NUMERIC_COMPARE' || m === 'NUMERIC_MATCH_POLICY_FACT') {
+    return { operator: s.ev_operator as 'EQ', value: m === 'NUMERIC_COMPARE' ? s.ev_value || null : null, unit: (s.ev_unit || null) as 'YEARS' | null,
+      tolerance: s.ev_tolerance || '0', tolerance_reference: s.ev_tolerance_ref || null, accepted: [] };
+  }
+  if (m === 'ENUM_MATCH') return { accepted: s.ev_accepted };
+  return null;
+}
+/** Plain-language summary of a stored evaluation rule (the server's engine evaluates it). */
+export function ruleSummary(q: Pick<ScriptQuestion, 'expected_answer_policy' | 'expected_value' | 'policy_fact_key'>): string {
+  const e = (q.expected_value ?? {}) as { value?: unknown; operator?: string; unit?: string; tolerance?: string; tolerance_reference?: string | null; accepted?: string[] };
+  const ops: Record<string, string> = { EQ: '=', GTE: '≥', LTE: '≤', GT: '>', LT: '<' };
+  const tol = e.tolerance && Number(e.tolerance) > 0 ? ` ± ${e.tolerance} (ref ${e.tolerance_reference})` : '';
+  switch (q.expected_answer_policy) {
+    case 'EXACT_BOOLEAN': return `Expected: ${e.value ? 'yes' : 'no'}`;
+    case 'ACKNOWLEDGEMENT': return 'Expected: acknowledged';
+    case 'NUMERIC_COMPARE': return `Expected ${ops[e.operator ?? 'EQ']} ${String(e.value)} ${e.unit ?? ''}${tol}`.trim();
+    case 'NUMERIC_MATCH_POLICY_FACT': return `Expected ${ops[e.operator ?? 'EQ']} policy fact ${q.policy_fact_key} ${e.unit ? `(${e.unit})` : ''}${tol}`.trim();
+    case 'ENUM_MATCH': return `Expected: ${(e.accepted ?? []).join(' or ')}`;
+    case 'ENUM_MATCH_POLICY_FACT': return `Expected: policy fact ${q.policy_fact_key}`;
+    case 'NARRATIVE_REVIEW': return 'Human assessment required';
+    default: return 'Capture only';
+  }
+}
+
+function EvaluationFields({ id, o, s, set }: { id: string; o: Options; s: QState; set: <K extends keyof QState>(k: K, v: QState[K]) => void }) {
+  const ev = evalOf(o);
+  const m = s.expected_answer_policy;
+  const facts = Object.entries(ev.facts ?? {}).filter(([, f]) => f.kind === (m === 'ENUM_MATCH_POLICY_FACT' ? 'ENUM' : 'NUMERIC'));
+  const fact = ev.facts?.[s.policy_fact_key];
+  const units = Object.entries(ev.units ?? {}).filter(([u]) => (m === 'NUMERIC_MATCH_POLICY_FACT' && fact?.units ? fact.units.includes(u) : true));
+  const options = split(s.enum_options);
+  const numeric = m === 'NUMERIC_COMPARE' || m === 'NUMERIC_MATCH_POLICY_FACT';
+  if (!numeric && m !== 'ENUM_MATCH' && m !== 'ENUM_MATCH_POLICY_FACT') return null;
+  return (
+    <fieldset className="softbox stack" style={{ gap: 8 }} data-testid="evaluation-fields">
+      <legend className="small strong">Evaluation rule</legend>
+      <div className="input-grid">
+        {m === 'NUMERIC_MATCH_POLICY_FACT' || m === 'ENUM_MATCH_POLICY_FACT' ? (
+          <Field id={`${id}-f`} label="Compare with policy fact" hint="Approved fact mappings only; values come from the case's immutable policy fact snapshot">
+            {(p) => <select {...p} className="field labelled" value={s.policy_fact_key} data-testid="q-fact" onChange={(e) => { const k = e.target.value; set('policy_fact_key', k); const f = ev.facts?.[k]; if (f?.units?.length && !f.units.includes(s.ev_unit)) set('ev_unit', f.unit ?? f.units[0] ?? ''); }}>
+              <option value="">Choose…</option>{facts.map(([k, f]) => <option key={k} value={k}>{k} — {f.label}</option>)}</select>}
+          </Field>
+        ) : null}
+        {numeric ? (
+          <>
+            <Field id={`${id}-op`} label="Comparison">{(p) => <select {...p} className="field labelled" value={s.ev_operator} data-testid="q-operator" onChange={(e) => set('ev_operator', e.target.value)}>
+              {Object.entries(ev.operators ?? { EQ: 'equal to' }).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>}</Field>
+            {m === 'NUMERIC_COMPARE' ? <Field id={`${id}-v`} label="Expected value">{(p) => <input {...p} inputMode="decimal" className="field labelled" value={s.ev_value} data-testid="q-ev-value" onChange={(e) => set('ev_value', e.target.value)} />}</Field> : null}
+            <Field id={`${id}-u`} label="Unit of the answer">{(p) => <select {...p} className="field labelled" value={s.ev_unit} data-testid="q-unit" onChange={(e) => set('ev_unit', e.target.value)}>
+              <option value="">{m === 'NUMERIC_MATCH_POLICY_FACT' ? 'The fact’s unit' : 'Choose…'}</option>{units.map(([u, l]) => <option key={u} value={u}>{l}</option>)}</select>}</Field>
+            {s.ev_operator === 'EQ' ? (
+              <>
+                <Field id={`${id}-tol`} label="Tolerance" hint="0 = exact. No tolerance is assumed; use only an approved value">{(p) => <input {...p} inputMode="decimal" className="field labelled" value={s.ev_tolerance} data-testid="q-tolerance" onChange={(e) => set('ev_tolerance', e.target.value)} />}</Field>
+                {Number(s.ev_tolerance) > 0 ? <Field id={`${id}-tr`} label="Tolerance approval reference" hint="Required for any tolerance">{(p) => <input {...p} className="field labelled" value={s.ev_tolerance_ref} maxLength={120} data-testid="q-tolerance-ref" onChange={(e) => set('ev_tolerance_ref', e.target.value)} />}</Field> : null}
+              </>
+            ) : null}
+          </>
+        ) : null}
+      </div>
+      {m === 'ENUM_MATCH' ? (
+        <div className="row wrap" style={{ gap: 12 }} role="group" aria-label="Accepted options">
+          <span className="small strong">Accepted options</span>
+          {options.length ? options.map((opt) => (
+            <label key={opt} className="row small" style={{ gap: 6 }}><input type="checkbox" checked={s.ev_accepted.includes(opt)} data-testid={`q-accept-${opt}`}
+              onChange={(e) => set('ev_accepted', e.target.checked ? [...s.ev_accepted, opt] : s.ev_accepted.filter((x) => x !== opt))} /> {opt}</label>
+          )) : <span className="xsmall muted">Enter the choice options first</span>}
+        </div>
+      ) : null}
+      <p className="xsmall muted">{ev.note ?? 'Comparisons are exact unless an approved tolerance is configured. A mismatch is a discrepancy for review, not a compliance finding.'}</p>
+    </fieldset>
+  );
+}
 
 function QuestionForm({ o, initial, code, branch, pending, onSave, onCancel, withReason }: {
   o: Options; initial: QState; code: string; branch: Cond; pending: boolean; withReason?: boolean;
@@ -441,6 +552,21 @@ function QuestionForm({ o, initial, code, branch, pending, onSave, onCancel, wit
   const set = <K extends keyof QState>(k: K, v: QState[K]) => setS((x) => ({ ...x, [k]: v }));
   const policies = POLICY_FOR[s.answer_type] ?? [];
   const changeType = (t: string) => setS((x) => ({ ...x, answer_type: t, expected_answer_policy: (POLICY_FOR[t] ?? [x.expected_answer_policy]).includes(x.expected_answer_policy) ? x.expected_answer_policy : POLICY_FOR[t]![0]! }));
+  const roles = lifecycleOf(o).roles ?? [];
+  const role = roles.find((r) => r.role === s.lifecycle_role);
+  const types = role && role.answer_types.length < o.answer_types.length ? role.answer_types : o.answer_types;
+  const changeRole = (name: string) => {
+    const r = roles.find((x) => x.role === name);
+    if (!r) return;
+    setS((x) => {
+      const t = r.answer_types.includes(x.answer_type) ? x.answer_type : r.answer_types[0] ?? x.answer_type;
+      const pol = (POLICY_FOR[t] ?? [x.expected_answer_policy]).includes(x.expected_answer_policy) ? x.expected_answer_policy : POLICY_FOR[t]![0]!;
+      return { ...x, lifecycle_role: name, on_failure: r.default_on_failure, answer_type: t, expected_answer_policy: pol,
+        deliver_on_termination: name === 'CLOSING_STATEMENT' && x.deliver_on_termination,
+        discloses_policy_information: !['OPENING', 'IDENTITY', 'CLOSING'].includes(r.stage) && x.discloses_policy_information };
+    });
+  };
+  const noDisclosure = role ? ['OPENING', 'IDENTITY', 'CLOSING'].includes(role.stage) : false;
   return (
     <form className="stack" style={{ gap: 12 }} aria-label={`Question ${code}`} data-testid="question-form"
       onSubmit={(e) => { e.preventDefault(); void onSave(toContent(s), b, reason); }}>
@@ -450,17 +576,32 @@ function QuestionForm({ o, initial, code, branch, pending, onSave, onCancel, wit
       <div className="input-grid">
         <Field id={`${id}-i`} label="Intent (what the question establishes)">{(p) => <input {...p} className="field labelled" value={s.intent} onChange={(e) => set('intent', e.target.value)} required minLength={5} />}</Field>
         <Field id={`${id}-c`} label="Category">{(p) => <select {...p} className="field labelled" value={s.category} onChange={(e) => set('category', e.target.value)}>{o.categories.map((c) => <option key={c} value={c}>{humanize(c)}</option>)}</select>}</Field>
-        <Field id={`${id}-t`} label="Answer type">{(p) => <select {...p} className="field labelled" value={s.answer_type} onChange={(e) => changeType(e.target.value)}>{o.answer_types.map((c) => <option key={c} value={c}>{humanize(c)}</option>)}</select>}</Field>
+        <Field id={`${id}-t`} label="Answer type">{(p) => <select {...p} className="field labelled" value={s.answer_type} onChange={(e) => changeType(e.target.value)}>{types.map((c) => <option key={c} value={c}>{humanize(c)}</option>)}</select>}</Field>
         <Field id={`${id}-m`} label="Delivery mode" hint={s.delivery_mode === 'EXACT_AUDIO' ? 'Needs an approved audio asset (not attachable yet)' : undefined}>{(p) => <select {...p} className="field labelled" value={s.delivery_mode} onChange={(e) => set('delivery_mode', e.target.value)}>{o.delivery_modes.map((c) => <option key={c} value={c}>{humanize(c)}</option>)}</select>}</Field>
-        <Field id={`${id}-p`} label="Expected-answer policy">{(p) => <select {...p} className="field labelled" value={s.expected_answer_policy} onChange={(e) => set('expected_answer_policy', e.target.value)}>{policies.map((c) => <option key={c} value={c}>{humanize(c)}</option>)}</select>}</Field>
+        <Field id={`${id}-p`} label="Evaluation method">{(p) => <select {...p} className="field labelled" value={s.expected_answer_policy} data-testid="q-method" onChange={(e) => set('expected_answer_policy', e.target.value)}>{policies.map((c) => <option key={c} value={c}>{METHOD_LABEL[c] ?? humanize(c)}</option>)}</select>}</Field>
         {s.expected_answer_policy === 'EXACT_BOOLEAN' ? (
           <Field id={`${id}-e`} label="Expected answer">{(p) => <select {...p} className="field labelled" value={s.expected_boolean} onChange={(e) => set('expected_boolean', e.target.value as QState['expected_boolean'])}><option value="">Choose…</option><option value="yes">Yes</option><option value="no">No</option></select>}</Field>
         ) : null}
-        {s.expected_answer_policy === 'NUMERIC_MATCH_POLICY_FACT' ? (
-          <Field id={`${id}-f`} label="Compare with policy fact">{(p) => <select {...p} className="field labelled" value={s.policy_fact_key} onChange={(e) => set('policy_fact_key', e.target.value)}><option value="">Choose…</option>{Object.entries(o.fact_keys).map(([k, l]) => <option key={k} value={k}>{k} — {l}</option>)}</select>}</Field>
-        ) : null}
         <Field id={`${id}-r`} label="Maximum re-prompts">{(p) => <input {...p} type="number" min={0} max={5} className="field labelled" value={s.max_reprompts} onChange={(e) => set('max_reprompts', Number(e.target.value))} />}</Field>
       </div>
+      {roles.length ? (
+        <fieldset className="softbox stack" style={{ gap: 8 }} data-testid="lifecycle-fields">
+          <legend className="small strong">Conversation lifecycle</legend>
+          <div className="input-grid">
+            <Field id={`${id}-lr`} label="Lifecycle role" hint={role ? `${humanize(role.stage)} stage${role.statement ? ' · statement, completes when delivered' : ''}` : undefined}>
+              {(p) => <select {...p} className="field labelled" value={s.lifecycle_role} onChange={(e) => changeRole(e.target.value)} data-testid="q-role">{roles.map((r) => <option key={r.role} value={r.role}>{humanize(r.role)}</option>)}</select>}</Field>
+            <Field id={`${id}-of`} label="On failure" hint={role && role.on_failure.length === 1 ? 'System-enforced (cannot be changed)' : 'Only the system-permitted behaviours are offered'}>
+              {(p) => <select {...p} className="field labelled" value={s.on_failure} onChange={(e) => set('on_failure', e.target.value)} disabled={!role || role.on_failure.length === 1} data-testid="q-on-failure">
+                {(role?.on_failure ?? [s.on_failure]).map((c) => <option key={c} value={c} disabled={s.lifecycle_role === 'DISCLOSURE' && s.mandatory && c !== 'TERMINATE'}>{humanize(c)}</option>)}</select>}</Field>
+          </div>
+          <div className="row wrap" style={{ gap: 16 }}>
+            <label className="row small" style={{ gap: 6 }}><input type="checkbox" checked={s.discloses_policy_information} disabled={noDisclosure} onChange={(e) => set('discloses_policy_information', e.target.checked)} data-testid="q-discloses" /> Discloses policy information (only after identity is confirmed)</label>
+            {s.lifecycle_role === 'CLOSING_STATEMENT' ? <label className="row small" style={{ gap: 6 }}><input type="checkbox" checked={s.deliver_on_termination} onChange={(e) => set('deliver_on_termination', e.target.checked)} data-testid="q-on-termination" /> Deliver on early termination</label> : null}
+          </div>
+          <p className="xsmall muted">Synthetic development assumptions, not approved AIA/MAS policy. Stage order and gate minimums are enforced by the system.</p>
+        </fieldset>
+      ) : null}
+      <EvaluationFields id={id} o={o} s={s} set={set} />
       {s.answer_type === 'ENUM' ? <Field id={`${id}-o`} label="Choice options (one per line)">{(p) => <textarea {...p} className="field textarea labelled" rows={3} value={s.enum_options} onChange={(e) => set('enum_options', e.target.value)} />}</Field> : null}
       <div className="row wrap" style={{ gap: 16 }}>
         <label className="row small" style={{ gap: 6 }}><input type="checkbox" checked={s.mandatory} onChange={(e) => set('mandatory', e.target.checked)} data-testid="q-mandatory" /> Mandatory question</label>

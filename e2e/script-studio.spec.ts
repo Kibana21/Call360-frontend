@@ -45,7 +45,7 @@ test('S2-A Script Studio: create, edit, submit, approve by a different checker, 
   await addNewQuestion(core, `Q-${code}-EXPLAINED`, 'Did the representative explain how the plan works?', 'Representative explained the plan');
   await addNewQuestion(core, `Q-${code}-TERM`, 'For how many years will you pay premiums?', 'Customer states the premium term', async (form) => {
     await form.getByLabel('Answer type').selectOption('NUMERIC');
-    await form.getByLabel('Expected-answer policy').selectOption('NUMERIC_MATCH_POLICY_FACT');
+    await form.getByLabel('Evaluation method').selectOption('NUMERIC_MATCH_POLICY_FACT');
     await form.getByLabel('Compare with policy fact').selectOption('premium_term_years');
   });
   await core.getByRole('button', { name: `Move Q-${code}-TERM up` }).click();

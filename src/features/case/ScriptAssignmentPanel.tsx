@@ -60,6 +60,8 @@ export function ScriptAssignmentPanel({ caseId, recorded }: { caseId: string; re
                   <Link className="link strong" to={`/scripts/${v.current.script_family_id}?version=${v.current.script_version_id}`}>{v.current.script_label}</Link>
                   {' '}by {v.current.matched_rule ? ruleLink(v.current.matched_rule) : humanize(v.current.origin)} · {humanize(v.current.origin)} · {when(v.current.assigned_at)} SGT · {v.current.assigned_by}</div>
                 {v.current.explanation ? <div className="explain" style={{ marginTop: 8 }}>{v.current.explanation}</div> : null}
+                {can('script.read') ? <div style={{ marginTop: 8 }}><Link className="btn tiny" to={`/simulator?case=${caseId}`} data-testid="start-text-simulation">Start text simulation</Link>
+                  <span className="xsmall muted"> · simulation only, no customer contact</span></div> : null}
                 <div style={{ marginTop: 10 }}>{recorded}</div>
               </div>
             ) : (

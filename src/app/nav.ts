@@ -31,6 +31,7 @@ export const NAV: { group: string; items: NavItem[] }[] = [
     items: [
       { label: 'Script Studio', icon: 'clipboard', to: '/scripts' },
       { label: 'Assignment Rules', icon: 'layers', to: '/assignment-rules' },
+      { label: 'Simulation Workbench', icon: 'chat', to: '/simulator' },
       { label: 'Review Workbench', icon: 'shield', to: '/reviews' },
     ],
   },
@@ -60,6 +61,7 @@ export const PAGE_TITLES: Record<string, string> = {
   '/intake': 'Data Intake',
   '/scripts': 'Script Studio',
   '/assignment-rules': 'Assignment Rules',
+  '/simulator': 'Simulation Workbench',
   '/reviews': 'Review Workbench',
   '/voice-studio': 'Voice Studio',
   '/admin/users': 'Administration',

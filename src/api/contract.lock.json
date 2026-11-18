@@ -1,6 +1,6 @@
 {
   "backend_repo": "Call360-backend",
-  "backend_base_sha": "92ba5ee9c60933f2e626a2679484a71bdce57486",
+  "backend_base_sha": "84ffb2b6a7d3f5716e37a2f8acd6fc6b53181ca3",
   "backend_manifest_sha256": null,
-  "openapi_sha256": "283300f0fa1f7c1158953f10db2efda07ca8fdd2048d767e97219f6139727470"
+  "openapi_sha256": "18c0b42394b866670de48f9dc4d531aaf06ba621b3810e20b48907564d259580"
 }

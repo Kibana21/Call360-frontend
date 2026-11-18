@@ -41,7 +41,7 @@ export async function f6Journey(page: Page, shots: boolean): Promise<void> {
   const term = page.getByTestId('question-Q-PREMIUM-TERM-YEARS');
   await term.locator('summary').click();
   await expect(term).toContainText('premium_term_years');
-  await expect(term).toContainText('Numeric match policy fact');
+  await expect(term).toContainText('Numeric comparison with a policy fact');
   const familyVersions = lib.items.filter((v: { script_family_id: string }) => v.script_family_id === published.script_family_id).length;
   await expect(page.getByTestId('version-history').getByRole('link')).toHaveCount(familyVersions);
   await expect(page.getByTestId('immutable-note')).toContainText('Immutable version'); // S2-A: published content never edits

@@ -778,6 +778,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/cases/{case_id}/script-simulations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Case Simulations */
+        get: operations["case_simulations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/cases/{case_id}/timeline": {
         parameters: {
             query?: never;
@@ -1303,6 +1320,271 @@ export interface paths {
         get: operations["script_authoring_options"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/script-simulations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Simulation Start
+         * @description Start a new text simulation (restarting = starting a new run; earlier runs are kept).
+         */
+        post: operations["simulation_start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/script-simulations/cases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Simulation Cases
+         * @description Cases in your markets that have a pinned script (newest assignment first); with ``include_unassigned``, any
+         *     synthetic case with a policy fact snapshot (for testing a chosen script version).
+         */
+        get: operations["simulation_cases"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/script-simulations/plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Simulation Plan
+         * @description The modules and questions the controller would run for the case, with each applicability reason.
+         */
+        get: operations["simulation_plan"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/script-simulations/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Simulation Get
+         * @description Current state, next permitted action, mandatory progress and the full event trace.
+         */
+        get: operations["simulation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/script-simulations/{run_id}/answer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Simulation Answer
+         * @description Submit the answer to the current action (a duplicate of the same answer is replayed, not re-applied).
+         */
+        post: operations["simulation_answer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/script-simulations/{run_id}/as-scenario": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Simulation As Scenario
+         * @description S2-E: structured scenario content reproducing an interactive run (responses that differ from the default
+         *     response) with its actual result as expectations. Nothing is saved; review it, then save it as a scenario.
+         */
+        get: operations["simulation_as_scenario"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/script-simulations/{run_id}/clarification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Simulation Clarification
+         * @description The customer needs clarification: re-prompt within the approved limit, else the question is unresolved.
+         */
+        post: operations["simulation_clarification"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/script-simulations/{run_id}/delivery": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Simulation Delivery
+         * @description Report whether the requested question was presented (simulated delivery).
+         */
+        post: operations["simulation_delivery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/script-simulations/{run_id}/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Simulation End
+         * @description End (COMPLETED only when every applicable mandatory question is completed) or abandon the run.
+         */
+        post: operations["simulation_end"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/script-simulations/{run_id}/evaluations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Simulation Evaluations */
+        get: operations["simulation_evaluations"];
+        put?: never;
+        /**
+         * Simulation Evaluate
+         * @description Evaluate the run's answers as recorded so far. Identical inputs return the existing evaluation (``created`` is
+         *     false); new answers create a new evaluation and earlier ones are kept.
+         */
+        post: operations["simulation_evaluate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/script-simulations/{run_id}/evaluations/{evaluation_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Simulation Evaluation Get
+         * @description One evaluation with its evidence trace and a replay check (re-derived from the stored inputs).
+         */
+        get: operations["simulation_evaluation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/script-simulations/{run_id}/event": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Simulation Event
+         * @description Report a conversation event (simulated): wrong person, callback requested, declined to continue or
+         *     interrupted. Each terminates the conversation; only closing statements marked for termination are then offered.
+         */
+        post: operations["simulation_event"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/script-simulations/{run_id}/skip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Simulation Skip
+         * @description Always refused: questions are skipped only by approved conditions (shown for completeness and testing).
+         */
+        post: operations["simulation_skip"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1842,6 +2124,239 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/simulation-runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Scenario Run List
+         * @description Recent test runs (newest first), optionally those that included a scenario.
+         */
+        get: operations["scenario_run_list"];
+        put?: never;
+        /**
+         * Scenario Run
+         * @description Run one or more scenarios (each against its own version, or all against one version; with a second version
+         *     this is a comparison). Results are recorded with the exact content snapshot and scenario revision used.
+         */
+        post: operations["scenario_run"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/simulation-runs/{batch_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Scenario Run Get
+         * @description A test run: each result with its explained failures, coverage per script snapshot and any comparison.
+         */
+        get: operations["scenario_run_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/simulation-scenarios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Scenario List
+         * @description The scenario library (newest change first) with each scenario's latest result.
+         */
+        get: operations["scenario_list"];
+        put?: never;
+        /**
+         * Scenario Create
+         * @description Create a scenario (revision 1). Steps and expectations are structured data, never code.
+         */
+        post: operations["scenario_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/simulation-scenarios/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Scenario Preview
+         * @description Dry run of unsaved scenario content against the controller (nothing is written).
+         */
+        post: operations["scenario_preview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/simulation-scenarios/{scenario_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Scenario Get
+         * @description A scenario (current or a given revision), its revision history and recent results.
+         */
+        get: operations["scenario_get"];
+        /**
+         * Scenario Revise
+         * @description Save a new revision (earlier revisions and their results are kept unchanged).
+         */
+        put: operations["scenario_revise"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/simulation-scenarios/{scenario_id}/copy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Scenario Copy
+         * @description Copy the current revision into a new scenario (for reuse or another version).
+         */
+        post: operations["scenario_copy"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/simulation-scenarios/{scenario_id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Scenario Status
+         * @description Archive or restore a scenario (never deleted).
+         */
+        post: operations["scenario_status"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/simulation-workbench/case-facts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Workbench Case Facts
+         * @description The applicability facts and SBQ band of a synthetic case's latest snapshot (to seed a scenario).
+         */
+        get: operations["workbench_case_facts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/simulation-workbench/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Workbench Options
+         * @description Structured vocabulary for scenarios: step kinds, events, outcomes, termination reasons, gates and facts.
+         */
+        get: operations["workbench_options"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/simulation-workbench/plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Workbench Plan
+         * @description Read-only: the modules and questions a version would run for the given synthetic facts and SBQ band.
+         */
+        post: operations["workbench_plan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/simulation-workbench/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Workbench Versions
+         * @description Every script version you can test: drafts (labelled), in review, published and superseded.
+         */
+        get: operations["workbench_versions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/survey-runs/{survey_run_id}": {
         parameters: {
             query?: never;
@@ -2238,6 +2753,47 @@ export interface components {
             reason: string;
             /** Status */
             status?: ("ACTIVE" | "DISABLED") | null;
+        };
+        /** AnswerEvaluationItem */
+        AnswerEvaluationItem: {
+            /** Answer */
+            answer: {
+                [key: string]: unknown;
+            } | null;
+            /** Expected */
+            expected: {
+                [key: string]: unknown;
+            } | null;
+            /** Explanation */
+            explanation: string;
+            /** Mandatory */
+            mandatory?: boolean | null;
+            /** Method */
+            method: string;
+            /** Normalized Answer */
+            normalized_answer?: unknown;
+            /** Question Code */
+            question_code: string;
+            /** Question Revision Id */
+            question_revision_id: string;
+            /** Result */
+            result: string;
+            /** Revision */
+            revision: number;
+            /** Role */
+            role?: string | null;
+            /** Rule */
+            rule: {
+                [key: string]: unknown;
+            };
+            /** Rule Evaluation Equivalent */
+            rule_evaluation_equivalent: string;
+            /** Rule Text */
+            rule_text: string;
+            /** Stage */
+            stage?: string | null;
+            /** Wording */
+            wording?: string | null;
         };
         /** ApplyAssignmentIn */
         ApplyAssignmentIn: {
@@ -2640,11 +3196,19 @@ export interface components {
             controls: components["schemas"]["PickOption"][];
             /** Delivery Modes */
             delivery_modes: string[];
+            /** Evaluation */
+            evaluation?: {
+                [key: string]: unknown;
+            };
             /** Expected Answer Policies */
             expected_answer_policies: string[];
             /** Fact Keys */
             fact_keys: {
                 [key: string]: string;
+            };
+            /** Lifecycle */
+            lifecycle?: {
+                [key: string]: unknown;
             };
             /** Module Kinds */
             module_kinds: string[];
@@ -2749,6 +3313,27 @@ export interface components {
             markets: string[];
             /** Total */
             total: number;
+        };
+        /** CaseFactsOut */
+        CaseFactsOut: {
+            /**
+             * Case Id
+             * Format: uuid
+             */
+            case_id: string;
+            /** Case Ref */
+            case_ref: string;
+            /** Facts */
+            facts: {
+                [key: string]: unknown;
+            };
+            /** Risk Band */
+            risk_band: string | null;
+            /**
+             * Snapshot Id
+             * Format: uuid
+             */
+            snapshot_id: string;
         };
         /** CaseLink */
         CaseLink: {
@@ -3212,6 +3797,31 @@ export interface components {
             message: string;
             /** Retryable */
             retryable: boolean;
+        };
+        /** EvaluationReplay */
+        EvaluationReplay: {
+            /** Detail */
+            detail: string;
+            /** Matches */
+            matches: boolean;
+        };
+        /**
+         * EvaluationRuleIn
+         * @description S3-A structured evaluation rule (validated against the answer type, governed operators, units and facts).
+         */
+        EvaluationRuleIn: {
+            /** Accepted */
+            accepted?: string[];
+            /** Operator */
+            operator?: ("EQ" | "GTE" | "LTE" | "GT" | "LT") | null;
+            /** Tolerance */
+            tolerance?: string | number | null;
+            /** Tolerance Reference */
+            tolerance_reference?: string | null;
+            /** Unit */
+            unit?: ("YEARS" | "MONTHS" | "SGD" | "COUNT") | null;
+            /** Value */
+            value?: string | number | null;
         };
         /** ExternalRefOut */
         ExternalRefOut: {
@@ -4786,25 +5396,38 @@ export interface components {
             /** Customer Wording */
             customer_wording: string;
             /**
+             * Deliver On Termination
+             * @default false
+             */
+            deliver_on_termination: boolean;
+            /**
              * Delivery Mode
              * @enum {string}
              */
             delivery_mode: "CONVERSATIONAL" | "CONTROLLED_TTS" | "EXACT_AUDIO";
+            /**
+             * Discloses Policy Information
+             * @default false
+             */
+            discloses_policy_information: boolean;
             /** Enum Options */
             enum_options?: string[];
             /** Escalation Rule Ref */
             escalation_rule_ref?: string | null;
+            evaluation?: components["schemas"]["EvaluationRuleIn"] | null;
             /** Evidence Required */
             evidence_required?: boolean | null;
             /**
              * Expected Answer Policy
              * @enum {string}
              */
-            expected_answer_policy: "EXACT_BOOLEAN" | "NUMERIC_MATCH_POLICY_FACT" | "ACKNOWLEDGEMENT" | "NARRATIVE_REVIEW" | "COLLECT_ONLY";
+            expected_answer_policy: "EXACT_BOOLEAN" | "ACKNOWLEDGEMENT" | "NUMERIC_COMPARE" | "NUMERIC_MATCH_POLICY_FACT" | "ENUM_MATCH" | "ENUM_MATCH_POLICY_FACT" | "NARRATIVE_REVIEW" | "COLLECT_ONLY";
             /** Expected Boolean */
             expected_boolean?: boolean | null;
             /** Intent */
             intent: string;
+            /** Lifecycle Role */
+            lifecycle_role?: string | null;
             /** Mandatory */
             mandatory: boolean;
             /**
@@ -4816,6 +5439,8 @@ export interface components {
             not_applicable_predicate?: {
                 [key: string]: unknown;
             } | null;
+            /** On Failure */
+            on_failure?: string | null;
             /** Policy Fact Key */
             policy_fact_key?: string | null;
             /** Unacceptable Outcomes */
@@ -6361,6 +6986,276 @@ export interface components {
             /** Source Type */
             source_type: string;
         };
+        /** ScenarioContent */
+        ScenarioContent: {
+            /**
+             * Default Response
+             * @default AFFIRMATIVE
+             * @enum {string}
+             */
+            default_response: "AFFIRMATIVE" | "STRICT";
+            /** Description */
+            description?: string | null;
+            expectations?: components["schemas"]["ScenarioExpectations"];
+            /** Facts */
+            facts?: {
+                [key: string]: boolean | number | string;
+            };
+            /** Name */
+            name: string;
+            /** Risk Band */
+            risk_band?: string | null;
+            /**
+             * Script Version Id
+             * Format: uuid
+             */
+            script_version_id: string;
+            /** Source Case Id */
+            source_case_id?: string | null;
+            /** Steps */
+            steps?: components["schemas"]["ScenarioStep"][];
+        };
+        /** ScenarioCopyIn */
+        ScenarioCopyIn: {
+            /** Name */
+            name?: string | null;
+        };
+        /** ScenarioExpectations */
+        ScenarioExpectations: {
+            /** Applicable Questions */
+            applicable_questions?: string[] | null;
+            /** Basis */
+            basis?: ("INDEPENDENT" | "GENERATED_BASELINE") | null;
+            /** Evaluations */
+            evaluations?: {
+                [key: string]: string;
+            };
+            /** Gates */
+            gates?: {
+                [key: string]: string;
+            };
+            /** Mandatory Complete */
+            mandatory_complete?: boolean | null;
+            /** Outcome */
+            outcome?: string | null;
+            /** Question States */
+            question_states?: {
+                [key: string]: string;
+            };
+            /** Sequence */
+            sequence?: string[] | null;
+            /** Termination Reason */
+            termination_reason?: string | null;
+        };
+        /** ScenarioList */
+        ScenarioList: {
+            /** Items */
+            items: components["schemas"]["ScenarioSummary"][];
+        };
+        /** ScenarioOut */
+        ScenarioOut: {
+            content: components["schemas"]["ScenarioContent"];
+            /** Copied From Ref */
+            copied_from_ref: string | null;
+            /** Family */
+            family: string;
+            /**
+             * Family Id
+             * Format: uuid
+             */
+            family_id: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Revision */
+            revision: number;
+            /** Revisions */
+            revisions: components["schemas"]["ScenarioRevisionSummary"][];
+            /** Row Version */
+            row_version: number;
+            /** Runs */
+            runs: {
+                [key: string]: unknown;
+            }[];
+            /** Scenario Ref */
+            scenario_ref: string;
+            /** Script Content Sha256 */
+            script_content_sha256: string;
+            /** Source Case Ref */
+            source_case_ref: string | null;
+            /** Status */
+            status: string;
+            /** Version Label */
+            version_label: string;
+            /** Version Status */
+            version_status: string;
+        };
+        /** ScenarioPreviewIn */
+        ScenarioPreviewIn: {
+            /**
+             * Default Response
+             * @default AFFIRMATIVE
+             * @enum {string}
+             */
+            default_response: "AFFIRMATIVE" | "STRICT";
+            /** Description */
+            description?: string | null;
+            expectations?: components["schemas"]["ScenarioExpectations"];
+            /** Facts */
+            facts?: {
+                [key: string]: boolean | number | string;
+            };
+            /** Name */
+            name?: string | null;
+            /** Risk Band */
+            risk_band?: string | null;
+            /**
+             * Script Version Id
+             * Format: uuid
+             */
+            script_version_id: string;
+            /** Source Case Id */
+            source_case_id?: string | null;
+            /** Steps */
+            steps?: components["schemas"]["ScenarioStep"][];
+        };
+        /** ScenarioPreviewOut */
+        ScenarioPreviewOut: {
+            /** Actual */
+            actual: {
+                [key: string]: unknown;
+            };
+            /** Error */
+            error: string | null;
+            /** Failures */
+            failures: {
+                [key: string]: unknown;
+            }[];
+            /** Problems */
+            problems: string[];
+            /** Response Log */
+            response_log: {
+                [key: string]: unknown;
+            }[];
+            /** Stale Reasons */
+            stale_reasons: string[];
+            /** Status */
+            status: string;
+            /** Version Label */
+            version_label: string;
+        };
+        /** ScenarioReviseIn */
+        ScenarioReviseIn: {
+            /** Change Note */
+            change_note?: string | null;
+            content: components["schemas"]["ScenarioContent"];
+            /** Expected Row Version */
+            expected_row_version: number;
+        };
+        /** ScenarioRevisionSummary */
+        ScenarioRevisionSummary: {
+            /** Change Note */
+            change_note: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By */
+            created_by: string | null;
+            /** Revision */
+            revision: number;
+            /** Version Label */
+            version_label: string;
+        };
+        /** ScenarioRunIn */
+        ScenarioRunIn: {
+            /** Compare With Version Id */
+            compare_with_version_id?: string | null;
+            /** Scenario Ids */
+            scenario_ids: string[];
+            /** Script Version Id */
+            script_version_id?: string | null;
+        };
+        /** ScenarioStatusIn */
+        ScenarioStatusIn: {
+            /** Expected Row Version */
+            expected_row_version: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ACTIVE" | "ARCHIVED";
+        };
+        /** ScenarioStep */
+        ScenarioStep: {
+            /** Event */
+            event?: string | null;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "ANSWER" | "UNCLEAR" | "REFUSED" | "UNKNOWN" | "CLARIFICATION" | "NOT_DELIVERED" | "DELIVERED" | "EVENT";
+            /** Note */
+            note?: string | null;
+            /** Question */
+            question: string;
+            /** Value */
+            value?: boolean | number | string | null;
+        };
+        /** ScenarioSummary */
+        ScenarioSummary: {
+            /** Current Revision */
+            current_revision: number;
+            /** Default Response */
+            default_response: string;
+            /** Description */
+            description: string | null;
+            /** Family */
+            family: string;
+            /**
+             * Family Id
+             * Format: uuid
+             */
+            family_id: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Last Run At */
+            last_run_at: string | null;
+            /** Last Status */
+            last_status: string | null;
+            /** Name */
+            name: string;
+            /** Row Version */
+            row_version: number;
+            /** Scenario Ref */
+            scenario_ref: string;
+            /**
+             * Script Version Id
+             * Format: uuid
+             */
+            script_version_id: string;
+            /** Status */
+            status: string;
+            /** Steps */
+            steps: number;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Version Label */
+            version_label: string;
+            /** Version Status */
+            version_status: string;
+        };
         /** ScriptAssignmentList */
         ScriptAssignmentList: {
             /** Items */
@@ -6576,8 +7471,18 @@ export interface components {
             controls: {
                 [key: string]: unknown;
             }[];
+            /**
+             * Deliver On Termination
+             * @default false
+             */
+            deliver_on_termination: boolean;
             /** Delivery Mode */
             delivery_mode: string;
+            /**
+             * Discloses Policy Information
+             * @default false
+             */
+            discloses_policy_information: boolean;
             /** Escalation Rule Ref */
             escalation_rule_ref: string | null;
             /** Evidence Required */
@@ -6588,6 +7493,11 @@ export interface components {
             expected_value: unknown;
             /** Intent */
             intent: string | null;
+            /**
+             * Lifecycle Role
+             * @default VERIFICATION
+             */
+            lifecycle_role: string;
             /** Mandatory */
             mandatory: boolean;
             /** Max Reprompts */
@@ -6599,6 +7509,11 @@ export interface components {
             module_question_id: string;
             /** Not Applicable Predicate */
             not_applicable_predicate: unknown;
+            /**
+             * On Failure
+             * @default CONTINUE
+             */
+            on_failure: string;
             /** Policy Fact Key */
             policy_fact_key: string | null;
             /** Position */
@@ -6839,7 +7754,7 @@ export interface components {
             /** Module Id */
             module_id?: string | null;
             /** Module Kind */
-            module_kind?: ("COMMON" | "PRODUCT" | "RISK" | "LANGUAGE") | null;
+            module_kind?: ("COMMON" | "PRODUCT" | "RISK" | "LANGUAGE" | "OPENING" | "IDENTITY" | "DISCLOSURE" | "CONSENT" | "CLOSING") | null;
             /** Module Name */
             module_name?: string | null;
         };
@@ -7062,6 +7977,129 @@ export interface components {
             /** Uncertain */
             uncertain: boolean;
         };
+        /** SimActionOut */
+        SimActionOut: {
+            /** Action Id */
+            action_id: string | null;
+            /** Answer Type */
+            answer_type: string | null;
+            /**
+             * Completes On Delivery
+             * @default false
+             */
+            completes_on_delivery: boolean;
+            /** Kind */
+            kind: string;
+            /** Mandatory */
+            mandatory: boolean | null;
+            /** Note */
+            note: string;
+            /** Options */
+            options: string[];
+            /** Presented */
+            presented: boolean;
+            /** Question Code */
+            question_code: string | null;
+            /** Reprompts Allowed */
+            reprompts_allowed: number;
+            /** Reprompts Used */
+            reprompts_used: number;
+            /** Role */
+            role?: string | null;
+            /** Stage */
+            stage?: string | null;
+            /** Statement */
+            statement: boolean;
+            /** Verbatim Required */
+            verbatim_required: boolean | null;
+            /** Wording */
+            wording: string | null;
+        };
+        /** SimAnswerIn */
+        SimAnswerIn: {
+            /** Action Id */
+            action_id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "ANSWER" | "UNCLEAR" | "REFUSED" | "UNKNOWN";
+            /** Value */
+            value?: boolean | number | string | null;
+            /** Verbatim */
+            verbatim?: string | null;
+        };
+        /** SimBatchList */
+        SimBatchList: {
+            /** Items */
+            items: components["schemas"]["SimBatchSummary"][];
+        };
+        /** SimBatchOut */
+        SimBatchOut: {
+            /** Batch Ref */
+            batch_ref: string;
+            /** Comparison */
+            comparison: {
+                [key: string]: unknown;
+            }[];
+            /** Coverage */
+            coverage: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Note */
+            note: string;
+            /** Results */
+            results: components["schemas"]["SimResultOut"][];
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Started By */
+            started_by: string | null;
+            /** Totals */
+            totals: {
+                [key: string]: unknown;
+            };
+            /** Version A */
+            version_a: string | null;
+            /** Version B */
+            version_b: string | null;
+        };
+        /** SimBatchSummary */
+        SimBatchSummary: {
+            /** Batch Ref */
+            batch_ref: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Started By */
+            started_by: string | null;
+            /** Totals */
+            totals: {
+                [key: string]: unknown;
+            };
+            /** Version A */
+            version_a: string | null;
+            /** Version B */
+            version_b: string | null;
+        };
         /** SimCase */
         SimCase: {
             baseline: components["schemas"]["SimDecision"];
@@ -7087,6 +8125,13 @@ export interface components {
             /** State */
             state: string;
         };
+        /** SimClarificationIn */
+        SimClarificationIn: {
+            /** Action Id */
+            action_id: string;
+            /** Reason */
+            reason: string;
+        };
         /** SimConditionResult */
         SimConditionResult: {
             /** Actual */
@@ -7100,6 +8145,17 @@ export interface components {
              * @enum {string}
              */
             result: "PASS" | "FAIL" | "UNKNOWN";
+        };
+        /** SimContactOut */
+        SimContactOut: {
+            /** Assignment Contact */
+            assignment_contact: boolean;
+            /** Label */
+            label: string;
+            /** Role */
+            role: string;
+            /** Selection Id */
+            selection_id: string;
         };
         /** SimDecision */
         SimDecision: {
@@ -7118,6 +8174,188 @@ export interface components {
             /** Winning Rules */
             winning_rules: string[];
         };
+        /** SimDeliveryIn */
+        SimDeliveryIn: {
+            /** Action Id */
+            action_id: string;
+            /** Delivered */
+            delivered: boolean;
+            /** Note */
+            note?: string | null;
+        };
+        /** SimEligibleCase */
+        SimEligibleCase: {
+            /**
+             * Case Id
+             * Format: uuid
+             */
+            case_id: string;
+            /** Case Ref */
+            case_ref: string;
+            /** Origin */
+            origin: string;
+            /** Script Label */
+            script_label: string;
+            /** Simulations */
+            simulations: number;
+            /** State */
+            state: string;
+        };
+        /** SimEligibleCases */
+        SimEligibleCases: {
+            /** Items */
+            items: components["schemas"]["SimEligibleCase"][];
+        };
+        /** SimEndIn */
+        SimEndIn: {
+            /**
+             * Abandon
+             * @default false
+             */
+            abandon: boolean;
+            /** Reason */
+            reason?: string | null;
+        };
+        /** SimEvaluationList */
+        SimEvaluationList: {
+            /** Items */
+            items: components["schemas"]["SimEvaluationSummary"][];
+        };
+        /** SimEvaluationOut */
+        SimEvaluationOut: {
+            /** Case Ref */
+            case_ref: string;
+            /** Content Sha256 */
+            content_sha256: string;
+            /** Content Source */
+            content_source: string;
+            /** Controller Outcome */
+            controller_outcome: string | null;
+            /** Controller Status */
+            controller_status: string;
+            /**
+             * Created
+             * @default false
+             */
+            created: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By Name */
+            created_by_name: string | null;
+            /** Engine Version */
+            engine_version: string;
+            /** Evaluation Ref */
+            evaluation_ref: string;
+            /** Events Evaluated */
+            events_evaluated: number;
+            /** Events Sha256 */
+            events_sha256: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Input Sha256 */
+            input_sha256: string;
+            /** Mode */
+            mode: string;
+            /** Note */
+            note: string;
+            /**
+             * Policy Fact Snapshot Id
+             * Format: uuid
+             */
+            policy_fact_snapshot_id: string;
+            /** Policy Fact Snapshot Sha256 */
+            policy_fact_snapshot_sha256: string;
+            replay: components["schemas"]["EvaluationReplay"];
+            /** Results */
+            results: components["schemas"]["AnswerEvaluationItem"][];
+            /**
+             * Run Id
+             * Format: uuid
+             */
+            run_id: string;
+            /** Script Label */
+            script_label: string;
+            /**
+             * Script Version Id
+             * Format: uuid
+             */
+            script_version_id: string;
+            /** Sim Ref */
+            sim_ref: string;
+            /** Totals */
+            totals: {
+                [key: string]: number;
+            };
+            /** Version Status */
+            version_status: string;
+        };
+        /** SimEvaluationSummary */
+        SimEvaluationSummary: {
+            /** Controller Outcome */
+            controller_outcome: string | null;
+            /** Controller Status */
+            controller_status: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By Name */
+            created_by_name: string | null;
+            /** Engine Version */
+            engine_version: string;
+            /** Evaluation Ref */
+            evaluation_ref: string;
+            /** Events Evaluated */
+            events_evaluated: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Totals */
+            totals: {
+                [key: string]: number;
+            };
+        };
+        /** SimEventIn */
+        SimEventIn: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "WRONG_PERSON" | "CALLBACK_REQUESTED" | "DECLINED_TO_CONTINUE" | "INTERRUPTED";
+            /** Note */
+            note?: string | null;
+        };
+        /** SimEventOut */
+        SimEventOut: {
+            /** Action Id */
+            action_id: string | null;
+            /** Actor */
+            actor: string;
+            /** Data */
+            data: {
+                [key: string]: unknown;
+            };
+            /** Event Type */
+            event_type: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Question Code */
+            question_code: string | null;
+            /** Seq */
+            seq: number;
+        };
         /** SimExisting */
         SimExisting: {
             /**
@@ -7133,6 +8371,237 @@ export interface components {
             script_label: string;
             /** Script Version Id */
             script_version_id: string;
+        };
+        /** SimPlanOut */
+        SimPlanOut: {
+            /** Assumptions */
+            assumptions?: string[];
+            /**
+             * Case Id
+             * Format: uuid
+             */
+            case_id: string;
+            /** Case Ref */
+            case_ref: string;
+            /** Contacts */
+            contacts: components["schemas"]["SimContactOut"][];
+            /** Content Approval Status */
+            content_approval_status: string;
+            /** Facts */
+            facts: {
+                [key: string]: unknown;
+            };
+            /**
+             * Identity Gate Configured
+             * @default false
+             */
+            identity_gate_configured: boolean;
+            /** Live Eligibility */
+            live_eligibility?: {
+                [key: string]: unknown;
+            } | null;
+            /** Manifest Sha256 */
+            manifest_sha256: string;
+            /**
+             * Mode
+             * @default TEXT_SIMULATION
+             */
+            mode: string;
+            /** Note */
+            note: string;
+            /** Questions */
+            questions: components["schemas"]["SimPlanQuestion"][];
+            /** Risk Band */
+            risk_band: string | null;
+            /**
+             * Script Family Id
+             * Format: uuid
+             */
+            script_family_id: string;
+            /** Script Label */
+            script_label: string;
+            /**
+             * Script Version Id
+             * Format: uuid
+             */
+            script_version_id: string;
+            /** Sections */
+            sections: components["schemas"]["SimPlanSection"][];
+            /** Stages */
+            stages?: string[];
+            /** Version Status */
+            version_status?: string | null;
+        };
+        /** SimPlanQuestion */
+        SimPlanQuestion: {
+            /** Answer Type */
+            answer_type: string;
+            /** Applicable */
+            applicable: boolean;
+            /** Code */
+            code: string;
+            /**
+             * Deliver On Termination
+             * @default false
+             */
+            deliver_on_termination: boolean;
+            /** Delivery Mode */
+            delivery_mode: string;
+            /**
+             * Discloses Policy Information
+             * @default false
+             */
+            discloses_policy_information: boolean;
+            /** Mandatory */
+            mandatory: boolean;
+            /** Max Reprompts */
+            max_reprompts: number;
+            /**
+             * On Failure
+             * @default CONTINUE
+             */
+            on_failure: string;
+            /** Options */
+            options: string[];
+            /** Position */
+            position: number;
+            /** Revision */
+            revision: number;
+            /**
+             * Role
+             * @default VERIFICATION
+             */
+            role: string;
+            /** Section */
+            section: string;
+            /** Section Name */
+            section_name: string;
+            /** Skip Reason */
+            skip_reason: string | null;
+            /**
+             * Stage
+             * @default VERIFICATION
+             */
+            stage: string;
+            /** Wording */
+            wording: string;
+        };
+        /** SimPlanSection */
+        SimPlanSection: {
+            /** Condition */
+            condition: string;
+            /** Included */
+            included: boolean;
+            /** Kind */
+            kind: string;
+            /** Module Code */
+            module_code: string;
+            /** Name */
+            name: string;
+            /** Position */
+            position: number;
+            /**
+             * Stage
+             * @default VERIFICATION
+             */
+            stage: string;
+        };
+        /** SimQuestionState */
+        SimQuestionState: {
+            /** Answer */
+            answer: {
+                [key: string]: unknown;
+            } | null;
+            /** Answer Type */
+            answer_type: string;
+            /** Code */
+            code: string;
+            /** Mandatory */
+            mandatory: boolean;
+            /** Position */
+            position: number;
+            /** Reason */
+            reason: string | null;
+            /** Reprompts Allowed */
+            reprompts_allowed: number;
+            /** Reprompts Used */
+            reprompts_used: number;
+            /** Requests */
+            requests: number;
+            /**
+             * Role
+             * @default VERIFICATION
+             */
+            role: string;
+            /** Section */
+            section: string;
+            /**
+             * Stage
+             * @default VERIFICATION
+             */
+            stage: string;
+            /** Status */
+            status: string;
+        };
+        /** SimResultOut */
+        SimResultOut: {
+            /** Actual */
+            actual: {
+                [key: string]: unknown;
+            };
+            /** Content Sha256 */
+            content_sha256: string | null;
+            /** Error */
+            error: string | null;
+            /** Events */
+            events: {
+                [key: string]: unknown;
+            }[];
+            /** Failures */
+            failures: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Plan Sha256 */
+            plan_sha256: string | null;
+            /** Problems */
+            problems: string[];
+            /** Response Log */
+            response_log: {
+                [key: string]: unknown;
+            }[];
+            /** Revision */
+            revision: number;
+            /**
+             * Scenario Id
+             * Format: uuid
+             */
+            scenario_id: string;
+            /** Scenario Name */
+            scenario_name: string;
+            /** Scenario Ref */
+            scenario_ref: string;
+            /**
+             * Script Version Id
+             * Format: uuid
+             */
+            script_version_id: string;
+            /** Side */
+            side: string;
+            /** Stale */
+            stale: boolean;
+            /** Stale Reasons */
+            stale_reasons: string[];
+            /** Status */
+            status: string;
+            /** Version Label */
+            version_label: string;
+            /** Version Status */
+            version_status: string;
         };
         /** SimRule */
         SimRule: {
@@ -7195,6 +8664,119 @@ export interface components {
             target_label: string;
             /** Tied */
             tied: boolean;
+        };
+        /** SimRunList */
+        SimRunList: {
+            /** Items */
+            items: components["schemas"]["SimRunSummary"][];
+        };
+        /** SimRunOut */
+        SimRunOut: {
+            /**
+             * Case Id
+             * Format: uuid
+             */
+            case_id: string;
+            /** Case Ref */
+            case_ref: string;
+            /** Contact Role */
+            contact_role: string | null;
+            /** Ended At */
+            ended_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Lifecycle */
+            lifecycle?: {
+                [key: string]: unknown;
+            };
+            /** Manifest Sha256 */
+            manifest_sha256: string;
+            next_action: components["schemas"]["SimActionOut"];
+            /** Note */
+            note: string;
+            /** Outcome */
+            outcome: string | null;
+            /** Questions */
+            questions: components["schemas"]["SimQuestionState"][];
+            /**
+             * Replayed
+             * @default false
+             */
+            replayed: boolean;
+            /** Script Label */
+            script_label: string;
+            /**
+             * Script Version Id
+             * Format: uuid
+             */
+            script_version_id: string;
+            /** Sim Ref */
+            sim_ref: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Status */
+            status: string;
+            /** Summary */
+            summary: {
+                [key: string]: unknown;
+            };
+            /** Trace */
+            trace: components["schemas"]["SimEventOut"][];
+        };
+        /** SimRunSummary */
+        SimRunSummary: {
+            /** Contact Role */
+            contact_role: string | null;
+            /** Ended At */
+            ended_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Mode
+             * @default TEXT_SIMULATION
+             */
+            mode: string;
+            /** Outcome */
+            outcome: string | null;
+            /** Script Label */
+            script_label?: string | null;
+            /** Sim Ref */
+            sim_ref: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Started By */
+            started_by: string | null;
+            /** Status */
+            status: string;
+        };
+        /** SimSkipIn */
+        SimSkipIn: {
+            /** Action Id */
+            action_id: string;
+        };
+        /** SimStartIn */
+        SimStartIn: {
+            /**
+             * Case Id
+             * Format: uuid
+             */
+            case_id: string;
+            /** Contact Selection Id */
+            contact_selection_id?: string | null;
+            /** Script Version Id */
+            script_version_id?: string | null;
         };
         /** SimSummary */
         SimSummary: {
@@ -7954,6 +9536,107 @@ export interface components {
             synthetic_badge: boolean;
             /** Time Zone */
             time_zone: string;
+        };
+        /** WorkbenchOptions */
+        WorkbenchOptions: {
+            /** Condition Facts */
+            condition_facts: {
+                [key: string]: unknown[];
+            };
+            /** Default Responses */
+            default_responses: string[];
+            /** Evaluation Facts */
+            evaluation_facts?: string[];
+            /** Evaluation Results */
+            evaluation_results?: string[];
+            /** Events */
+            events: {
+                [key: string]: string;
+            };
+            /** Expectation Bases */
+            expectation_bases?: string[];
+            /** Gate Statuses */
+            gate_statuses: string[];
+            /** Gates */
+            gates: string[];
+            /** Note */
+            note: string;
+            /** Outcomes */
+            outcomes: string[];
+            /** Question States */
+            question_states: string[];
+            /** Risk Bands */
+            risk_bands: string[];
+            /** Step Kinds */
+            step_kinds: string[];
+            /** Termination Reasons */
+            termination_reasons: string[];
+        };
+        /** WorkbenchPlanIn */
+        WorkbenchPlanIn: {
+            /** Facts */
+            facts?: {
+                [key: string]: boolean | number | string;
+            };
+            /** Risk Band */
+            risk_band?: string | null;
+            /**
+             * Script Version Id
+             * Format: uuid
+             */
+            script_version_id: string;
+        };
+        /** WorkbenchPlanOut */
+        WorkbenchPlanOut: {
+            /** Content Approval Status */
+            content_approval_status: string;
+            /** Content Sha256 */
+            content_sha256: string;
+            /** Live Eligibility */
+            live_eligibility: {
+                [key: string]: unknown;
+            };
+            /** Questions */
+            questions: components["schemas"]["SimPlanQuestion"][];
+            /** Script Label */
+            script_label: string;
+            /**
+             * Script Version Id
+             * Format: uuid
+             */
+            script_version_id: string;
+            /** Sections */
+            sections: components["schemas"]["SimPlanSection"][];
+            /** Version Status */
+            version_status: string;
+        };
+        /** WorkbenchVersion */
+        WorkbenchVersion: {
+            /** Content Approval Status */
+            content_approval_status: string;
+            /** Family */
+            family: string;
+            /**
+             * Family Id
+             * Format: uuid
+             */
+            family_id: string;
+            /** Family Name */
+            family_name: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Status */
+            status: string;
+            /** Version Label */
+            version_label: string;
+        };
+        /** WorkbenchVersions */
+        WorkbenchVersions: {
+            /** Items */
+            items: components["schemas"]["WorkbenchVersion"][];
         };
     };
     responses: never;
@@ -11601,6 +13284,82 @@ export interface operations {
             };
         };
     };
+    case_simulations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimRunList"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     case_timeline: {
         parameters: {
             query?: never;
@@ -13692,6 +15451,1099 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AuthoringOptions"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    simulation_start: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SimStartIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimRunOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    simulation_cases: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                include_unassigned?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimEligibleCases"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    simulation_plan: {
+        parameters: {
+            query: {
+                case_id: string;
+                script_version_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimPlanOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    simulation_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimRunOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    simulation_answer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SimAnswerIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimRunOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    simulation_as_scenario: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScenarioPreviewIn"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    simulation_clarification: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SimClarificationIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimRunOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    simulation_delivery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SimDeliveryIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimRunOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    simulation_end: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SimEndIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimRunOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    simulation_evaluations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimEvaluationList"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    simulation_evaluate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimEvaluationOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    simulation_evaluation_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+                evaluation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimEvaluationOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    simulation_event: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SimEventIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimRunOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    simulation_skip: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SimSkipIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimRunOut"];
                 };
             };
             /** @description Unauthorized */
@@ -15998,6 +18850,1090 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    scenario_run_list: {
+        parameters: {
+            query?: {
+                scenario_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimBatchList"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    scenario_run: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScenarioRunIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimBatchOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    scenario_run_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                batch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimBatchOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    scenario_list: {
+        parameters: {
+            query?: {
+                family_id?: string | null;
+                q?: string | null;
+                include_archived?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScenarioList"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    scenario_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScenarioContent"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScenarioOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    scenario_preview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScenarioPreviewIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScenarioPreviewOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    scenario_get: {
+        parameters: {
+            query?: {
+                revision?: number | null;
+            };
+            header?: never;
+            path: {
+                scenario_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScenarioOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    scenario_revise: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scenario_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScenarioReviseIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScenarioOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    scenario_copy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scenario_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScenarioCopyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScenarioOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    scenario_status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scenario_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScenarioStatusIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScenarioOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    workbench_case_facts: {
+        parameters: {
+            query: {
+                case_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CaseFactsOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    workbench_options: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkbenchOptions"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    workbench_plan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkbenchPlanIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkbenchPlanOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    workbench_versions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkbenchVersions"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
