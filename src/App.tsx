@@ -20,9 +20,12 @@ import { GroupsPage } from './features/admin/GroupsPage';
 import { SessionsPage } from './features/admin/SessionsPage';
 import { SystemPage } from './features/admin/SystemPage';
 import { ReviewWorkbenchPage } from './features/reviews/ReviewWorkbenchPage';
+import { ReviewCasePage } from './features/reviews/ReviewCasePage';
 import { VoiceStudioPage } from './features/voice/VoiceStudioPage';
+import { VoiceLabPage } from './features/voicelab/VoiceLabPage';
 import { RuleDetailPage } from './features/rules/RuleDetailPage';
 import { TextSimulatorPage } from './features/simulator/TextSimulatorPage';
+import { FindingRulesPage } from './features/findings/FindingRulesPage';
 import { AssignmentRulesPage } from './features/scripts/AssignmentRulesPage';
 import { ScriptFamilyPage } from './features/scripts/ScriptFamilyPage';
 import { ScriptLibraryPage } from './features/scripts/ScriptLibraryPage';
@@ -53,8 +56,11 @@ export function App() {
           <Route path="assignment-rules" element={<RequirePermission permission="script.read"><AssignmentRulesPage /></RequirePermission>} />
           <Route path="assignment-rules/:ruleCode" element={<RequirePermission permission="script.read"><RuleDetailPage /></RequirePermission>} />
           <Route path="simulator" element={<RequirePermission permission="script.read"><TextSimulatorPage /></RequirePermission>} />
+          <Route path="finding-rules" element={<RequirePermission permission="script.read"><FindingRulesPage /></RequirePermission>} />
           <Route path="reviews" element={<RequirePermission permission="queue.read"><ReviewWorkbenchPage /></RequirePermission>} />
+          <Route path="reviews/cases/:caseId" element={<RequirePermission permission="queue.read"><ReviewCasePage /></RequirePermission>} />
           <Route path="voice-studio" element={<RequirePermission permission="voice.preflight.read"><VoiceStudioPage /></RequirePermission>} />
+          <Route path="voice-lab" element={<VoiceLabPage />} />
           <Route path="intake" element={<RequirePermission permission="intake.read"><IntakePage /></RequirePermission>} />
           <Route path="account/password" element={<PasswordPage />} />
           <Route path="unauthorized" element={<UnauthorizedPage />} />

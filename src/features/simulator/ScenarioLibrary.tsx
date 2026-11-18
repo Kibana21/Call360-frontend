@@ -109,7 +109,7 @@ export function ScenarioLibrary({ selected, fromRun, onSelect, onShowRun }: {
   );
 }
 
-const EMPTY_EXP: Expect = { outcome: null, termination_reason: null, gates: {}, mandatory_complete: null, applicable_questions: null, sequence: null, question_states: {}, evaluations: {}, basis: null };
+const EMPTY_EXP: Expect = { outcome: null, termination_reason: null, gates: {}, mandatory_complete: null, applicable_questions: null, sequence: null, question_states: {}, evaluations: {}, basis: null, findings: null };
 
 function ScenarioEditor({ id, fromRun, onSaved, onShowRun }: { id: string | null; fromRun: string | null; onSaved: (id: string) => void; onShowRun: (b: string) => void }) {
   const { can } = useAuth();
@@ -163,7 +163,8 @@ function ScenarioEditor({ id, fromRun, onSaved, onShowRun }: { id: string | null
     setExp({ outcome: (a.outcome as string) ?? null, termination_reason: (a.termination_reason as string) ?? 'NONE', gates: (a.gates as Record<string, string>) ?? {},
       mandatory_complete: (a.mandatory_complete as boolean) ?? null, sequence: (a.sequence as string[]) ?? null, applicable_questions: (a.applicable as string[]) ?? null,
       evaluations: Object.fromEntries(Object.entries((a.evaluation_results as Record<string, string>) ?? {}).filter(([, r]) => !['NOT_EVALUATED', 'NOT_APPLICABLE'].includes(r))),
-      basis: 'GENERATED_BASELINE' });
+      basis: 'GENERATED_BASELINE',
+      findings: Array.isArray(a.findings_view) ? (a.findings_view as { question: string; category: string; severity: string }[]).map((f) => ({ question: f.question, category: f.category, severity: f.severity as 'LOW' })) : null });
   };
   return (
     <>
@@ -356,6 +357,7 @@ function ExpectationsEditor({ exp, o, questions, setExp }: { exp: Expect; o: Opt
         </div>
         {Object.keys(evals).length ? <ul className="plain-list row wrap" style={{ gap: 6, flexDirection: 'row' }}>{Object.entries(evals).map(([q, r]) => <li key={q}><Badge tone={EVAL_TONE[r] ?? 'gray'}>{`${q}: ${EVAL_LABEL[r] ?? humanize(r)}`}</Badge> <button type="button" className="link xsmall" onClick={() => { const n = { ...evals }; delete n[q]; setExp({ evaluations: n }); }} aria-label={`Remove expected evaluation of ${q}`}>remove</button></li>)}</ul> : null}
       </div>
+      <FindingsExpectation exp={exp} o={o} questions={questions} setExp={setExp} />
       <div className="stack xsmall" style={{ gap: 4 }}>
         <label className="row" style={{ gap: 6 }}><input type="checkbox" checked={exp.applicable_questions != null} onChange={(e) => setExp({ applicable_questions: e.target.checked ? questions.filter((q) => q.applicable).map((q) => q.code) : null })} data-testid="scn-exp-applicable" /> Expect exactly these applicable questions{exp.applicable_questions ? `: ${exp.applicable_questions.join(', ')}` : ''}</label>
         <label className="row" style={{ gap: 6 }}><input type="checkbox" checked={exp.sequence != null} onChange={(e) => setExp({ sequence: e.target.checked ? [] : null })} disabled={exp.sequence == null} /> Expect exactly this question sequence{exp.sequence ? `: ${exp.sequence.join(' → ') || '(use a dry run to capture it)'}` : ' (capture it with a dry run)'}</label>
@@ -402,9 +404,36 @@ export function ActualSummary({ a }: { a: Record<string, unknown> }) {
         (a.mandatory_open as string[] | undefined)?.length ? `${a.termination_reason ? 'Not reached (terminated)' : 'Still open'}: ${(a.mandatory_open as string[]).join(', ')}` : '',
       ].filter(Boolean).join(' · ') || 'Incomplete'}</dd>
       <dt>Sequence</dt><dd className="mono">{((a.sequence as string[]) ?? []).join(' → ')}</dd>
+      {Array.isArray(a.findings_view) ? <><dt>Findings</dt><dd data-testid="actual-findings">{(a.findings_view as { question: string; category: string; severity: string }[]).length ? (a.findings_view as { question: string; category: string; severity: string }[]).map((f) => `${f.question} ${humanize(f.category).toLowerCase()} (${f.severity})`).join('; ') : 'None'}</dd></> : null}
       {a.evaluation_totals ? <><dt>Answer evaluation</dt><dd><EvaluationTotals totals={a.evaluation_totals as Record<string, number>} testId="actual-eval-totals" /></dd></> : null}
       <dt>Compliance</dt><dd>Not evaluated (answer evaluation is not a compliance decision)</dd>
     </dl>
+  );
+}
+
+function FindingsExpectation({ exp, o, questions, setExp }: { exp: Expect; o: Options; questions: Plan['questions']; setExp: (p: Partial<Expect>) => void }) {
+  const list = exp.findings ?? null;
+  const [q, setQ] = useState('');
+  const [cat, setCat] = useState('');
+  const [sev, setSev] = useState('');
+  const cats = (o as { finding_categories?: string[] }).finding_categories ?? [];
+  const sevs = (o as { finding_severities?: string[] }).finding_severities ?? [];
+  return (
+    <div className="stack" style={{ gap: 6 }} data-testid="scn-exp-findings">
+      <label className="row xsmall" style={{ gap: 6 }}><input type="checkbox" checked={list != null} onChange={(e) => setExp({ findings: e.target.checked ? [] : null })} data-testid="scn-exp-findings-check" />
+        Check generated findings (with the published finding rules){list != null && !list.length ? ' — expect no findings' : ''}</label>
+      {list != null ? (
+        <>
+          <div className="row wrap" style={{ gap: 6, alignItems: 'center' }}>
+            <select aria-label="Question for an expected finding" className="field" value={q} onChange={(e) => setQ(e.target.value)} data-testid="scn-exp-finding-q"><option value="">Question…</option>{questions.map((x) => <option key={x.code} value={x.code}>{x.code}</option>)}</select>
+            <select aria-label="Expected finding category" className="field" value={cat} onChange={(e) => setCat(e.target.value)} data-testid="scn-exp-finding-cat"><option value="">Category…</option>{cats.map((c) => <option key={c} value={c}>{humanize(c)}</option>)}</select>
+            <select aria-label="Expected finding severity" className="field" value={sev} onChange={(e) => setSev(e.target.value)} data-testid="scn-exp-finding-sev"><option value="">Any severity</option>{sevs.map((c) => <option key={c} value={c}>{c}</option>)}</select>
+            <Button tiny disabled={!q || !cat} onClick={() => { setExp({ findings: [...list, { question: q, category: cat, severity: (sev || null) as 'LOW' | null }] }); setQ(''); setCat(''); setSev(''); }} data-testid="scn-exp-finding-add">Add expected finding</Button>
+          </div>
+          {list.length ? <ul className="plain-list row wrap" style={{ gap: 6, flexDirection: 'row' }}>{list.map((f, i) => <li key={i}><Badge tone="red">{`${f.question}: ${humanize(f.category)}${f.severity ? ` · ${f.severity}` : ''}`}</Badge> <button type="button" className="link xsmall" onClick={() => setExp({ findings: list.filter((_, j) => j !== i) })} aria-label={`Remove expected finding ${i + 1}`}>remove</button></li>)}</ul> : null}
+        </>
+      ) : null}
+    </div>
   );
 }
 

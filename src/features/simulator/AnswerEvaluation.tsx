@@ -9,6 +9,7 @@ import { Badge, Button, Card, type Tone } from '../../components/ui';
 import { humanize, when } from '../cases/shared';
 import { METHOD_LABEL } from '../scripts/ScriptEditor';
 import { ErrorBox, errorText } from '../scripts/ScriptEditor';
+import { RunFindings } from './RunFindings';
 
 export type EvaluationItem = components['schemas']['AnswerEvaluationItem'];
 type Evaluation = components['schemas']['SimEvaluationOut'];
@@ -167,6 +168,7 @@ export function RunEvaluation({ runId, canEvaluate, status }: { runId: string; c
                 <dt>Run</dt><dd>{e.sim_ref} · {e.case_ref}</dd>
               </dl>
             </details>
+            <RunFindings key={e.id} runId={runId} evaluationId={e.id} canGenerate={canEvaluate} />
           </>
         ) : null}
       </div>

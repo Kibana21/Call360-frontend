@@ -293,7 +293,7 @@ function RunView({ runId, caseId, version, onRestart, onPlan, onSaveScenario }: 
               <Button onClick={onPlan}>Back to plan</Button>
               {can('script.simulate') ? <Button icon="plus" onClick={onSaveScenario} data-testid="sim-save-scenario">Save as scenario</Button> : null}
             </div>
-            <RunEvaluation runId={runId} canEvaluate={can('script.simulate')} status={r.status} />
+            <RunEvaluation key={runId} runId={runId} canEvaluate={can('script.simulate')} status={r.status} />
             <Card title="Question progress" subtitle="Mandatory order is fixed; a question is skipped only by an approved condition">
               <div className="table-wrap" tabIndex={0} role="region" aria-label="Question progress"><table className="data-table" data-testid="sim-questions">
                 <thead><tr><th>#</th><th>Stage</th><th>Question</th><th>Status</th><th>Answer</th><th>Re-prompts</th></tr></thead>

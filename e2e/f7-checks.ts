@@ -41,9 +41,9 @@ export async function f7Journey(page: Page, shots: boolean): Promise<void> {
   await expect(detail).toContainText('Critical severity');
   await expect(detail).toContainText('Why the case was selected — not a finding');
   if (f.evidence.question_code) await expect(detail).toContainText(f.evidence.question_code);
-  await expect(detail).toContainText('No review decision recorded');
+  await expect(detail).toContainText(/Review(Not yet reviewed|Under review|Confirmed)/); // no fabricated outcome
   await expect(detail).toContainText('Not available — recordings are captured from Stage S1');
-  for (const name of ['Confirm', 'Reject', 'Send to checker']) await expect(detail.getByRole('button', { name })).toBeDisabled();
+  await expect(detail.getByTestId('open-case-review')).toHaveAttribute('href', new RegExp(`/reviews/cases/${f.case_id}`)); // S3-C
   if (shots) { await a11yAndLayout(page, 'review-workbench'); await page.setViewportSize({ width: 1440, height: 900 }); }
 
   // Navigation to Call Detail, which shows the same finding.

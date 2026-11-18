@@ -1,6 +1,7 @@
 // S2-E test runs: recorded single / batch runs and two-version comparisons, each result with its explained
 // differences, the exact script snapshot and scenario revision used, structural coverage and the controller trace.
 import { DISCLAIMER, EvaluationTable, EvaluationTotals, totalsOf, type EvaluationItem } from './AnswerEvaluation';
+import { FindingsView, type Finding } from './RunFindings';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Fragment, useId, useMemo, useState } from 'react';
 import { api, unwrap } from '../../api/client';
@@ -158,6 +159,12 @@ function ResultDetail({ r }: { r: Result }) {
           <EvaluationTable items={(r.actual as { evaluations: EvaluationItem[] }).evaluations} testId="result-eval-table" />
         </div>
       ) : null}
+      {Array.isArray((r.actual as { findings?: unknown }).findings) ? (
+        <div className="stack" style={{ gap: 6 }} data-testid="result-findings">
+          <strong className="small">Findings · {String(((r.actual as { finding_rule_set?: { label?: string } }).finding_rule_set ?? {}).label ?? '')}</strong>
+          <FindingsView findings={(r.actual as { findings: Finding[] }).findings} notConverted={((r.actual as { findings_not_converted?: Record<string, unknown>[] }).findings_not_converted) ?? []} human={[]} testId="result-findings-view" />
+        </div>
+      ) : (r.actual as { evaluations?: unknown }).evaluations ? <p className="xsmall muted" style={{ margin: 0 }} data-testid="result-no-rules">No finding rule set was published when this ran, so no findings were generated.</p> : null}
       {r.response_log.length ? (
         <details><summary className="small strong" style={{ cursor: 'pointer', minHeight: 28, display: 'flex', alignItems: 'center' }}>How each item was answered ({r.response_log.length})</summary>
           <ol className="plain-list xsmall" style={{ margin: '6px 0 0' }}>{r.response_log.map((l, i) => <li key={i}><span className="mono">{String(l.action_id)}</span> — {String(l.response)} <span className="muted">({String(l.by)})</span></li>)}</ol></details>
@@ -182,7 +189,7 @@ function Comparison({ b }: { b: Batch }) {
           const pd = c.plan_diff as Record<string, unknown> | null;
           const od = (c.outcome_diff as { field: string; a: unknown; b: unknown }[]) ?? [];
           const list = (k: string) => ((pd?.[k] as string[]) ?? []);
-          const show = (v: unknown) => (Array.isArray(v) ? v.join(' → ') || '—' : v && typeof v === 'object' ? Object.entries(v).map(([k, x]) => `${k}: ${String(x)}`).join(', ') : v == null ? '—' : String(v));
+          const show = (v: unknown) => (Array.isArray(v) ? v.map((x) => (x && typeof x === 'object' ? Object.values(x as Record<string, unknown>).filter(Boolean).join(' ') : String(x))).join(Array.isArray(v) && v.some((x) => typeof x === 'object') ? '; ' : ' → ') || '—' : v && typeof v === 'object' ? Object.entries(v).map(([k, x]) => `${k}: ${String(x)}`).join(', ') : v == null ? '—' : String(v));
           return (
             <div key={String(c.scenario_id)} className="softbox stack" style={{ gap: 6 }} data-testid={`cmp-${String(c.scenario_ref)}`}>
               <div className="row wrap" style={{ gap: 6 }}><strong className="small">{String(c.scenario_name)}</strong>
@@ -203,7 +210,7 @@ function Comparison({ b }: { b: Batch }) {
               ) : <p className="xsmall muted" style={{ margin: 0 }}>No plan comparison (a side could not run).</p>}
               {od.length ? (
                 <table className="data-table"><thead><tr><th>Controller result</th><th>A</th><th>B</th></tr></thead>
-                  <tbody>{od.map((x) => <tr key={x.field}><td className="small">{x.field.startsWith('evaluation:') ? <>Answer evaluation <span className="mono">{x.field.slice(11)}</span></> : humanize(x.field.toUpperCase())}</td><td className="xsmall mono" style={{ whiteSpace: 'normal' }}>{show(x.a)}</td><td className="xsmall mono" style={{ whiteSpace: 'normal' }}>{show(x.b)}</td></tr>)}</tbody></table>
+                  <tbody>{od.map((x) => <tr key={x.field}><td className="small">{x.field.startsWith('evaluation:') ? <>Answer evaluation <span className="mono">{x.field.slice(11)}</span></> : x.field === 'findings' ? 'Findings (question · category · severity)' : humanize(x.field.toUpperCase())}</td><td className="xsmall mono" style={{ whiteSpace: 'normal' }}>{show(x.a)}</td><td className="xsmall mono" style={{ whiteSpace: 'normal' }}>{show(x.b)}</td></tr>)}</tbody></table>
               ) : null}
             </div>
           );

@@ -48,7 +48,8 @@ export async function cp01b3Admin(page: Page): Promise<void> {
   // 3. Groups: the user is a member of Singapore users; history and reserved permissions are visible.
   await page.goto('/admin/groups');
   await expect(page.getByTestId('group-LOCAL_USER_SG')).toContainText(displayName);
-  await expect(page.getByTestId('reserved-permissions')).toContainText('review.decide');
+  await expect(page.getByTestId('reserved-permissions')).toContainText('pii.unmasked'); // review.decide un-reserved in S3-C
+  await expect(page.getByTestId('reserved-permissions')).not.toContainText('review.decide');
   await a11yAndLayout(page, 'admin-groups');
   await page.setViewportSize({ width: 1440, height: 900 });
 

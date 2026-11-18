@@ -1,7 +1,7 @@
-// Review Workbench (`/reviews`, F7): compliance findings of in-scope cases (API-077) with server-side search, filters,
-// sorting and paging held in the URL, and a read-only detail of the selected finding: its recorded question, answer,
-// rule evaluation, controls and the case, policy and sale it belongs to. Finding severity is shown apart from the
-// case's SBQ selection band. No review decision exists before Stage S3, so every adjudication action is disabled.
+// Review Workbench (`/reviews`, F7 → S3-C): compliance findings of in-scope cases (API-077) with server-side search,
+// filters, sorting and paging held in the URL, and the selected finding's recorded question, answer, rule evaluation,
+// controls and case; the cases awaiting review or escalated; and the checker's pending approvals. Reviewing happens on
+// the case review page (`/reviews/cases/:caseId`). Finding severity is shown apart from the case's SBQ selection band.
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -41,6 +41,7 @@ export function ReviewWorkbenchPage() {
     queryKey: ['review-queue', params.toString()], enabled: allowed,
     queryFn: async () => unwrap(await api.GET('/api/v1/review-queue', { params: { query: query as never } })),
   });
+  const tab = params.get('tab') ?? 'findings';
   const [text, setText] = useState(params.get('q') ?? '');
   useEffect(() => setText(params.get('q') ?? ''), [params]);
   if (!allowed) return <Forbidden />;
@@ -57,13 +58,17 @@ export function ReviewWorkbenchPage() {
   return (
     <>
       <PageHead eyebrow="Human accountability" title="Review Workbench"
-        description="Compliance findings on Singapore callback cases, with the recorded answer, rule result and controls behind each one. Read-only: review decisions arrive in Stage S3."
-        actions={<>
-          {['Assign work', 'Export review queue'].map((l) => <Button key={l} tiny disabled aria-describedby="rw-s3">{l}</Button>)}
-          <span id="rw-s3"><StageChip label="Stage S3 — review decisions" /></span>
-        </>} />
+        description="Compliance findings on Singapore callback cases, with the recorded answer, rule result and controls behind each one. Open a case to inspect the evidence, record dispositions and propose a governed decision; final decisions need a different checker."
+        actions={<span><StageChip label="Assignment and export — Stage S4" /></span>} />
       <div className="topnotice" role="note"><div className="row"><Icon name="info" size="sm" />
-        <span><strong>Seeded synthetic findings.</strong> They were not produced by a Call360 voice session or compliance evaluation. No finding has been confirmed, dismissed or closed by a reviewer.</span></div></div>
+        <span><strong>Synthetic data.</strong> Seeded findings were not produced by a Call360 voice session; engine findings come from synthetic fixtures. Findings are concerns for review, never breach determinations.</span></div></div>
+      <div className="subtabs" role="tablist" aria-label="Review views" style={{ marginBottom: 14 }}>
+        {([['findings', 'Findings'], ['cases', 'Cases to review'], ['approvals', 'Approvals']] as const).map(([k, l]) => (
+          <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'active' : ''} data-testid={`rw-tab-${k}`}
+            onClick={() => setParams(k === 'findings' ? {} : { tab: k })}>{l}</button>
+        ))}
+      </div>
+      {tab === 'cases' ? <ReviewCasesTab /> : tab === 'approvals' ? <ApprovalsTab /> : <>
 
       <div className="layout cols-4" style={{ marginBottom: 18 }} aria-label="Findings summary for this queue">
         <Tile label={queue === 'ALL' ? 'Findings' : 'Awaiting review'} value={data ? Object.values(f.status ?? {}).reduce((a, b) => a + b, 0) : undefined} sub="Open or under review unless “All findings”" accent />
@@ -124,7 +129,48 @@ export function ReviewWorkbenchPage() {
         </Card>
         <div>{selected ? <FindingDetail i={selected} /> : data && data.items.length ? null : <Card title="Finding detail"><Empty title="Select a finding" /></Card>}</div>
       </div>
+      </>}
     </>
+  );
+}
+
+function ReviewCasesTab() {
+  const q = useQuery({ queryKey: ['review-cases'], queryFn: async () => unwrap(await api.GET('/api/v1/review/cases')) });
+  return (
+    <Card title="Cases to review" subtitle="Awaiting review, escalated, or with a pending approval">
+      <Region query={q} label="cases">
+        {() => q.data!.items.length ? (
+          <div className="table-wrap" tabIndex={0} role="region" aria-label="Cases to review"><table className="data-table" data-testid="rw-cases">
+            <thead><tr><th>Case</th><th>State</th><th>Open findings</th><th>Pending approvals</th><th>Due</th></tr></thead>
+            <tbody>{q.data!.items.map((c) => (
+              <tr key={c.id}><td><Link className="link mono" to={`/reviews/cases/${c.id}`} data-testid={`rw-case-${c.case_ref}`}>{c.case_ref}</Link></td>
+                <td><Badge tone={c.state === 'ESCALATED' ? 'red' : 'amber'}>{humanize(c.state)}</Badge></td><td>{c.open_findings}</td><td>{c.pending_approvals}</td><td className="xsmall">{when(c.due_at)}</td></tr>
+            ))}</tbody>
+          </table></div>
+        ) : <Empty title="Nothing to review">No case is awaiting review or escalated.</Empty>}
+      </Region>
+    </Card>
+  );
+}
+
+function ApprovalsTab() {
+  const q = useQuery({ queryKey: ['review-approvals'], queryFn: async () => unwrap(await api.GET('/api/v1/review/approvals')) });
+  return (
+    <Card title="Pending approvals" subtitle="Protected outcomes proposed by one reviewer; a different checker approves or rejects them on the case">
+      <Region query={q} label="approvals">
+        {() => q.data!.items.length ? (
+          <ul className="plain-list stack" style={{ gap: 8 }} data-testid="rw-approvals">
+            {q.data!.items.map((a) => (
+              <li key={a.id} className="softbox row wrap" style={{ gap: 8 }}>
+                <span className="mono small strong">{a.approval_ref}</span><Badge tone="blue">{humanize(a.proposed_action)}</Badge>
+                <Link className="link mono" to={`/reviews/cases/${a.callback_case_id}`}>{a.case_ref}</Link>{a.finding_ref ? <span className="mono xsmall">{a.finding_ref}</span> : null}
+                <span className="xsmall muted">by {a.proposed_by_name ?? '—'} · {when(a.proposed_at)} — {a.reason}</span>
+              </li>
+            ))}
+          </ul>
+        ) : <Empty title="No pending approvals" />}
+      </Region>
+    </Card>
   );
 }
 
@@ -196,14 +242,13 @@ function FindingDetail({ i }: { i: ReviewItem }) {
         {e.rule_ref ? <><dt>Expected · observed</dt><dd>{show(e.rule_expected)} · {show(e.rule_observed)}</dd></> : null}
         <dt>Transcript</dt><dd>{e.transcript === 'NOT_AVAILABLE' ? 'Not available — transcripts are captured from Stage S1' : humanize(e.transcript)}</dd>
         <dt>Recording</dt><dd>Not available — recordings are captured from Stage S1</dd>
-        <dt>Review</dt><dd>{i.review_closed_at ? `Closed ${when(i.review_closed_at)}` : 'No review decision recorded'}{i.reviewer_assigned ? ' · reviewer assigned' : ' · no reviewer assigned'}</dd>
+        <dt>Review</dt><dd>{i.review_closed_at ? `Review closed ${when(i.review_closed_at)}` : i.status === 'OPEN' ? 'Not yet reviewed' : humanize(i.status)}{i.reviewer_assigned ? ' · reviewer assigned' : ' · no reviewer assigned'}</dd>
       </dl>
       {e.label ? <p className="xsmall muted">{e.label}</p> : null}
 
       <div className="row wrap" style={{ marginTop: 14 }}>
-        <Link className="btn primary" to={`/cases/${i.case_id}`} data-testid="open-call-detail">Open Call Detail</Link>
-        {['Confirm', 'Reject', 'Request info', 'Assign', 'Send to checker'].map((l) => <Button key={l} tiny disabled aria-describedby="rw-detail-s3">{l}</Button>)}
-        <span id="rw-detail-s3"><StageChip label="Stage S3" /></span>
+        <Link className="btn primary" to={`/reviews/cases/${i.case_id}?finding=${i.id}`} data-testid="open-case-review">Review this case</Link>
+        <Link className="btn" to={`/cases/${i.case_id}`} data-testid="open-call-detail">Open Call Detail</Link>
       </div>
     </section>
   );

@@ -34,11 +34,11 @@ describe('Review Workbench', () => {
     expect(within(detail).getByText('Why the case was selected — not a finding')).toBeInTheDocument();
     expect(detail).toHaveTextContent('NUMERIC_MATCH v1 · Fail');
     expect(detail).toHaveTextContent('10 · 5');
-    expect(detail).toHaveTextContent('No review decision recorded');
+    expect(detail).toHaveTextContent('Not yet reviewed'); // no fabricated review outcome
     expect(detail).toHaveTextContent('Not available — recordings are captured from Stage S1');
     expect(within(detail).getByTestId('open-call-detail')).toHaveAttribute('href', '/cases/c1');
     expect(within(detail).getByRole('link', { name: 'POL-SG-000001' })).toHaveAttribute('href', '/policies/p1?sale=s1');
-    for (const name of ['Confirm', 'Reject', 'Send to checker']) expect(within(detail).getByRole('button', { name })).toBeDisabled();
+    expect(within(detail).getByTestId('open-case-review')).toHaveAttribute('href', expect.stringContaining('/reviews/cases/')); // S3-C: review on the case page
     await userEvent.click(within(screen.getByTestId('review-list')).getByRole('button', { name: /FND-2026-00002/ }));
     expect(screen.getByTestId('finding-detail')).toHaveTextContent('FND-2026-00002');
     await userEvent.selectOptions(screen.getByLabelText('Severity'), 'CRITICAL');

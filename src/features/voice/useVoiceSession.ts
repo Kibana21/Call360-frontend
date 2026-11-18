@@ -13,11 +13,26 @@ import type { components } from '../../api/generated/schema';
 import { SessionRecorder, type CloseReason, type RecorderStatus } from './recorder';
 
 export type VoiceSessionInfo = components['schemas']['VoiceSessionOut'];
+/** What the transport needs from a created session (operational sessions, and Voice Lab sessions in S1-E.1). */
+export interface SessionLike { session_id: string; stream_path: string; credential: string; sample_rate: number; recording_consent: string }
+/** Where sessions are created, resumed and stopped: case sessions by default; the Voice Lab passes its own. */
+export interface VoiceAdapter<S extends SessionLike> {
+  create: (caseId: string, consent: { notice_version: string } | null) => Promise<S>;
+  resume?: (id: string) => Promise<S>;
+  stop: (id: string) => Promise<void>;
+}
+const CASE_ADAPTER: VoiceAdapter<VoiceSessionInfo> = {
+  create: async (caseId, consent) => unwrap(await api.POST('/api/v1/voice/sessions', { body: consent
+    ? { case_id: caseId, recording_consent: 'GRANTED', consent_notice_version: consent.notice_version }
+    : { case_id: caseId, recording_consent: 'DECLINED' } })),
+  resume: async (id) => unwrap(await api.POST('/api/v1/voice/sessions/{session_id}/resume', { params: { path: { session_id: id } } })),
+  stop: async (id) => { await api.POST('/api/v1/voice/sessions/{session_id}/stop', { params: { path: { session_id: id } } }); },
+};
 export type VoicePhase = 'idle' | 'requesting-mic' | 'connecting' | 'live' | 'reconnecting' | 'ending' | 'ended' | 'error';
 export interface VoiceLogItem { at: number; text: string }
-export interface VoiceState {
+export interface VoiceState<S extends SessionLike = VoiceSessionInfo> {
   phase: VoicePhase;
-  session: VoiceSessionInfo | null;
+  session: S | null;
   agentSpeaking: boolean;
   userSpeaking: boolean;
   muted: boolean;
@@ -31,7 +46,7 @@ export interface VoiceState {
   recording: RecorderStatus | null; // null: this session is not recorded (consent declined)
 }
 
-const INITIAL: VoiceState = {
+const INITIAL: VoiceState<never> = {
   phase: 'idle', session: null, agentSpeaking: false, userSpeaking: false, muted: false, micLevel: 0,
   responses: 0, interruptions: 0, error: null, endReason: null, finalState: null, log: [], recording: null,
 };
@@ -50,22 +65,24 @@ export function micErrorMessage(e: unknown): string {
 export const END_REASONS: Record<string, string> = {
   STOPPED_BY_USER: 'You stopped the session.',
   DISCONNECTED: 'The connection closed.',
-  IDLE_TIMEOUT: 'No microphone audio reached the server for 20 seconds.',
+  IDLE_TIMEOUT: 'The session was idle for too long.',
+  KILL_SWITCH: 'The Voice Lab emergency stop ended the session.',
   MAX_DURATION: 'The 5-minute test limit was reached.',
   MIC_DEVICE_LOST: 'The microphone was disconnected.',
 };
 
 const newId = () => (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`);
 
-export function useVoiceSession() {
-  const [state, setState] = useState<VoiceState>(INITIAL);
+export function useVoiceSession<S extends SessionLike = VoiceSessionInfo>(adapter?: VoiceAdapter<S>) {
+  const ad = (adapter ?? CASE_ADAPTER) as unknown as VoiceAdapter<S>;
+  const [state, setState] = useState<VoiceState<S>>(INITIAL);
   const refs = useRef<{
     ws: WebSocket | null; ctx: AudioContext | null; stream: MediaStream | null; player: AudioWorkletNode | null;
-    session: VoiceSessionInfo | null; response: number; cleared: Set<number>; muted: boolean; closing: boolean;
+    session: S | null; response: number; cleared: Set<number>; muted: boolean; closing: boolean;
     ended: boolean; resumeTries: number; seq: number; reconnect: (() => Promise<void>) | null; pageHiding: boolean;
-    recorder: SessionRecorder | null;
+    recorder: SessionRecorder | null; gpt: boolean;
   }>({ ws: null, ctx: null, stream: null, player: null, session: null, response: 0, cleared: new Set(), muted: false,
-    closing: false, ended: false, resumeTries: 0, seq: 0, reconnect: null, pageHiding: false, recorder: null });
+    closing: false, ended: false, resumeTries: 0, seq: 0, reconnect: null, pageHiding: false, recorder: null, gpt: false });
 
   const note = useCallback((text: string) => setState((s) => ({ ...s, log: [{ at: Date.now(), text }, ...s.log].slice(0, 12) })), []);
 
@@ -90,8 +107,8 @@ export function useVoiceSession() {
   const restStop = useCallback(async () => {
     const id = refs.current.session?.session_id;
     if (!id) return;
-    try { await api.POST('/api/v1/voice/sessions/{session_id}/stop', { params: { path: { session_id: id } } }); } catch { /* the server sweeper finalises it */ }
-  }, []);
+    try { await ad.stop(id); } catch { /* the server sweeper finalises it */ }
+  }, [ad]);
 
   const endRecording = useCallback((reason: CloseReason) => refs.current.recorder?.endSegment(reason) ?? Promise.resolve(), []);
 
@@ -104,7 +121,7 @@ export function useVoiceSession() {
     setState((s) => ({ ...s, phase: 'error', error: message, agentSpeaking: false, userSpeaking: false, micLevel: 0 }));
   }, [clientEvent, endRecording, release, restStop]);
 
-  const openSocket = useCallback((session: VoiceSessionInfo) => {
+  const openSocket = useCallback((session: S) => {
     const r = refs.current;
     r.session = session; r.response = 0; r.cleared = new Set(); r.ended = false;
     setState((s) => ({ ...s, session }));
@@ -124,24 +141,25 @@ export function useVoiceSession() {
         recording?: { state: string; segment?: number; chunk_max_samples?: number; reason?: string } };
       if (m.type === 'session.ready') {
         r.resumeTries = 0;
+        r.gpt = Boolean((m as { provider?: string }).provider?.startsWith('GPT_LIVE'));
         if (r.recorder && m.recording?.state === 'RECORDING' && m.recording.segment) {
           r.recorder.startSegment(m.recording.segment, m.recording.chunk_max_samples ?? 32000);
           note(`Recording started (segment ${m.recording.segment}) — microphone and played test audio`);
         } else if (r.recorder) note('Recording could not start on the server; this session is not recorded');
         void r.ctx?.resume();
         setState((s) => ({ ...s, phase: 'live', error: null }));
-        note(m.resumed ? 'Reconnected — the same session resumed' : 'Connected to the mock voice provider');
+        note(m.resumed ? 'Reconnected — the same session resumed' : `Connected to the ${(m as { provider?: string }).provider?.startsWith('GPT_LIVE') ? 'GPT-Live adapter' : 'mock voice provider'}`);
         if (r.muted) clientEvent({ type: 'input.mute', muted: true });
       } else if (m.type === 'response.started') {
         r.response = m.response ?? 0;
         setState((s) => ({ ...s, responses: s.responses + 1 }));
-        note(`Mock voice speaking (response ${m.response})`);
+        note(r.gpt ? `GPT-Live speaking (response ${m.response})` : `Mock voice speaking (response ${m.response})`);
       } else if (m.type === 'playback.clear') {
         r.cleared.add(m.response ?? -1);
         r.player?.port.postMessage({ type: 'clear' });
         setState((s) => ({ ...s, interruptions: s.interruptions + 1, agentSpeaking: false }));
-        note('You interrupted — mock speech stopped and queued audio cleared');
-      } else if (m.type === 'response.done' && m.completed) note('Mock voice finished the test message');
+        note(r.gpt ? 'You interrupted — provider audio dropped and queued audio cleared' : 'You interrupted — mock speech stopped and queued audio cleared');
+      } else if (m.type === 'response.done' && m.completed) note(r.gpt ? 'GPT-Live response finished (no further audio)' : 'Mock voice finished the test message');
       else if (m.type === 'input.speech_started') { setState((s) => ({ ...s, userSpeaking: true })); note('Your speech detected'); }
       else if (m.type === 'input.speech_stopped') setState((s) => ({ ...s, userSpeaking: false }));
       else if (m.type === 'session.ended') { r.ended = true; setState((s) => ({ ...s, endReason: m.reason ?? null, finalState: m.state ?? null })); }
@@ -176,7 +194,8 @@ export function useVoiceSession() {
       await new Promise((ok) => setTimeout(ok, 1500 * r.resumeTries));
       if (r.closing) return;
       try {
-        openSocket(unwrap(await api.POST('/api/v1/voice/sessions/{session_id}/resume', { params: { path: { session_id: id } } })));
+        if (!ad.resume) break; // this kind of session cannot be resumed
+        openSocket(await ad.resume(id));
         return;
       } catch (e) {
         if (e instanceof ApiFailure && e.status > 0 && e.status < 500) break; // no longer resumable
@@ -200,13 +219,9 @@ export function useVoiceSession() {
     }
     r.stream = stream;
     setState((s) => ({ ...s, phase: 'connecting' }));
-    let session: VoiceSessionInfo;
+    let session: S;
     try {
-      session = resumeId
-        ? unwrap(await api.POST('/api/v1/voice/sessions/{session_id}/resume', { params: { path: { session_id: resumeId } } }))
-        : unwrap(await api.POST('/api/v1/voice/sessions', { body: recordingConsent
-          ? { case_id: caseId, recording_consent: 'GRANTED', consent_notice_version: recordingConsent.notice_version }
-          : { case_id: caseId, recording_consent: 'DECLINED' } }));
+      session = resumeId && ad.resume ? await ad.resume(resumeId) : await ad.create(caseId, recordingConsent ?? null);
     } catch (e) {
       release();
       setState({ ...INITIAL, phase: 'error', error: e instanceof ApiFailure ? `${e.message}${e.code ? ` (${e.code})` : ''}` : 'The session could not be created.' });
@@ -249,7 +264,7 @@ export function useVoiceSession() {
     } catch {
       fail('Audio could not be started in this browser.');
     }
-  }, [fail, openSocket, release]);
+  }, [ad, fail, openSocket, release]);
 
   const stop = useCallback(async () => {
     const r = refs.current;
@@ -291,5 +306,8 @@ export function useVoiceSession() {
     r.ctx = null; r.stream = null; r.player = null;
   }, [clientEvent, release]);
 
-  return { state, start, stop, setMuted };
+  /** Send an application event over the live connection (e.g. a Voice Lab instruction); false when not connected. */
+  const send = useCallback((event: Record<string, unknown>) => clientEvent(event), [clientEvent]);
+
+  return { state, start, stop, setMuted, send };
 }

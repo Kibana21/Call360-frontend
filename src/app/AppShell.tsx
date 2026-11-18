@@ -13,7 +13,7 @@ export function initials(name: string): string {
 export function AppShell() {
   const { me, signOut, can } = useAuth();
   const location = useLocation();
-  const title = PAGE_TITLES[location.pathname] ?? (location.pathname.startsWith('/cases/') ? 'Call Detail' : location.pathname.startsWith('/policies/') ? 'Policy Detail' : location.pathname.startsWith('/scripts/') ? 'Script Detail' : location.pathname.startsWith('/assignment-rules/') ? 'Rule Detail' : location.pathname === '/account/password' ? 'Change password' : 'Call360');
+  const title = PAGE_TITLES[location.pathname] ?? (location.pathname.startsWith('/cases/') ? 'Call Detail' : location.pathname.startsWith('/policies/') ? 'Policy Detail' : location.pathname.startsWith('/scripts/') ? 'Script Detail' : location.pathname.startsWith('/assignment-rules/') ? 'Rule Detail' : location.pathname.startsWith('/reviews/cases/') ? 'Case Review' : location.pathname === '/account/password' ? 'Change password' : 'Call360');
   const isAdmin = !!me?.roles.includes('ADMIN');
 
   useEffect(() => {

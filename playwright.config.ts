@@ -39,8 +39,17 @@ export default defineConfig({
     {
       command: 'uv run uvicorn --factory app.main:app_factory --host 127.0.0.1 --port 8001',
       cwd: backend,
-      env: { CALL360_ENV_FILE: '.env.test' },
+      // S1-E.2: the GPT-Live adapter is exercised only against the mocked protocol server below (loopback).
+      env: { CALL360_ENV_FILE: '.env.test', VOICE_LAB_GPT_LIVE_MOCK_URL: 'ws://127.0.0.1:8766/v1/live/sessions' },
       url: 'http://127.0.0.1:8001/health/live',
+      reuseExistingServer: false,
+      timeout: 60_000,
+    },
+    {
+      // S1-E.2 mocked GPT-Live protocol server (no model, no key, no network beyond loopback).
+      command: 'uv run call360 --env-file .env.test gpt-live-mock --port 8766',
+      cwd: backend,
+      port: 8766,
       reuseExistingServer: false,
       timeout: 60_000,
     },
