@@ -49,7 +49,7 @@ export function useLabAction<T>() {
   });
 }
 
-const TRACK: Record<string, string> = { MIC: 'Microphone (as received by the server)', PROVIDER_PLAYBACK: 'Provider audio (as sent by the server)' };
+const TRACK: Record<string, string> = { MIC: 'Microphone (as received by the server)', PROVIDER_PLAYBACK: 'Provider audio sent to the browser (server capture — not a record of what was played)' };
 
 export function SessionDetail({ id }: { id: string }) {
   const q = useQuery({
@@ -86,6 +86,7 @@ export function SessionDetail({ id }: { id: string }) {
       {typeof m.timing_basis === 'string' ? <p className="xsmall muted">Timing: {m.timing_basis}.</p> : null}
       <div className="stack" style={{ gap: 6 }}>
         <span className="form-label">Recording</span>
+        {s.media.length ? <span className="xsmall muted" data-testid="lab-recording-basis">Both tracks are captured on the server. The provider track is what the server sent; audio the browser discarded after an interruption may be in it, so it is not evidence of what the caller heard.</span> : null}
         {s.media.length ? s.media.map((t) => t.purged_at ? (
           <p key={t.track} className="xsmall muted">{TRACK[t.track] ?? t.track}: deleted on {when(t.purged_at)} under the local retention policy (checksum kept: <span className="mono">{t.sha256.slice(0, 12)}…</span>)</p>
         ) : (

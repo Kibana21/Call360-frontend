@@ -71,6 +71,12 @@ export const END_REASONS: Record<string, string> = {
   MIC_DEVICE_LOST: 'The microphone was disconnected.',
 };
 
+/** A provider audio frame is played only if it belongs to the current response and that response was not cleared by
+ * an interruption. Frames of an interrupted response that were already in flight are dropped, and the player queue is
+ * emptied on `playback.clear`, so stale audio never plays after a barge-in. */
+export const playable = (response: number, current: number, cleared: ReadonlySet<number>) =>
+  response === current && !cleared.has(response);
+
 const newId = () => (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`);
 
 export function useVoiceSession<S extends SessionLike = VoiceSessionInfo>(adapter?: VoiceAdapter<S>) {
@@ -133,7 +139,7 @@ export function useVoiceSession<S extends SessionLike = VoiceSessionInfo>(adapte
       if (typeof ev.data !== 'string') {
         const buf = ev.data as ArrayBuffer;
         const response = new DataView(buf).getUint32(0, true);
-        if (response !== r.response || r.cleared.has(response)) return; // stale or interrupted: never played
+        if (!playable(response, r.response, r.cleared)) return; // stale or interrupted: never played
         r.player?.port.postMessage({ type: 'push', pcm: buf.slice(4) });
         return;
       }

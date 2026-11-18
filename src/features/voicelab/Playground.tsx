@@ -115,9 +115,10 @@ export function Playground({ settings }: { settings: LabSettings }) {
             <Field id="lab-provider" label="Voice provider">{(p) => (
               <select {...p} className="field" value={form.provider} data-testid="lab-provider"
                 onChange={(e) => { const pr = settings.providers.find((x) => x.code === e.target.value); setForm({ ...form, provider: e.target.value, model: pr?.models[0] ?? '', voice: pr?.voices[0] ?? '' }); }}>
-                {settings.providers.map((x) => <option key={x.code} value={x.code}>{x.label}{x.available ? '' : ' (disabled)'}</option>)}
+                {[...settings.providers].filter((x) => !x.hidden || x.code === form.provider).sort((a, b) => Number(b.preferred) - Number(a.preferred))
+                  .map((x) => <option key={x.code} value={x.code}>{x.label}{x.available ? '' : ' (not available)'}</option>)}
               </select>)}</Field>
-            <Field id="lab-model" label="Model">{(p) => models
+            <Field id="lab-model" label={form.provider === 'AZURE_OPENAI_GPT_LIVE' ? 'Deployment' : 'Model'}>{(p) => models
               ? <select {...p} className="field" value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} data-testid="lab-model">{models.map((m) => <option key={m}>{m}</option>)}</select>
               : <input {...p} className="field labelled" value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} data-testid="lab-model" />}</Field>
             <Field id="lab-voice" label="Voice">{(p) => voices
@@ -125,9 +126,9 @@ export function Playground({ settings }: { settings: LabSettings }) {
               : <input {...p} className="field labelled" value={form.voice} onChange={(e) => setForm({ ...form, voice: e.target.value })} data-testid="lab-voice" />}</Field>
           </div>
           {provider ? <p className="xsmall muted" data-testid="lab-provider-note"><SpendBadge cls={provider.spend_class} /> {provider.reason}</p> : null}
-          <Field id="lab-system" label="System prompt" hint={form.provider.startsWith('GPT_LIVE') ? 'Synthetic content only. Sent once in session.start (immutable for the session).' : 'Synthetic content only. The mock provider does not interpret prompts.'}>{(p) => (
+          <Field id="lab-system" label="System prompt" hint={provider?.vendor != null ? 'Synthetic content only. Sent once in session.start (immutable for the session).' : 'Synthetic content only. The mock provider does not interpret prompts.'}>{(p) => (
             <textarea {...p} className="field textarea labelled" rows={4} value={form.system_prompt} onChange={(e) => setForm({ ...form, system_prompt: e.target.value })} data-testid="lab-system-prompt" />)}</Field>
-          <Field id="lab-turns" label="Per-turn instructions" hint={form.provider.startsWith('GPT_LIVE') ? 'One per line; instruction n is appended (session.instructions.append) after the caller’s turn n.' : 'One per line; instruction n is attached to response n in the event trace.'}>{(p) => (
+          <Field id="lab-turns" label="Per-turn instructions" hint={provider?.vendor != null ? 'One per line; instruction n is appended (session.instructions.append) after the caller’s turn n.' : 'One per line; instruction n is attached to response n in the event trace.'}>{(p) => (
             <textarea {...p} className="field textarea labelled" rows={3} value={form.turns} onChange={(e) => setForm({ ...form, turns: e.target.value })} data-testid="lab-turns" />)}</Field>
           <Field id="lab-note" label="Change note">{(p) => <input {...p} className="field labelled" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} data-testid="lab-note" />}</Field>
           <ErrorBox error={save.error ? errorText(save.error) : null} />
@@ -143,14 +144,14 @@ export function Playground({ settings }: { settings: LabSettings }) {
           <div className="stack" style={{ gap: 10 }}>
             <p className="small" style={{ margin: 0 }} data-testid="lab-estimate">
               Estimated maximum cost of a session: <strong>{est === null ? 'cannot be estimated — refused' : usd(est)}</strong>
-              {provider?.spend_class === 'NONE' ? ' (keyless mock, no charge)' : provider?.spend_class === 'SIMULATED' ? ' (synthetic metering — no money is spent)' : ' (paid voice minutes at the verified rate)'}.
+              {provider?.spend_class === 'NONE' ? ' (keyless mock, no charge)' : provider?.spend_class === 'SIMULATED' ? ' (synthetic metering — no money is spent)' : est === null ? ' (no verified price for this provider)' : ' (paid voice minutes at the configured rate)'}.
               Limits: {maxS} s maximum, idle timeout {settings.budgets[0]?.idle_timeout_s} s.
             </p>
             <label className="row small" style={{ gap: 6 }}><input type="checkbox" checked={record} disabled={active || !settings.recording_available} onChange={(e) => setRecord(e.target.checked)} data-testid="lab-record" />
               Record this lab session (server-side, encrypted locally; synthetic speech only)</label>
             {paid ? (
               <p className="small" data-testid="lab-paid-note" style={{ margin: 0 }}>
-                <strong>Paid provider.</strong> A session needs the server&apos;s GPT-Live configuration ({settings.gpt_live.mode === 'LIVE' && settings.gpt_live.api_key_configured ? 'configured' : 'not configured'}),
+                <strong>Paid provider.</strong> A session needs the server&apos;s {provider?.vendor === 'AZURE' ? 'Azure OpenAI' : 'OpenAI'} configuration ({provider?.available ? 'configured' : 'not configured'}),
                 the paid switch ({settings.control.paid_enabled ? 'on' : 'off'}) and a single-use smoke-test authorisation issued by another user
                 ({issued ? `${issued.authorisation_ref}, ${issued.max_duration_s} s, up to USD ${Number(issued.max_usd).toFixed(4)}` : 'none issued'}). The server refuses otherwise.
               </p>

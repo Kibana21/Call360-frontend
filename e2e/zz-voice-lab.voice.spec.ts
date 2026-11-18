@@ -105,7 +105,7 @@ test('S1-E.1 Voice Lab: prompt → session → recording/transcript → dataset 
   await page.getByTestId('lab-tab-playground').click();
   await page.getByTestId('lab-prompt-select').selectOption('');
   await page.getByTestId('lab-prompt-name').fill(`E2E paid ${run}`);
-  await page.getByTestId('lab-provider').selectOption('GPT_LIVE');
+  await page.getByTestId('lab-provider').selectOption('OPENAI_GPT_LIVE');
   await page.getByTestId('lab-system-prompt').fill('Never runs.');
   await page.getByTestId('lab-save-prompt').click();
   await expect(page.getByTestId('lab-estimate')).toContainText('USD 0.1000'); // 120 s smoke-test maximum at USD 0.05 / min
@@ -114,7 +114,19 @@ test('S1-E.1 Voice Lab: prompt → session → recording/transcript → dataset 
   await expect(page.getByTestId('lab-refusal')).toContainText('PAID_DISABLED');
   await expect(page.getByTestId('lab-refusal')).toContainText('SMOKE_TEST_NOT_AUTHORISED');
 
-  // S1-E.2: the GPT-Live adapter against the mocked protocol server — live audio, interruption, live instruction,
+  // S1-E.2A: Azure OpenAI (preferred) without a verified price on this server fails closed.
+  await page.getByTestId('lab-prompt-select').selectOption('');
+  await page.getByTestId('lab-prompt-name').fill(`E2E Azure ${run}`);
+  await page.getByTestId('lab-provider').selectOption('AZURE_OPENAI_GPT_LIVE');
+  await page.getByTestId('lab-model').fill('gpt-live-1');
+  await page.getByTestId('lab-system-prompt').fill('Never runs.');
+  await page.getByTestId('lab-save-prompt').click();
+  await expect(page.getByTestId('lab-estimate')).toContainText('cannot be estimated');
+  await page.getByTestId('lab-start').click();
+  await expect(page.getByTestId('lab-refusal')).toContainText('COST_UNKNOWN');
+  await expect(page.getByTestId('lab-refusal')).toContainText('PROVIDER_NOT_AVAILABLE');
+
+  // S1-E.2: the GPT-Live adapter against the mocked protocol server (Azure profile: 24 kHz on the wire) — live audio, interruption, live instruction,
   // live trace, confirmed close and reconciliation from the provider-reported usage.
   await page.getByTestId('lab-prompt-select').selectOption('');
   await page.getByTestId('lab-prompt-name').fill(`E2E GPT-Live mock ${run}`);
@@ -143,6 +155,8 @@ test('S1-E.1 Voice Lab: prompt → session → recording/transcript → dataset 
   await signIn(admin, accounts().admin, '/voice-lab?tab=settings');
   await expect(admin.getByTestId('lab-paid-spend')).toContainText('USD 0.0000');
   // Smoke-test authorisation: issued and revoked by the manager (single use; issuing is not execution).
+  await expect(admin.getByTestId('lab-azure-rate')).toContainText('fail closed');
+  await admin.getByTestId('lab-auth-provider').selectOption('OPENAI_GPT_LIVE');
   await admin.getByTestId('lab-auth-reason').fill('E2E authorisation drill (never executed)');
   await admin.getByTestId('lab-auth-issue').click();
   const auth = admin.locator('[data-testid^="lab-auth-LAB-A-"]').first();

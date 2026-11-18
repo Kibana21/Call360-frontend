@@ -20,14 +20,17 @@ const SETTINGS = (manage: boolean, kill = false) => ({
   budgets: [budget('SIMULATED'), budget('PAID')],
   providers: [
     { code: 'MOCK', label: 'Mock voice provider (keyless)', spend_class: 'NONE', available: true, reason: 'Local mock', models: ['mock-fixed-message-1'], voices: ['synthetic-fixed'], rate_card: rate('0', '0'), network: false },
-    { code: 'GPT_LIVE', label: 'GPT-Live (real provider, paid)', spend_class: 'PAID', available: false, reason: 'Disabled: VOICE_LAB_GPT_LIVE_MODE is not LIVE', models: ['gpt-live-1'], voices: ['marin', 'quartz'], rate_card: rate('0', '0', 'verified', '0.05'), network: true },
+    { code: 'AZURE_OPENAI_GPT_LIVE', label: 'Azure OpenAI GPT-Live (preferred, paid)', spend_class: 'PAID', available: false, reason: 'Not configured on this server: no verified Azure price', models: [], voices: ['marin', 'quartz'], rate_card: rate(null, null, 'UNKNOWN', '0'), network: true, vendor: 'AZURE', preferred: true, hidden: false },
+    { code: 'OPENAI_GPT_LIVE', label: 'OpenAI GPT-Live (direct, paid)', spend_class: 'PAID', available: false, reason: 'Disabled: VOICE_LAB_GPT_LIVE_MODE is not LIVE', models: ['gpt-live-1'], voices: ['marin', 'quartz'], rate_card: rate('0', '0', 'verified', '0.05'), network: true, vendor: 'OPENAI', preferred: false, hidden: false },
   ],
   paid_spend: { paid_reservations: 0, paid_usd: '0', paid_sessions: 0, paid_experiments: 0 }, history: [], authorisations: [] as unknown[],
-  gpt_live: { mode: 'DISABLED', api_key_configured: false, endpoint_host: 'api.openai.com', mock_endpoint_configured: false, close_timeout_s: 5, protocol_notes: 'notes' }, retention_hours: 168,
+  gpt_live: { mode: 'DISABLED', api_key_configured: false, endpoint_host: 'api.openai.com', mock_endpoint_configured: false, mock_profile: 'AZURE', close_timeout_s: 5, protocol_notes: 'notes' }, retention_hours: 168,
+  azure: { mode: 'DISABLED', endpoint_host: null, deployment: null, auth: 'API_KEY', credential_configured: false, entra_available: false, entra_scope: 'https://ai.azure.com/.default', audio_rate: 24000,
+    deployment_type: null, region: null, price_usd_per_min: null, price_source: null, price_verified_on: null, missing: ['VOICE_LAB_AZURE_GPT_LIVE_MODE is not LIVE', 'no verified Azure price'] },
   recording_available: true, transcription_available: true, mock_message: ['Hello.'], can_manage: manage, note: 'n',
 });
 const PROMPT = { id: 'p1', prompt_ref: 'LAB-P-0001', name: 'Paid try', created_by: 'u', created_at: T, versions: [{ id: 'v1', version_no: 1, system_prompt: 's',
-  turn_instructions: [], provider: 'GPT_LIVE', model: 'gpt-live-1', voice: 'marin', parameters: {}, change_note: 'Initial version', sha256: 'a'.repeat(64), created_by: 'u', created_at: T }] };
+  turn_instructions: [], provider: 'OPENAI_GPT_LIVE', model: 'gpt-live-1', voice: 'marin', parameters: {}, change_note: 'Initial version', sha256: 'a'.repeat(64), created_by: 'u', created_at: T }] };
 
 describe('Voice Lab', () => {
   it('shows zero paid spend, the fail-closed paid provider and lets a manager engage the emergency stop', async () => {
@@ -40,6 +43,9 @@ describe('Voice Lab', () => {
     expect(screen.getByTestId('lab-paid-switch-state')).toHaveTextContent('Off (default)');
     expect(screen.getByTestId('lab-gpt-config')).toHaveTextContent('Not configured');
     expect(screen.getByTestId('lab-gpt-config')).toHaveTextContent('USD 0.05 per minute, billed per second');
+    expect(screen.getByTestId('lab-azure-rate')).toHaveTextContent('Unknown — every Azure session is refused (fail closed)');
+    expect(screen.getByTestId('lab-auth-issue')).toHaveTextContent('price unknown'); // Azure (preferred) has no verified price
+    await userEvent.selectOptions(screen.getByTestId('lab-auth-provider'), 'OPENAI_GPT_LIVE');
     expect(screen.getByTestId('lab-auth-issue')).toHaveTextContent('Issue (up to USD 0.1000)'); // 120 s × 0.05 / min
     expect(screen.queryByTestId('lab-tab-playground')).toBeNull(); // a manager without voicelab.use cannot run sessions
     await userEvent.type(screen.getByTestId('lab-kill-reason'), 'Emergency drill');

@@ -7494,6 +7494,136 @@
         "title": "LabAuthoriseIn",
         "type": "object"
       },
+      "LabAzureConfig": {
+        "properties": {
+          "audio_rate": {
+            "title": "Audio Rate",
+            "type": "integer"
+          },
+          "auth": {
+            "title": "Auth",
+            "type": "string"
+          },
+          "credential_configured": {
+            "title": "Credential Configured",
+            "type": "boolean"
+          },
+          "deployment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deployment"
+          },
+          "deployment_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deployment Type"
+          },
+          "endpoint_host": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Endpoint Host"
+          },
+          "entra_available": {
+            "title": "Entra Available",
+            "type": "boolean"
+          },
+          "entra_scope": {
+            "title": "Entra Scope",
+            "type": "string"
+          },
+          "missing": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing",
+            "type": "array"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "price_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Source"
+          },
+          "price_usd_per_min": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Usd Per Min"
+          },
+          "price_verified_on": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Verified On"
+          },
+          "region": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Region"
+          }
+        },
+        "required": [
+          "mode",
+          "endpoint_host",
+          "deployment",
+          "auth",
+          "credential_configured",
+          "entra_available",
+          "entra_scope",
+          "audio_rate",
+          "deployment_type",
+          "region",
+          "price_usd_per_min",
+          "price_source",
+          "price_verified_on",
+          "missing"
+        ],
+        "title": "LabAzureConfig",
+        "type": "object"
+      },
       "LabBudgetIn": {
         "properties": {
           "daily_usd": {
@@ -8524,6 +8654,10 @@
             "title": "Mock Endpoint Configured",
             "type": "boolean"
           },
+          "mock_profile": {
+            "title": "Mock Profile",
+            "type": "string"
+          },
           "mode": {
             "title": "Mode",
             "type": "string"
@@ -8538,6 +8672,7 @@
           "api_key_configured",
           "endpoint_host",
           "mock_endpoint_configured",
+          "mock_profile",
           "close_timeout_s",
           "protocol_notes"
         ],
@@ -8650,14 +8785,17 @@
             "type": "integer"
           },
           "model": {
-            "default": "gpt-live-1",
             "maxLength": 80,
+            "minLength": 1,
             "title": "Model",
             "type": "string"
           },
           "provider": {
-            "const": "GPT_LIVE",
-            "default": "GPT_LIVE",
+            "default": "AZURE_OPENAI_GPT_LIVE",
+            "enum": [
+              "AZURE_OPENAI_GPT_LIVE",
+              "OPENAI_GPT_LIVE"
+            ],
             "title": "Provider",
             "type": "string"
           },
@@ -8675,6 +8813,7 @@
           }
         },
         "required": [
+          "model",
           "reason"
         ],
         "title": "LabPaidAuthorisationIn",
@@ -9105,6 +9244,11 @@
             "title": "Code",
             "type": "string"
           },
+          "hidden": {
+            "default": false,
+            "title": "Hidden",
+            "type": "boolean"
+          },
           "label": {
             "title": "Label",
             "type": "string"
@@ -9120,6 +9264,11 @@
             "title": "Network",
             "type": "boolean"
           },
+          "preferred": {
+            "default": false,
+            "title": "Preferred",
+            "type": "boolean"
+          },
           "rate_card": {
             "additionalProperties": true,
             "title": "Rate Card",
@@ -9132,6 +9281,17 @@
           "spend_class": {
             "title": "Spend Class",
             "type": "string"
+          },
+          "vendor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vendor"
           },
           "voices": {
             "items": {
@@ -9948,6 +10108,9 @@
             "title": "Authorisations",
             "type": "array"
           },
+          "azure": {
+            "$ref": "#/components/schemas/LabAzureConfig"
+          },
           "budgets": {
             "items": {
               "$ref": "#/components/schemas/LabBudgetOut"
@@ -10014,6 +10177,7 @@
           "history",
           "authorisations",
           "gpt_live",
+          "azure",
           "retention_hours",
           "recording_available",
           "transcription_available",

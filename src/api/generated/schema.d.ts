@@ -5978,6 +5978,37 @@ export interface components {
             /** Reason */
             reason: string;
         };
+        /** LabAzureConfig */
+        LabAzureConfig: {
+            /** Audio Rate */
+            audio_rate: number;
+            /** Auth */
+            auth: string;
+            /** Credential Configured */
+            credential_configured: boolean;
+            /** Deployment */
+            deployment: string | null;
+            /** Deployment Type */
+            deployment_type: string | null;
+            /** Endpoint Host */
+            endpoint_host: string | null;
+            /** Entra Available */
+            entra_available: boolean;
+            /** Entra Scope */
+            entra_scope: string;
+            /** Missing */
+            missing: string[];
+            /** Mode */
+            mode: string;
+            /** Price Source */
+            price_source: string | null;
+            /** Price Usd Per Min */
+            price_usd_per_min: string | null;
+            /** Price Verified On */
+            price_verified_on: string | null;
+            /** Region */
+            region: string | null;
+        };
         /** LabBudgetIn */
         LabBudgetIn: {
             /** Daily Usd */
@@ -6358,6 +6389,8 @@ export interface components {
             endpoint_host: string;
             /** Mock Endpoint Configured */
             mock_endpoint_configured: boolean;
+            /** Mock Profile */
+            mock_profile: string;
             /** Mode */
             mode: string;
             /** Protocol Notes */
@@ -6405,17 +6438,14 @@ export interface components {
              * @default 120
              */
             max_duration_s: number;
-            /**
-             * Model
-             * @default gpt-live-1
-             */
+            /** Model */
             model: string;
             /**
              * Provider
-             * @default GPT_LIVE
-             * @constant
+             * @default AZURE_OPENAI_GPT_LIVE
+             * @enum {string}
              */
-            provider: "GPT_LIVE";
+            provider: "AZURE_OPENAI_GPT_LIVE" | "OPENAI_GPT_LIVE";
             /** Reason */
             reason: string;
             /**
@@ -6586,12 +6616,22 @@ export interface components {
             available: boolean;
             /** Code */
             code: string;
+            /**
+             * Hidden
+             * @default false
+             */
+            hidden: boolean;
             /** Label */
             label: string;
             /** Models */
             models: string[];
             /** Network */
             network: boolean;
+            /**
+             * Preferred
+             * @default false
+             */
+            preferred: boolean;
             /** Rate Card */
             rate_card: {
                 [key: string]: unknown;
@@ -6600,6 +6640,8 @@ export interface components {
             reason: string;
             /** Spend Class */
             spend_class: string;
+            /** Vendor */
+            vendor?: string | null;
             /** Voices */
             voices: string[];
         };
@@ -6861,6 +6903,7 @@ export interface components {
         LabSettingsOut: {
             /** Authorisations */
             authorisations: components["schemas"]["LabPaidAuthorisationOut"][];
+            azure: components["schemas"]["LabAzureConfig"];
             /** Budgets */
             budgets: components["schemas"]["LabBudgetOut"][];
             /** Can Manage */
