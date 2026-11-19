@@ -132,6 +132,9 @@ test('S1-E.1 Voice Lab: prompt → session → recording/transcript → dataset 
   await page.getByTestId('lab-prompt-name').fill(`E2E GPT-Live mock ${run}`);
   await page.getByTestId('lab-provider').selectOption('GPT_LIVE_MOCK');
   await page.getByTestId('lab-system-prompt').fill('You are a synthetic test voice.');
+  // S1-E.2B: the mock now waits for the caller like the live model; the opening instruction makes it speak first.
+  await page.getByTestId('lab-opening').fill('Greet the caller now and say this is a synthetic test.');
+  await expect(page.getByTestId('lab-quiet-room')).toContainText('quiet room');
   await page.getByTestId('lab-turns').fill('Ask the caller to confirm they can hear you');
   await page.getByTestId('lab-save-prompt').click();
   await expect(page.getByTestId('lab-estimate')).toContainText('synthetic metering');
@@ -143,6 +146,7 @@ test('S1-E.1 Voice Lab: prompt → session → recording/transcript → dataset 
   await page.getByTestId('lab-instruction-send').click();
   await live.getByTestId('lab-trace').locator('summary').click();
   await expect(live.getByTestId('lab-trace')).toContainText('PROVIDER_SESSION_STARTED', { timeout: 10_000 });
+  await expect(live.getByTestId('lab-trace')).toContainText('OPENING_INSTRUCTION_APPENDED', { timeout: 10_000 });
   await expect(live.getByTestId('lab-trace')).toContainText('PLAYGROUND_INSTRUCTION', { timeout: 10_000 });
   await page.getByTestId('lab-stop').click();
   await expect(page.getByTestId('lab-ended')).toContainText('You stopped the session.');

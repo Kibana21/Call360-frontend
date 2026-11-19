@@ -17,7 +17,9 @@ const PHASE: Record<VoicePhase, [string, 'gray' | 'blue' | 'green' | 'amber' | '
   live: ['Live', 'green'], reconnecting: ['Reconnecting…', 'amber'], ending: ['Ending…', 'amber'], ended: ['Ended', 'gray'],
   error: ['Stopped — see message', 'red'],
 };
-const EMPTY = { name: '', system_prompt: '', turns: '', provider: 'MOCK', model: 'mock-fixed-message-1', voice: 'synthetic-fixed', note: '' };
+const EMPTY = { name: '', system_prompt: '', turns: '', opening: '', provider: 'MOCK', model: 'mock-fixed-message-1', voice: 'synthetic-fixed', note: '' };
+// S1-E.2B (D-109): only the GPT-Live providers (and their loopback mock) send an opening instruction.
+const OPENING_PROVIDERS = ['AZURE_OPENAI_GPT_LIVE', 'OPENAI_GPT_LIVE', 'GPT_LIVE', 'GPT_LIVE_MOCK'];
 
 export function Playground({ settings }: { settings: LabSettings }) {
   const prompts = useQuery({ queryKey: ['voicelab', 'prompts'], queryFn: async () => unwrap(await api.GET('/api/v1/voice-lab/prompts')) });
@@ -37,7 +39,7 @@ export function Playground({ settings }: { settings: LabSettings }) {
   useEffect(() => {
     if (!current) return;
     const v = current.versions.find((x) => x.id === versionId) ?? current.versions[0]!;
-    setForm({ name: current.name, system_prompt: v.system_prompt, turns: v.turn_instructions.join('\n'), provider: v.provider, model: v.model, voice: v.voice, note: '' });
+    setForm({ name: current.name, system_prompt: v.system_prompt, turns: v.turn_instructions.join('\n'), opening: v.opening_instruction ?? '', provider: v.provider, model: v.model, voice: v.voice, note: '' });
   }, [current, versionId]);
 
   const provider = settings.providers.find((p) => p.code === form.provider);
@@ -82,6 +84,7 @@ export function Playground({ settings }: { settings: LabSettings }) {
   const body = () => ({
     name: form.name, system_prompt: form.system_prompt, turn_instructions: form.turns.split('\n').map((t) => t.trim()).filter(Boolean),
     provider: form.provider, model: form.model, voice: form.voice, change_note: form.note || null,
+    opening_instruction: OPENING_PROVIDERS.includes(form.provider) && form.opening.trim() ? form.opening.trim() : null,
   });
   const saveNew = () => save.mutate(async () => {
     const p = current
@@ -128,6 +131,8 @@ export function Playground({ settings }: { settings: LabSettings }) {
           {provider ? <p className="xsmall muted" data-testid="lab-provider-note"><SpendBadge cls={provider.spend_class} /> {provider.reason}</p> : null}
           <Field id="lab-system" label="System prompt" hint={provider?.vendor != null ? 'Synthetic content only. Sent once in session.start (immutable for the session).' : 'Synthetic content only. The mock provider does not interpret prompts.'}>{(p) => (
             <textarea {...p} className="field textarea labelled" rows={4} value={form.system_prompt} onChange={(e) => setForm({ ...form, system_prompt: e.target.value })} data-testid="lab-system-prompt" />)}</Field>
+          {OPENING_PROVIDERS.includes(form.provider) ? <Field id="lab-opening" label="Opening instruction" hint="Optional, up to 500 characters. Sent once right after the session starts, before your microphone audio, so the voice speaks first (GPT-Live otherwise waits for the caller). Part of this prompt version.">{(p) => (
+            <textarea {...p} className="field textarea labelled" rows={2} maxLength={500} value={form.opening} onChange={(e) => setForm({ ...form, opening: e.target.value })} data-testid="lab-opening" />)}</Field> : null}
           <Field id="lab-turns" label="Per-turn instructions" hint={provider?.vendor != null ? 'One per line; instruction n is appended (session.instructions.append) after the caller’s turn n.' : 'One per line; instruction n is attached to response n in the event trace.'}>{(p) => (
             <textarea {...p} className="field textarea labelled" rows={3} value={form.turns} onChange={(e) => setForm({ ...form, turns: e.target.value })} data-testid="lab-turns" />)}</Field>
           <Field id="lab-note" label="Change note">{(p) => <input {...p} className="field labelled" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} data-testid="lab-note" />}</Field>
@@ -149,6 +154,8 @@ export function Playground({ settings }: { settings: LabSettings }) {
             </p>
             <label className="row small" style={{ gap: 6 }}><input type="checkbox" checked={record} disabled={active || !settings.recording_available} onChange={(e) => setRecord(e.target.checked)} data-testid="lab-record" />
               Record this lab session (server-side, encrypted locally; synthetic speech only)</label>
+            <p className="xsmall muted" style={{ margin: 0 }} data-testid="lab-quiet-room">
+              Use headphones in a quiet room: background speech is treated as the caller — it interrupts the voice and is sent to the provider.</p>
             {paid ? (
               <p className="small" data-testid="lab-paid-note" style={{ margin: 0 }}>
                 <strong>Paid provider.</strong> A session needs the server&apos;s {provider?.vendor === 'AZURE' ? 'Azure OpenAI' : 'OpenAI'} configuration ({provider?.available ? 'configured' : 'not configured'}),

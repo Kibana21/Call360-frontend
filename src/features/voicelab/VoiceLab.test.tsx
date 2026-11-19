@@ -68,4 +68,24 @@ describe('Voice Lab', () => {
     expect(refusal).toHaveTextContent('Refused by Voice Lab cost controls');
     expect(within(refusal).getByText(/PAID_DISABLED: paid providers are disabled/)).toBeVisible();
   });
+
+  it('S1-E.2B: shows and versions the opening instruction for GPT-Live prompts only, with the quiet-room note', async () => {
+    let posted: Record<string, unknown> | null = null;
+    const v1 = { ...PROMPT.versions[0]!, parameters: { opening_instruction: 'Greet the caller now.' }, opening_instruction: 'Greet the caller now.' };
+    stubApi({ 'GET /api/v1/me': () => json(200, USER), 'GET /api/v1/voice-lab/settings': () => json(200, SETTINGS(false)),
+      'GET /api/v1/voice-lab/prompts': () => json(200, { items: [{ ...PROMPT, versions: [v1] }] }),
+      'POST /api/v1/voice-lab/prompts/p1/versions': async (r) => { posted = (await r.json()) as Record<string, unknown>;
+        return json(200, { ...PROMPT, versions: [{ ...v1, id: 'v2', version_no: 2, opening_instruction: 'Greet now; say it is a test.' }, v1] }); } });
+    renderAt(<App />, '/voice-lab');
+    const opening = await screen.findByTestId('lab-opening');
+    await waitFor(() => expect(opening).toHaveValue('Greet the caller now.'));
+    expect(screen.getByTestId('lab-quiet-room')).toHaveTextContent('background speech is treated as the caller');
+    await userEvent.clear(opening);
+    await userEvent.type(opening, 'Greet now; say it is a test.');
+    await userEvent.click(screen.getByTestId('lab-save-prompt'));
+    await waitFor(() => expect(posted).not.toBeNull());
+    expect(posted!['opening_instruction']).toBe('Greet now; say it is a test.');
+    await userEvent.selectOptions(screen.getByTestId('lab-provider'), 'MOCK');
+    expect(screen.queryByTestId('lab-opening')).toBeNull(); // the keyless mock speaks a fixed message
+  });
 });

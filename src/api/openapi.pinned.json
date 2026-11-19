@@ -9060,6 +9060,18 @@
             "title": "Name",
             "type": "string"
           },
+          "opening_instruction": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opening Instruction"
+          },
           "parameters": {
             "additionalProperties": true,
             "title": "Parameters",
@@ -9183,6 +9195,17 @@
           "model": {
             "title": "Model",
             "type": "string"
+          },
+          "opening_instruction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opening Instruction"
           },
           "parameters": {
             "additionalProperties": true,

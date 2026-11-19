@@ -6536,6 +6536,8 @@ export interface components {
             model: string;
             /** Name */
             name: string;
+            /** Opening Instruction */
+            opening_instruction?: string | null;
             /** Parameters */
             parameters?: {
                 [key: string]: unknown;
@@ -6593,6 +6595,8 @@ export interface components {
             id: string;
             /** Model */
             model: string;
+            /** Opening Instruction */
+            opening_instruction?: string | null;
             /** Parameters */
             parameters: {
                 [key: string]: unknown;
