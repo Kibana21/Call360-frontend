@@ -122,6 +122,7 @@ test('S2-A Script Studio: create, edit, submit, approve by a different checker, 
   const vid = new URL(page.url()).searchParams.get('version')!;
   const detail = await (await page.request.get(`/api/v1/script-versions/${vid}`)).json();
   expect(detail.status).toBe('PUBLISHED');
+  await page.getByTestId('sv-tab-details').click(); // S2-A.2
   await expect(page.getByTestId('manifest-sha')).toHaveText(detail.manifest_sha256);
   expect(detail.author_ref).not.toBe(detail.reviewer_ref);
   await page.goto('/scripts');

@@ -238,3 +238,17 @@ a.btn{text-decoration:none}
 .transcript-gap{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border:1px dashed #d79aa4;background:#fff8f9;border-radius:8px;font-size:11px;color:#6d3640}
 .provenance summary{cursor:pointer;font-weight:700;color:#354155}
 .provenance dl{margin:0}
+/* S2-A.2 Script Studio layout */
+.family-list{list-style:none;margin:0;padding:0 17px 17px;display:flex;flex-direction:column;gap:12px}
+.family-card{border:1px solid var(--line);border-radius:11px;padding:16px 18px;background:#fff}
+.family-card:hover{border-color:#d5d9e0}
+.family-name{font-size:14px;margin:0 0 4px;font-weight:760;letter-spacing:-.15px}
+.family-name .link{color:#2a3448;text-decoration:none}.family-name .link:hover{color:var(--red);text-decoration:underline}
+.family-facts{margin:10px 0 10px;color:#536075;line-height:1.6}
+.version-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid #e3e6eb;border-radius:8px;padding:4px 4px 4px 8px;font-size:11px;color:#354155;text-decoration:none;background:#fff}
+.version-chip:hover{border-color:#cbd1db;background:#f9fafb}
+.version-chip:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.ss-reference>summary{cursor:pointer;font-size:13px}
+.version-bar{padding:16px 22px}
+.version-facts{margin:10px 0 0;color:#536075;line-height:1.6}
+.q-wording{display:block;font-size:12px;font-weight:650;color:#2a3448;line-height:1.5}

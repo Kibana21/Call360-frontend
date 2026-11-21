@@ -5,7 +5,7 @@
 // version diff and the change history.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useId, useState, type FormEvent, type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api, ApiFailure, unwrap } from '../../api/client';
 import type { components } from '../../api/generated/schema';
 import { useAuth } from '../../auth/AuthContext';
@@ -121,17 +121,23 @@ export function NewDraftButton({ familyId, versions }: { familyId: string; versi
 }
 
 // ---- the version workspace -------------------------------------------------------------------------------------
-type Tab = 'structure' | 'review' | 'diff' | 'history';
+const TABS = ['structure', 'versions', 'review', 'diff', 'history', 'details'] as const;
+type Tab = (typeof TABS)[number];
 
-export function VersionWorkspace({ d, family, versions, readView }: {
-  d: ScriptVersionDetail; family: { id: string }; versions: ScriptVersionSummary[]; readView: ReactNode;
+/** The tabs under the version bar; the open tab lives in the URL (`?tab=`) so it survives reloads and version changes. */
+export function VersionWorkspace({ d, family, versions, readView, versionsView, detailsView }: {
+  d: ScriptVersionDetail; family: { id: string }; versions: ScriptVersionSummary[]; readView: ReactNode; versionsView: ReactNode; detailsView: ReactNode;
 }) {
   const { can, me } = useAuth();
-  const [tab, setTab] = useState<Tab>('structure');
+  const [params, setParams] = useSearchParams();
+  const asked = params.get('tab') as Tab | null;
+  const tab: Tab = asked && (TABS as readonly string[]).includes(asked) ? asked : 'structure';
+  const setTab = (t: Tab) => setParams((p) => { const n = new URLSearchParams(p); if (t === 'structure') n.delete('tab'); else n.set('tab', t); return n; }, { replace: true });
   const editing = d.status === 'DRAFT' && can('script.edit');
   const iAmMaker = !!me && d.makers.includes(me.principal.principal_id);
   const needsAttention = (d.status === 'SUBMITTED_FOR_REVIEW' && can('script.approve')) || (d.status === 'APPROVED' && can('script.publish'));
-  const tabs: Array<[Tab, string]> = [['structure', editing ? 'Edit questions' : 'Questions'], ['review', 'Review & publish'], ['diff', 'Version diff'], ['history', 'Change history']];
+  const tabs: Array<[Tab, string]> = [['structure', editing ? 'Edit questions' : 'Questions'], ['versions', `Versions (${versions.length})`], ['review', 'Review & publish'],
+    ['diff', 'Compare versions'], ['history', 'Change history'], ['details', 'Details']];
   return (
     <>
       {d.status !== 'DRAFT' ? (
@@ -155,6 +161,8 @@ export function VersionWorkspace({ d, family, versions, readView }: {
         {tab === 'review' ? <ReviewPanel d={d} familyId={family.id} versions={versions} iAmMaker={iAmMaker} /> : null}
         {tab === 'diff' ? <DiffPanel d={d} versions={versions} /> : null}
         {tab === 'history' ? <HistoryPanel d={d} /> : null}
+        {tab === 'versions' ? versionsView : null}
+        {tab === 'details' ? detailsView : null}
       </div>
     </>
   );
@@ -862,7 +870,7 @@ function DiffPanel({ d, versions }: { d: ScriptVersionDetail; versions: ScriptVe
   });
   const [showAll, setShowAll] = useState(false);
   return (
-    <Card title="Version diff" subtitle="Semantic comparison: added, removed, moved, reworded and changed questions and sections">
+    <Card title="Compare versions" subtitle="What changed between two versions: questions and sections added, removed, moved, reworded or changed">
       <div className="stack" style={{ gap: 12 }} data-testid="diff-panel">
         <div className="row wrap" style={{ gap: 8 }}>
           <label className="form-label" htmlFor="diff-against" style={{ margin: 0 }}>Compare v{d.version_label} with</label>

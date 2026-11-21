@@ -29,6 +29,8 @@ import { FindingRulesPage } from './features/findings/FindingRulesPage';
 import { AssignmentRulesPage } from './features/scripts/AssignmentRulesPage';
 import { ScriptFamilyPage } from './features/scripts/ScriptFamilyPage';
 import { ScriptLibraryPage } from './features/scripts/ScriptLibraryPage';
+import { surveyStudioEnabled } from './features/surveystudio/flag';
+import { StudioRoot } from './features/surveystudio/StudioRoot';
 import { LoginPage } from './features/LoginPage';
 import { NotFoundPage } from './features/NotFoundPage';
 import { SessionExpiredPage } from './features/SessionExpiredPage';
@@ -53,6 +55,8 @@ export function App() {
           <Route path="search" element={<RequirePermission permission="search.use"><SearchPage /></RequirePermission>} />
           <Route path="scripts" element={<RequirePermission permission="script.read"><ScriptLibraryPage /></RequirePermission>} />
           <Route path="scripts/:scriptFamilyId" element={<RequirePermission permission="script.read"><ScriptFamilyPage /></RequirePermission>} />
+          {/* SS-02A: Survey Studio prototype — sample data only, registered only when its build setting is on (ADR-0010). */}
+          {surveyStudioEnabled() ? <Route path="survey-studio/*" element={<RequirePermission permission="script.read"><StudioRoot /></RequirePermission>} /> : null}
           <Route path="assignment-rules" element={<RequirePermission permission="script.read"><AssignmentRulesPage /></RequirePermission>} />
           <Route path="assignment-rules/:ruleCode" element={<RequirePermission permission="script.read"><RuleDetailPage /></RequirePermission>} />
           <Route path="simulator" element={<RequirePermission permission="script.read"><TextSimulatorPage /></RequirePermission>} />

@@ -4,7 +4,8 @@ import { useAuth } from '../auth/AuthContext';
 import { Icon } from '../components/Icon';
 import { StageChip } from '../components/ui';
 import { GlobalSearch } from './GlobalSearch';
-import { NAV, PAGE_TITLES } from './nav';
+import { surveyStudioEnabled } from '../features/surveystudio/flag';
+import { navFor, PAGE_TITLES } from './nav';
 
 export function initials(name: string): string {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join('') || '?';
@@ -13,7 +14,7 @@ export function initials(name: string): string {
 export function AppShell() {
   const { me, signOut, can } = useAuth();
   const location = useLocation();
-  const title = PAGE_TITLES[location.pathname] ?? (location.pathname.startsWith('/cases/') ? 'Call Detail' : location.pathname.startsWith('/policies/') ? 'Policy Detail' : location.pathname.startsWith('/scripts/') ? 'Script Detail' : location.pathname.startsWith('/assignment-rules/') ? 'Rule Detail' : location.pathname.startsWith('/reviews/cases/') ? 'Case Review' : location.pathname === '/account/password' ? 'Change password' : 'Call360');
+  const title = PAGE_TITLES[location.pathname] ?? (surveyStudioEnabled() && location.pathname.startsWith('/survey-studio') ? 'Survey Studio' : location.pathname.startsWith('/cases/') ? 'Call Detail' : location.pathname.startsWith('/policies/') ? 'Policy Detail' : location.pathname.startsWith('/scripts/') ? 'Script Detail' : location.pathname.startsWith('/assignment-rules/') ? 'Rule Detail' : location.pathname.startsWith('/reviews/cases/') ? 'Case Review' : location.pathname === '/account/password' ? 'Change password' : 'Call360');
   const isAdmin = !!me?.roles.includes('ADMIN');
 
   useEffect(() => {
@@ -32,7 +33,7 @@ export function AppShell() {
           </div>
         </div>
         <nav className="nav-scroll" aria-label="Main navigation">
-          {NAV.map((group) => (
+          {navFor(surveyStudioEnabled()).map((group) => (
             <div key={group.group} role="group" aria-labelledby={`nav-${group.group}`}>
               <div className="nav-section" id={`nav-${group.group}`}>{group.group}</div>
               {group.items.map((item) =>

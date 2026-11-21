@@ -19,13 +19,15 @@ export async function f6Journey(page: Page, shots: boolean): Promise<void> {
   await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Script Studio' }).click();
   await expect(page.getByRole('heading', { name: 'Script Studio', level: 1 })).toBeVisible();
   await expect(page.getByTestId('synthetic-script-banner')).toContainText('not approved AIA/MAS wording');
-  await expect(page.getByTestId('script-library').locator('tbody tr')).toHaveCount(lib.total);
+  await expect(page.getByTestId('script-library').locator('.version-chip')).toHaveCount(lib.total); // S2-A.2: one card per script, a chip per version
+  const familyCount = new Set(lib.items.map((v: { script_family_id: string }) => v.script_family_id)).size;
+  await expect(page.getByTestId('script-library').getByRole('listitem')).toHaveCount(familyCount);
   const me = await (await page.request.get('/api/v1/me')).json();
   await expect(page.getByRole('button', { name: 'New script' })).toHaveCount(me.permissions.includes('script.edit') ? 1 : 0); // S2-A
   await page.getByLabel('Status').selectOption('PUBLISHED');
   await expect(page).toHaveURL(/status=PUBLISHED/);
   const publishedCount = lib.items.filter((v: { status: string }) => v.status === 'PUBLISHED').length;
-  await expect(page.getByTestId('script-library').locator('tbody tr')).toHaveCount(publishedCount);
+  await expect(page.getByTestId('script-library').locator('.version-chip')).toHaveCount(publishedCount);
   await expect(page.getByTestId('controls')).toContainText('SYN-CTRL-01');
   await expect(page.getByTestId('regulatory-references')).toContainText('Synthetic placeholder');
   expect(await page.locator('body').innerText()).not.toMatch(MALAYSIA);
@@ -33,9 +35,9 @@ export async function f6Journey(page: Page, shots: boolean): Promise<void> {
 
   // 2. Script Version: ordered structure, manifest and question detail equal the API.
   await page.getByRole('link', { name: `${published.family} v${published.version_label}` }).click();
-  await expect(page.getByRole('heading', { name: 'Script Detail' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: published.family_name, level: 1 })).toBeVisible();
+  await expect(page.getByTestId('version-picker')).toHaveValue(published.id);
   const detail = await (await page.request.get(`/api/v1/script-versions/${published.id}`)).json();
-  await expect(page.getByTestId('manifest-sha')).toHaveText(detail.manifest_sha256);
   const headings = page.getByTestId('script-section').getByRole('heading', { level: 2 });
   await expect(headings).toHaveText(detail.sections.map((s: { position: number; module_name: string }) => `${s.position}. ${s.module_name}`));
   const term = page.getByTestId('question-Q-PREMIUM-TERM-YEARS');
@@ -43,7 +45,10 @@ export async function f6Journey(page: Page, shots: boolean): Promise<void> {
   await expect(term).toContainText('premium_term_years');
   await expect(term).toContainText('Numeric comparison with a policy fact');
   const familyVersions = lib.items.filter((v: { script_family_id: string }) => v.script_family_id === published.script_family_id).length;
+  await page.getByTestId('sv-tab-versions').click(); // S2-A.2: versions and details have their own tabs
   await expect(page.getByTestId('version-history').getByRole('link')).toHaveCount(familyVersions);
+  await page.getByTestId('sv-tab-details').click();
+  await expect(page.getByTestId('manifest-sha')).toHaveText(detail.manifest_sha256);
   await expect(page.getByTestId('immutable-note')).toContainText('Immutable version'); // S2-A: published content never edits
   if (shots) { await a11yAndLayout(page, 'script-detail'); await page.setViewportSize({ width: 1440, height: 900 }); }
 
@@ -69,6 +74,7 @@ export async function f6Journey(page: Page, shots: boolean): Promise<void> {
   await expect(page.getByTestId('cd-script-link')).toHaveText(`${published.family} v${published.version_label}`);
   await page.getByTestId('cd-script-link').click();
   await expect(page).toHaveURL(new RegExp(`/scripts/${published.script_family_id}\\?version=${published.id}`));
+  await page.getByTestId('sv-tab-details').click();
   await expect(page.getByTestId('manifest-sha')).toHaveText(detail.manifest_sha256);
 
   // 5. History: a superseded rule's case keeps the version it was assigned.

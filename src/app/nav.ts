@@ -53,6 +53,13 @@ export const NAV: { group: string; items: NavItem[] }[] = [
   },
 ];
 
+/** SS-02A: with the prototype setting on, "Survey Studio" is listed first under Governance (ADR-0010); otherwise NAV is unchanged. */
+export function navFor(prototype: boolean): typeof NAV {
+  if (!prototype) return NAV;
+  return NAV.map((g) => (g.group === 'Governance'
+    ? { ...g, items: [{ label: 'Survey Studio', icon: 'layers' as IconName, to: '/survey-studio' }, ...g.items] } : g));
+}
+
 export const PAGE_TITLES: Record<string, string> = {
   '/': 'Overview',
   '/calls': 'Call Explorer',

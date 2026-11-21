@@ -1,5 +1,7 @@
 // Script Studio library (`/scripts`, F6): every script version in the caller's markets (API-060) with server-side
 // filters in the URL, plus the controls (API-066) and regulatory references (API-065) the questions link to.
+// S2-A.2: shown as one card per script family (the version in use first; drafts and older versions underneath);
+// controls and references are folded away below the list.
 // S2-A: users with script.edit create new script families here; drafting, review and publishing happen on the family page.
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState, type FormEvent } from 'react';
@@ -10,10 +12,18 @@ import { Badge, Button, Card, PageHead } from '../../components/ui';
 import { humanize, Region, when } from '../cases/shared';
 import { useAuth } from '../../auth/AuthContext';
 import { NewScriptForm } from './ScriptEditor';
-import { scriptHref, short, StatusBadge, SyntheticBanner } from './shared';
+import { compareLabels, scriptHref, StatusBadge, SyntheticBanner, type ScriptVersionSummary } from './shared';
 
 const STATUSES = ['DRAFT', 'SUBMITTED_FOR_REVIEW', 'APPROVED', 'SCHEDULED', 'PUBLISHED', 'SUPERSEDED', 'WITHDRAWN', 'ABANDONED'] as const;
 type Status = (typeof STATUSES)[number];
+const OPEN = ['DRAFT', 'SUBMITTED_FOR_REVIEW', 'APPROVED', 'SCHEDULED'];
+
+/** Groups the server's version list by family (first-seen order), newest version first inside each family. */
+export function groupByFamily(items: ScriptVersionSummary[]): Array<{ id: string; versions: ScriptVersionSummary[] }> {
+  const by = new Map<string, ScriptVersionSummary[]>();
+  for (const v of items) by.set(v.script_family_id, [...(by.get(v.script_family_id) ?? []), v]);
+  return [...by].map(([id, vs]) => ({ id, versions: [...vs].sort((a, b) => compareLabels(b.version_label, a.version_label)) }));
+}
 
 export function ScriptLibraryPage() {
   const [params, setParams] = useSearchParams();
@@ -37,6 +47,7 @@ export function ScriptLibraryPage() {
   const setOne = (k: string, v: string) => setParams((p) => { const n = new URLSearchParams(p); n.delete(k); if (v) n.set(k, v); return n; });
   const facets = library.data?.facets ?? {};
   const filtered = [...params.keys()].length > 0;
+  const families = groupByFamily(library.data?.items ?? []);
 
   return (
     <>
@@ -49,8 +60,8 @@ export function ScriptLibraryPage() {
       <SyntheticBanner />
       {creating ? <NewScriptForm onCancel={() => setCreating(false)} /> : null}
 
-      <Card pad={false} title="Script library" subtitle="Every version in your markets, with its lifecycle status. Filters run on the server."
-        aside={library.data ? <Badge tone="gray" noDot>{`${library.data.total} version${library.data.total === 1 ? '' : 's'}`}</Badge> : undefined}>
+      <Card pad={false} title="Scripts" subtitle="One card per script. Each shows the version in use; drafts and older versions are listed underneath."
+        aside={library.data ? <Badge tone="gray" noDot>{`${families.length} script${families.length === 1 ? '' : 's'} · ${library.data.total} version${library.data.total === 1 ? '' : 's'}`}</Badge> : undefined}>
         <form className="table-toolbar" role="search" aria-label="Filter scripts"
           onSubmit={(e: FormEvent) => { e.preventDefault(); setOne('q', text.trim()); }}>
           <label className="sr-only" htmlFor="ss-q">Search scripts</label>
@@ -73,45 +84,64 @@ export function ScriptLibraryPage() {
           {filtered ? <Button onClick={() => setParams(new URLSearchParams())}>Clear filters</Button> : null}
         </form>
         <p className="xsmall muted" style={{ margin: '0 17px 10px' }}>
-          Product, risk band and channel match the conditions written on each version's modules; no case is evaluated.
+          Filters apply to versions: a script is shown when at least one of its versions matches. Product, risk band and channel match the
+          conditions written on each version's sections; no case is evaluated.
         </p>
         <Region query={library} label="script library">
-          {() => library.data!.items.length === 0 ? (
+          {() => families.length === 0 ? (
             <Empty title="No script versions match">Clear a filter to see more versions.</Empty>
           ) : (
-            <div className="table-wrap">
-              <table className="data-table" data-testid="script-library">
-                <caption className="sr-only">Script versions</caption>
-                <thead><tr>
-                  <th scope="col">Script version</th><th scope="col">Status</th><th scope="col">Effective</th><th scope="col">Modules</th>
-                  <th scope="col">Questions</th><th scope="col">Assigned cases</th><th scope="col">Rules</th><th scope="col">Manifest</th>
-                </tr></thead>
-                <tbody>
-                  {library.data!.items.map((v) => (
-                    <tr key={v.id}>
-                      <td><Link className="link" to={scriptHref(v.script_family_id, v.id)}>{v.family} v{v.version_label}</Link>
-                        <div className="xsmall muted">{v.family_name} · {v.market} · {v.language}</div></td>
-                      <td><StatusBadge status={v.status} /></td>
-                      <td>{v.effective_from ? when(v.effective_from).split(',')[0] : 'Not set'}{v.effective_to ? ` – ${when(v.effective_to).split(',')[0]}` : ''}</td>
-                      <td>{v.modules.map((m) => humanize(m.module_code)).join(' · ')}</td>
-                      <td>{v.questions} <span className="xsmall muted">({v.mandatory_questions} mandatory)</span></td>
-                      <td>{v.cases_assigned}</td>
-                      <td>{v.rules_targeting.length ? v.rules_targeting.join(', ') : '—'}</td>
-                      <td className="mono xsmall" title={v.manifest_sha256 ?? 'Draft — no frozen manifest'}>{v.manifest_sha256 ? short(v.manifest_sha256) : 'Draft'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ul className="family-list" data-testid="script-library" aria-label="Scripts">
+              {families.map((f) => <FamilyCard key={f.id} versions={f.versions} />)}
+            </ul>
           )}
         </Region>
       </Card>
 
-      <div className="layout cols-even" style={{ marginTop: 19 }}>
-        <ControlsCard />
-        <ReferencesCard />
-      </div>
+      <details className="card card-pad ss-reference" style={{ marginTop: 19 }} data-testid="controls-and-references">
+        <summary className="strong">Controls and regulatory references
+          <span className="xsmall muted" style={{ fontWeight: 400 }}> · why the questions exist: the S&C controls they evidence and the public references behind them</span></summary>
+        <div className="layout cols-even" style={{ marginTop: 16 }}>
+          <ControlsCard />
+          <ReferencesCard />
+        </div>
+      </details>
     </>
+  );
+}
+
+/** One script family: the version in use as the headline, then every listed version (newest first) as a link. */
+function FamilyCard({ versions }: { versions: ScriptVersionSummary[] }) {
+  const head = versions[0]!;
+  const live = versions.find((v) => v.status === 'PUBLISHED') ?? null;
+  const open = versions.find((v) => OPEN.includes(v.status)) ?? null;
+  const main = live ?? open ?? head;
+  return (
+    <li className="family-card" data-testid={`family-${head.family}`}>
+      <div className="row between wrap" style={{ alignItems: 'flex-start' }}>
+        <div style={{ minWidth: 0 }}>
+          <h3 className="family-name"><Link className="link" to={scriptHref(head.script_family_id, main.id)}>{head.family_name}</Link></h3>
+          <div className="xsmall muted"><span className="mono">{head.family}</span> · {head.market} · {head.language}</div>
+        </div>
+        {live ? <Badge tone="green">{`In use: v${live.version_label}`}</Badge> : <Badge tone="gray">No version in use</Badge>}
+      </div>
+      <p className="small family-facts">
+        {live ? <>
+          <strong>v{live.version_label}</strong> in use{live.effective_from ? ` from ${when(live.effective_from).split(',')[0]}` : ''} ·{' '}
+          {live.questions} questions ({live.mandatory_questions} mandatory) · {live.cases_assigned} assigned case{live.cases_assigned === 1 ? '' : 's'}
+          {live.rules_targeting.length ? ` · selected by ${live.rules_targeting.join(', ')}` : ' · no assignment rule selects it'}
+        </> : 'Not published yet: no case can be assigned this script.'}
+        {open ? <> · <span className="strong">v{open.version_label} {humanize(open.status).toLowerCase()}</span></> : null}
+      </p>
+      <div className="row wrap family-versions" style={{ gap: 6 }}>
+        <span className="xsmall muted">Versions:</span>
+        {versions.map((v) => (
+          <Link key={v.id} className="version-chip" to={scriptHref(v.script_family_id, v.id)}>
+            <span className="strong"><span className="sr-only">{v.family} </span>v{v.version_label}</span> <StatusBadge status={v.status} />
+          </Link>
+        ))}
+      </div>
+    </li>
   );
 }
 

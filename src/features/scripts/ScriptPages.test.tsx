@@ -6,7 +6,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { App } from '../../App';
 import { json, ME, renderAt, stubApi } from '../../test/render';
-import { describeCondition } from './shared';
+import { compareLabels, describeCondition } from './shared';
 import { ruleSummary } from './ScriptEditor';
 
 afterEach(() => vi.unstubAllGlobals());
@@ -70,7 +70,7 @@ describe('Script Studio', () => {
     stubApi(base({ 'GET /api/v1/scripts': (req) => { seen.push(new URL(req.url).search); return json(200, LIB); } }));
     renderAt(<App />, '/scripts');
     const table = await screen.findByTestId('script-library');
-    expect(within(table).getByRole('link', { name: 'SALES_VERIFICATION_SG v1.1' })).toHaveAttribute('href', '/scripts/f1?version=v11');
+    expect(within(table).getByRole('link', { name: /^SALES_VERIFICATION_SG v1\.1 / })).toHaveAttribute('href', '/scripts/f1?version=v11');
     expect(screen.getByTestId('synthetic-script-banner')).toHaveTextContent('not approved AIA/MAS wording');
     expect(screen.queryByRole('button', { name: 'New script' })).toBeNull(); // no script.edit: no authoring
     expect(screen.getByLabelText('Channel')).toBeDisabled(); // no channel-specific module exists
@@ -81,9 +81,8 @@ describe('Script Studio', () => {
   it('shows a version in structural order with expected answers, controls and separate regulatory references', async () => {
     stubApi(base(familyRoutes(DETAIL)));
     renderAt(<App />, '/scripts/f1');
-    const history = await screen.findByTestId('version-history');
-    expect(within(history).getByRole('link', { current: 'page' })).toHaveTextContent('v1.1'); // published version selected by default
-    expect(await screen.findByTestId('manifest-sha')).toHaveTextContent('a'.repeat(64));
+    expect(await screen.findByTestId('version-picker')).toHaveValue('v11'); // published version selected by default
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Sales verification (synthetic)');
     const sections = await screen.findAllByTestId('script-section');
     expect(sections.map((s) => within(s).getByRole('heading').textContent)).toEqual(['1. Common', '2. Elevated risk']);
     expect(sections[1]).toHaveTextContent('SBQ risk band is High');
@@ -95,6 +94,32 @@ describe('Script Studio', () => {
     expect(screen.queryByTestId('draft-editor')).toBeNull();
     expect(screen.queryByRole('button', { name: 'New draft version' })).toBeNull(); // no script.edit
     expect(screen.getByRole('link', { name: 'SG-SALES-VERIFY v2' })).toHaveAttribute('href', '/assignment-rules?rule=SG-SALES-VERIFY%20v2');
+    // S2-A.2: versions and technical details sit behind their own tabs.
+    expect(screen.queryByTestId('version-history')).toBeNull();
+    await userEvent.click(screen.getByTestId('sv-tab-versions'));
+    const history = await screen.findByTestId('version-history');
+    expect(within(history).getAllByRole('link').map((l) => l.textContent?.slice(0, 4))).toEqual(['v1.1', 'v1.0']); // newest first
+    expect(within(history).getByRole('link', { current: 'page' })).toHaveTextContent('v1.1');
+    await userEvent.click(screen.getByTestId('sv-tab-details'));
+    expect(await screen.findByTestId('manifest-sha')).toHaveTextContent('a'.repeat(64));
+  });
+
+  it('S2-A.2: groups the library into one card per script with the version in use first', async () => {
+    stubApi(base({ 'GET /api/v1/scripts': () => json(200, LIB) }));
+    renderAt(<App />, '/scripts');
+    const list = await screen.findByTestId('script-library');
+    const cards = within(list).getAllByRole('listitem');
+    expect(cards).toHaveLength(1); // two versions, one script
+    expect(within(cards[0]!).getByRole('heading', { level: 3 })).toHaveTextContent('Sales verification (synthetic)');
+    expect(within(cards[0]!).getByRole('link', { name: 'Sales verification (synthetic)' })).toHaveAttribute('href', '/scripts/f1?version=v11');
+    expect(cards[0]).toHaveTextContent('In use: v1.1');
+    expect(within(cards[0]!).getAllByRole('link', { name: /^SALES_VERIFICATION_SG v/ }).map((l) => l.textContent))
+      .toEqual(['SALES_VERIFICATION_SG v1.1 Published', 'SALES_VERIFICATION_SG v1.0 Superseded']); // name includes the visible status
+    expect(screen.getByTestId('controls-and-references')).not.toHaveAttribute('open'); // folded away by default
+  });
+
+  it('S2-A.2: orders version labels numerically', () => {
+    expect(['1.9', '1.10', '1.0', '2.0'].sort(compareLabels)).toEqual(['1.0', '1.9', '1.10', '2.0']);
   });
 
   it('creates a script and edits a draft with the row-version token, then validates and submits it (author)', async () => {

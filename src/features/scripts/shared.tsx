@@ -35,6 +35,15 @@ export function PublishedCaveat({ status, approval }: { status: string; approval
 }
 
 export const scriptHref = (familyId: string, versionId?: string) => `/scripts/${familyId}${versionId ? `?version=${versionId}` : ''}`;
+/** Orders version labels numerically ("1.10" after "1.9"); negative when a precedes b. */
+export function compareLabels(a: string, b: string): number {
+  const x = a.split('.').map(Number), y = b.split('.').map(Number);
+  for (let i = 0; i < Math.max(x.length, y.length); i++) {
+    const d = (x[i] ?? 0) - (y[i] ?? 0);
+    if (d) return d;
+  }
+  return a.localeCompare(b);
+}
 export const short = (sha?: string | null) => (sha ? `${sha.slice(0, 12)}…` : '—');
 
 export function SyntheticBanner() {

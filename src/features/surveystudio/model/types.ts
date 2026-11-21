@@ -1,0 +1,215 @@
+// Survey Studio prototype (SS-02A) — canonical model types.
+// These mirror the SS-01 contracts (Call360-specs docs/plans/survey-studio/04_SS-01_CANONICAL_CONTRACTS.md and the
+// fixtures beside it): Definitions and Versions are shared and never changed by a placement; Instances (module
+// instances, question nodes) own routing and bindings. PROTOTYPE ONLY: nothing here is saved to the server.
+
+export type AnswerType = 'YES_NO' | 'SINGLE_SELECT' | 'MULTI_SELECT' | 'FREE_TEXT';
+export type ModuleKind = 'OPENING' | 'COMMON' | 'PRODUCT' | 'RISK' | 'EXCEPTION' | 'CLOSING';
+/**
+ * REVIEW_REQUIRED is governed, not an ordinary author-routable outcome (owner decision D-127): automated progression
+ * halts and the run waits for an authorised review. It is never "completed" and a survey cannot route past it.
+ */
+export type OutcomeCode = 'COMPLETED' | 'CLARIFICATION_REQUIRED' | 'ESCALATE' | 'CUSTOMER_DECLINED' | 'UNABLE_TO_VERIFY' | 'REVIEW_REQUIRED';
+
+export interface TextRule { required: boolean; min: number; max: number }
+
+/** One coded choice. `code` is the stable identity; `label` can change without changing any route. */
+export interface Option {
+  code: string;
+  label: string;
+  exclusive?: boolean;
+  isOther?: boolean;
+  otherText?: TextRule;
+  /**
+   * Interruption governance (owner decision, SS-02A.1). Part of the DEFINITION, so a placement cannot change it.
+   * absent = prohibited: this answer can never interrupt a follow-up queue;
+   * OPTIONAL = a placement may configure an interruption, choosing one of the three behaviours;
+   * MANDATORY = a required escalation: every placement must stop and escalate, and nothing may weaken that.
+   */
+  interrupt?: InterruptClass;
+}
+export type InterruptClass = 'OPTIONAL' | 'MANDATORY';
+/** A = stop the queue and end with an approved outcome; B = ask the interrupt's question(s), then resume the queue;
+ *  C = stop the queue and continue at an explicitly chosen destination. */
+export type InterruptPolicy = 'STOP_ESCALATE' | 'RESUME' | 'STOP_REJOIN';
+
+/** A Question Version: structure plus the pinned customer-facing wording (Wording Version). */
+export interface Question {
+  code: string;
+  version: number;
+  answerType: AnswerType;
+  intent: string;
+  options: Option[]; // YES_NO carries YES / NO
+  /**
+   * MULTI_SELECT limits, present only once the author has set them. Absent = at least one, up to every answer that can
+   * be combined. Stored limits are NEVER changed by another edit (owner correction, SS-02B.2): when removing an answer
+   * or changing exclusivity makes them impossible, that is a conflict the author resolves explicitly.
+   */
+  selection?: { min: number; max: number };
+  textRule?: TextRule; // FREE_TEXT
+  wording: { version: number; text: string; approval: 'SYNTHETIC_UNAPPROVED' };
+  /** true = approved shared library version (immutable here); false = draft created in this session. */
+  published: boolean;
+}
+
+export type Target = { node: string } | { outcome: OutcomeCode } | { ret: true };
+
+export type RoutingMode = 'ALL_TO_NEXT' | 'PER_CHOICE' | 'SEQUENTIAL_FOLLOWUPS' | 'ORDERED_RULES';
+
+/**
+ * One prioritised rule of a first-matching-rule question (SS-02B.1). The array order IS the priority: the first rule
+ * whose criteria the selected answers meet decides the single destination; nothing else runs.
+ * ANY = at least one of the listed answers is selected; ALL = every listed answer is; NONE = none of them is.
+ */
+export interface SetRule { id: string; kind: 'ANY' | 'ALL' | 'NONE'; options: string[]; to: Target | null }
+
+export interface Followup { option: string; nodes: string[] }
+export interface Interrupt { option: string; policy: InterruptPolicy; outcome?: OutcomeCode; nodes?: string[]; rejoin?: Target | null }
+
+export interface Routing {
+  mode: RoutingMode;
+  /** PER_CHOICE: the answer the author treats as the normal path (layout and safe insertion only). */
+  normal?: string;
+  /** SEQUENTIAL_FOLLOWUPS: array order is the execution order (priority). */
+  followups?: Followup[];
+  noFollowup?: string[];
+  interrupts?: Interrupt[];
+  rejoin?: Target | null;
+  /** ORDERED_RULES: prioritised rules, then the mandatory "otherwise" destination when no rule matches. */
+  rules?: SetRule[];
+  fallback?: Target | null;
+}
+
+export interface QuestionNode {
+  id: string;
+  type: 'QUESTION';
+  q: { code: string; version: number };
+  routing: Routing;
+  role?: 'FOLLOWUP';
+}
+/**
+ * A decision point (SS-02B.1): asks nothing, evaluates one condition binding and leaves by exactly one of three
+ * results. Its edges use `on`: MATCH | NO_MATCH | UNKNOWN. When information is missing the result is UNKNOWN, never
+ * NO_MATCH; the binding's unknownPolicy says whether UNKNOWN follows its own route or stops the call for review.
+ */
+export interface DecisionNode { id: string; type: 'DECISION'; binding: Binding | null }
+export type ModuleNode = QuestionNode | DecisionNode;
+export const isQuestion = (n: ModuleNode): n is QuestionNode => n.type === 'QUESTION';
+
+/** `on`: YES | NO | an option code | ANY (the explicit "everybody continues" default) | AFTER_CAPTURE; for a decision MATCH | NO_MATCH | UNKNOWN. */
+export interface Edge { id: string; from: string; on: string; to: Target }
+
+export interface Module {
+  code: string;
+  revision: number;
+  name: string;
+  kind: ModuleKind;
+  intent: string;
+  published: boolean;
+  entry: string | null;
+  outcomes: OutcomeCode[];
+  nodes: ModuleNode[];
+  edges: Edge[];
+  /** Recommended entry rule applied when the module is added to a survey (the author can change it). */
+  defaultEntry?: Entry;
+  /** Set on a draft revision derived for one survey (copy-on-write). */
+  derivedFor?: string;
+}
+
+// ---- conditions -------------------------------------------------------------------------------------------------
+export type FieldType = 'MONEY' | 'INTEGER' | 'ENUM' | 'BOOLEAN';
+export interface FieldDef { code: string; label: string; type: FieldType; unit?: string; values?: string[] }
+
+/**
+ * `field` = a customer or policy attribute; `param` = a named setting whose value each placement supplies;
+ * `input` = a named earlier answer, mapped to a question by each placement; `literal` = a fixed value.
+ * A literal compared with an answer is a stable OPTION CODE (or a list of codes), never a display label.
+ */
+export type Operand = { field: string } | { param: string } | { input: string } | { literal: string | number | boolean | string[] };
+/**
+ * INCLUDES_ANY / INCLUDES_ALL / INCLUDES_NONE apply to a multiple-choice answer and take a list of option codes
+ * (owner decision D-125). An answered question with nothing selected is a KNOWN empty selection; a question that was
+ * not answered is UNKNOWN — the two are never confused.
+ */
+export type CompareOp = 'EQ' | 'NEQ' | 'GT' | 'GTE' | 'LT' | 'LTE' | 'INCLUDES_ANY' | 'INCLUDES_ALL' | 'INCLUDES_NONE';
+/**
+ * The typed declaration of an earlier answer a condition reads (owner correction, SS-02B.2). It names the question by
+ * its stable identity and pinned version and carries its answer type, so the option codes used in the condition can be
+ * checked. Nothing here is a display label: what the author sees is looked up from the question when it is shown.
+ */
+export interface InputDecl { question: { code: string; version: number }; answerType: AnswerType; scope: 'MODULE' }
+export type Ast =
+  | { op: 'AND'; args: Ast[] }
+  | { op: 'OR'; args: Ast[] }
+  | { op: 'NOT'; arg: Ast }
+  | { op: CompareOp; left: Operand; right: Operand };
+
+export interface Condition {
+  code: string;
+  version: number;
+  name: string;
+  ast: Ast;
+  params: Record<string, { type: FieldType; unit?: string; label: string }>;
+  /** Earlier answers the condition reads, by stable key; each placement binds a key to one question instance. */
+  inputs?: Record<string, InputDecl>;
+  /** true = in the reusable library (immutable: a change makes a new version); false = belongs to one placement. */
+  shared: boolean;
+}
+
+/**
+ * BLOCK = stop and flag for review: the governed REVIEW_REQUIRED outcome (a decision carries it as its UNKNOWN edge);
+ * SKIP_WITH_REASON = module entry only; ROUTE = a decision follows the Unknown route the author chose.
+ */
+export type UnknownPolicy = 'BLOCK' | 'SKIP_WITH_REASON' | 'ROUTE';
+export interface Binding {
+  condition: { code: string; version: number };
+  params: Record<string, number | string | boolean>;
+  /** Which question instance (stable node id in this module) supplies each declared earlier answer (decisions only). */
+  inputs?: Record<string, { node: string }>;
+  /** null until the author chooses: missing data must never silently become FALSE. */
+  unknownPolicy: UnknownPolicy | null;
+}
+
+export type Entry =
+  | { mode: 'ALWAYS' }
+  | { mode: 'RULE'; binding: Binding }
+  | { mode: 'ON_OUTCOME'; of: string; outcomes: OutcomeCode[] };
+
+export type SurveyTarget = '@CONTINUE' | { instance: string } | { surveyOutcome: OutcomeCode };
+
+export interface Instance {
+  id: string; // stable instance code, e.g. mi-suitability
+  module: { code: string; revision: number };
+  entry: Entry;
+  /** One route per declared module outcome; null = not yet decided by the author (a blocker). */
+  routes: Record<string, SurveyTarget | null>;
+}
+
+export interface Survey {
+  id: string; // S-…
+  name: string;
+  purpose: string;
+  versionLabel: string;
+  sequence: Instance[];
+  createdAt: number; // counter value, for stable ordering
+}
+
+export interface Workspace {
+  questions: Question[];
+  conditions: Condition[];
+  modules: Module[];
+  surveys: Survey[];
+  /** Monotonic counter for new codes, so ids are deterministic and never reused. */
+  seq: number;
+}
+
+export interface Issue {
+  id: string;
+  severity: 'ERROR' | 'WARNING';
+  message: string;
+  fix: string;
+  where: { surveyId?: string; instanceId?: string; moduleKey?: string; nodeId?: string; on?: string; part?: string };
+}
+
+export const qKey = (q: { code: string; version: number }) => `${q.code}@${q.version}`;
+export const mKey = (m: { code: string; revision: number }) => `${m.code}@${m.revision}`;
