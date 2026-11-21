@@ -33,8 +33,8 @@ export function JourneyNav({ survey, at, compact }: { survey: Survey; at: Journe
     { id: 'compose', label: 'Compose', to: base, state: `${survey.sequence.length} module${survey.sequence.length === 1 ? '' : 's'}` },
     { id: 'build', label: 'Build modules', to: first ? `${base}/modules/${first}` : null, state: 'Guided or graph' },
     { id: 'simulate', label: 'Simulate', to: survey.sequence.length ? `${base}/simulate` : null, state: 'Try a journey' },
-    { id: 'validate', label: 'Validate', to: `${base}/validate`, ...(readiness?.blockers ? { state: `${readiness.blockers} blocker${readiness.blockers === 1 ? '' : 's'}`, tone: 'warn' as const } : readiness?.open ? { state: `${readiness.open} to acknowledge`, tone: 'warn' as const } : { state: 'Ready for review', tone: 'ok' as const }) },
-    persisted ? { id: 'review', label: 'Review and publish', to: `${base}/review`, state: 'Not available yet' }
+    { id: 'validate', label: 'Validate', to: `${base}/validate`, ...(persisted ? (readiness?.blockers ? { state: `${readiness.blockers} editor blocker${readiness.blockers === 1 ? '' : 's'}`, tone: 'warn' as const } : { state: 'The server decides' }) : readiness?.blockers ? { state: `${readiness.blockers} blocker${readiness.blockers === 1 ? '' : 's'}`, tone: 'warn' as const } : readiness?.open ? { state: `${readiness.open} to acknowledge`, tone: 'warn' as const } : { state: 'Ready for review', tone: 'ok' as const }) },
+    persisted ? { id: 'review', label: 'Review and publish', to: `${base}/review`, state: 'Candidates and versions' }
       : { id: 'review', label: 'Review and publish', to: `${base}/review`, state: st ? STAGE_LABEL[st.stage] : 'Draft', ...(st?.stage === 'REJECTED' ? { tone: 'warn' as const } : st?.stage === 'APPROVED' || st?.stage === 'PUBLISHED' ? { tone: 'ok' as const } : {}) },
   ];
   return (

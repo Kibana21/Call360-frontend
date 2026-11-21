@@ -65,7 +65,7 @@ export function ValidationPage() {
               <div><dt>Blockers</dt><dd data-testid="ss-val-blockers">{r.blockers}</dd></div>
               <div><dt>Warnings open</dt><dd data-testid="ss-val-open">{r.open}<small> of {r.warnings}</small></dd></div>
             </dl>
-            {persisted ? <span className="ss-btn primary" aria-disabled="true" data-testid="ss-val-to-review" title="Submitting a saved survey for review is not available yet.">Submit is not available yet</span>
+            {persisted ? <Link className="ss-btn primary" to={`${base}/review`} data-testid="ss-val-to-review" title="The server decides whether the saved draft can be submitted.">Go to review and publish <Glyph name="right" size={14} /></Link>
               : r.ready ? <Link className="ss-btn primary" to={`${base}/review`} data-testid="ss-val-to-review">Go to review and publish <Glyph name="right" size={14} /></Link>
               : <span className="ss-btn primary" aria-disabled="true" data-testid="ss-val-to-review" title={r.reasons.join('; ')}>Submit is not available yet</span>}
           </div>
@@ -93,7 +93,7 @@ export function ValidationPage() {
             {only ? <p className="ss-val-about">{AREAS.find((a) => a.id === only)!.about}</p> : null}
             {shown.length === 0 ? <p className="ss-empty" data-testid="ss-val-empty"><span><strong>Nothing found here.</strong> {only ? 'This area passes.' : 'This draft passes every check.'}</span></p> : null}
             <ul className="ss-findings" data-testid="ss-findings">
-              {shown.map((f) => <FindingRow key={f.id} f={f} canAck={author} onGo={() => goTo(f)}
+              {shown.map((f) => <FindingRow key={f.id} f={f} canAck={author && !persisted} advisory={persisted} onGo={() => goTo(f)}
                 onAck={(note) => govern((g) => acknowledge(g, survey.id, f, note, Date.now()))} onUnack={() => govern((g) => unacknowledge(g, survey.id, f, Date.now()))} />)}
             </ul>
 
@@ -132,7 +132,7 @@ export function ValidationPage() {
   );
 }
 
-function FindingRow({ f, canAck, onGo, onAck, onUnack }: { f: Finding; canAck: boolean; onGo: () => void; onAck: (note: string) => string | null; onUnack: () => string | null }) {
+function FindingRow({ f, canAck, advisory, onGo, onAck, onUnack }: { f: Finding; canAck: boolean; /** FI-2: a saved survey — editor warnings are advisory; only server warnings are acknowledged, at submission. */ advisory?: boolean; onGo: () => void; onAck: (note: string) => string | null; onUnack: () => string | null }) {
   const [note, setNote] = useState('');
   const [asking, setAsking] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -157,7 +157,8 @@ function FindingRow({ f, canAck, onGo, onAck, onUnack }: { f: Finding; canAck: b
       </div>
       <div className="ss-finding-actions">
         {f.where ? <button type="button" className="ss-btn small" onClick={onGo} data-testid="ss-finding-go"><Glyph name="open" size={14} /> Go to it</button> : null}
-        {f.severity === 'WARNING' && !f.acknowledged && !asking ? <button type="button" className="ss-btn small" disabled={!canAck} title={canAck ? undefined : 'Only the author acknowledges a warning.'} onClick={() => setAsking(true)} data-testid="ss-ack">Acknowledge</button> : null}
+        {f.severity === 'WARNING' && advisory ? <span className="ss-muted" data-testid="ss-advisory">Advisory · editor only</span> : null}
+        {f.severity === 'WARNING' && !advisory && !f.acknowledged && !asking ? <button type="button" className="ss-btn small" disabled={!canAck} title={canAck ? undefined : 'Only the author acknowledges a warning.'} onClick={() => setAsking(true)} data-testid="ss-ack">Acknowledge</button> : null}
         {f.acknowledged ? <button type="button" className="ss-btn small" disabled={!canAck} onClick={() => onUnack()} data-testid="ss-unack">Withdraw</button> : null}
       </div>
     </li>

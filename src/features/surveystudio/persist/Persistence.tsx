@@ -34,6 +34,11 @@ export interface Persistence {
   saveOnTop: () => Promise<void>;
   keepEditing: () => void;
   openConflict: () => void;
+  /**
+   * FI-2: read the saved draft again and show it. Used after a submission, which freezes the versions the draft pins:
+   * the editor must then treat them as published (a change is a new version). Refused while there is unsaved work.
+   */
+  refreshFromServer: () => Promise<void>;
 }
 
 const Ctx = createContext<Persistence | null>(null);
@@ -179,6 +184,13 @@ export function PersistenceProvider({ initial, onBaseline, children }: { initial
     } catch (e) { setError(describe(e)); } finally { setBusy(false); }
   }, [conflict, busy, raise, replace, setBaseline]);
 
+  const refreshFromServer = useCallback(async () => {
+    if (live.current.current.set === null || !isEmpty(changes(baseRef.current.editor, live.current.current.set)) || live.current.detailsChanged) return;
+    const o = open(await loadDraft(baseRef.current.surveyId), baseRef.current.versionLabel);
+    setBaseline(o.baseline);
+    replace(o.ws, 'The versions this draft pins are now frozen: a change to one is a new version');
+  }, [replace, setBaseline]);
+
   const keepEditing = useCallback(() => setConflict((c) => (c ? { ...c, open: false } : c)), []);
   const openConflict = useCallback(() => setConflict((c) => (c ? { ...c, open: true } : c)), []);
 
@@ -194,8 +206,8 @@ export function PersistenceProvider({ initial, onBaseline, children }: { initial
   const value = useMemo<Persistence>(() => ({
     surveyId: baseline.surveyId, code: baseline.code, status, revision: baseline.revision, savedAt: baseline.updatedAt, savedBy: baseline.updatedBy,
     canEdit: can('survey.edit'), dirty, changed, error, mappingError: current.problem, conflict, note: baseline.note, lastSavedNotice: status === 'saved' ? saved : null,
-    save, reloadServerDraft, saveOnTop, keepEditing, openConflict,
-  }), [baseline, status, can, dirty, changed, error, current.problem, conflict, saved, save, reloadServerDraft, saveOnTop, keepEditing, openConflict]);
+    save, reloadServerDraft, saveOnTop, keepEditing, openConflict, refreshFromServer,
+  }), [baseline, status, can, dirty, changed, error, current.problem, conflict, saved, save, reloadServerDraft, saveOnTop, keepEditing, openConflict, refreshFromServer]);
 
   return <Ctx.Provider value={value}>{children}<LeaveGuard dirty={dirty} code={baseline.code} /></Ctx.Provider>;
 }

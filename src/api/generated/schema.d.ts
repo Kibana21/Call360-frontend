@@ -2727,6 +2727,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/survey-candidates/{candidate_id}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Survey Candidate Documents
+         * @description FI-2 — what a reviewer inspects: the frozen content and every pinned document with its hash and integrity, the
+         *     makers, the recorded acknowledgements, the server's validation of exactly this content, and what the identity rules
+         *     allow the reader. Read-only: a candidate is never changed.
+         */
+        get: operations["survey_candidate_documents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/survey-candidates/{candidate_id}/publish": {
         parameters: {
             query?: never;
@@ -2952,6 +2974,26 @@ export interface paths {
          * @description Server validation of the draft: stable codes, never matched by message. Nothing is stored.
          */
         post: operations["survey_draft_validate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-definitions/{survey_id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Survey Definition History
+         * @description FI-2 — every candidate and every published version of a survey, oldest first, with derived status.
+         */
+        get: operations["survey_definition_history"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -11826,6 +11868,107 @@ export interface components {
             /** Expected Row Version */
             expected_row_version: number;
         };
+        /** SurveyAcknowledgement */
+        SurveyAcknowledgement: {
+            /** Acknowledged By */
+            acknowledged_by: string;
+            /** Acknowledged By Name */
+            acknowledged_by_name: string | null;
+            /** At */
+            at: string;
+            /** Code */
+            code: string;
+            /** Content Sha256 */
+            content_sha256: string;
+            /** Message */
+            message: string;
+            /** Reason */
+            reason: string;
+        };
+        /** SurveyCandidateAsset */
+        SurveyCandidateAsset: {
+            /** Code */
+            code: string;
+            /** Document */
+            document: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Intact
+             * @description True when the stored, frozen document still has exactly that hash.
+             */
+            intact: boolean;
+            /** Kind */
+            kind: string;
+            /**
+             * Sha256
+             * @description The hash the candidate's manifest pins.
+             */
+            sha256: string;
+            /** Version */
+            version: number;
+        };
+        /** SurveyCandidateDocumentsOut */
+        SurveyCandidateDocumentsOut: {
+            /** Acknowledgements */
+            acknowledgements: components["schemas"]["SurveyAcknowledgement"][];
+            approver: components["schemas"]["SurveyPerson"] | null;
+            /** Assets */
+            assets: components["schemas"]["SurveyCandidateAsset"][];
+            /** Content */
+            content: {
+                [key: string]: unknown;
+            };
+            /** Content Sha256 */
+            content_sha256: string;
+            /** Draft Revision */
+            draft_revision: number;
+            /** History */
+            history: components["schemas"]["SurveyLifecycleEvent"][];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Makers */
+            makers: components["schemas"]["SurveyPerson"][];
+            /** Manifest Intact */
+            manifest_intact: boolean;
+            /** Manifest Problems */
+            manifest_problems: string[];
+            /** Manifest Sha256 */
+            manifest_sha256: string;
+            /** N */
+            n: number;
+            /** Note */
+            note: string;
+            /**
+             * Note Standing
+             * @default Synthetic content, unapproved for operational use. No survey here is eligible for a live call.
+             */
+            note_standing: string;
+            restrictions: components["schemas"]["SurveyCandidateRestrictions"];
+            /** Status */
+            status: string;
+            /**
+             * Submitted At
+             * Format: date-time
+             */
+            submitted_at: string;
+            submitted_by: components["schemas"]["SurveyPerson"];
+            /** Survey Code */
+            survey_code: string;
+            /**
+             * Survey Id
+             * Format: uuid
+             */
+            survey_id: string;
+            validation: components["schemas"]["SurveyCandidateValidation"];
+            /** Version Id */
+            version_id: string | null;
+            /** Version Label */
+            version_label: string | null;
+        };
         /** SurveyCandidateOut */
         SurveyCandidateOut: {
             /** Content */
@@ -11867,6 +12010,34 @@ export interface components {
              * Format: uuid
              */
             survey_id: string;
+        };
+        /** SurveyCandidateRestrictions */
+        SurveyCandidateRestrictions: {
+            /** Can Decide */
+            can_decide: boolean;
+            /** Can Publish */
+            can_publish: boolean;
+            /** Can Withdraw */
+            can_withdraw: boolean;
+            /** Decide Reason */
+            decide_reason: string | null;
+            /** Is Approver */
+            is_approver: boolean;
+            /** Is Maker */
+            is_maker: boolean;
+            /** Publish Reason */
+            publish_reason: string | null;
+            /** Withdraw Reason */
+            withdraw_reason: string | null;
+        };
+        /** SurveyCandidateValidation */
+        SurveyCandidateValidation: {
+            /** Blockers */
+            blockers: number;
+            /** Findings */
+            findings: components["schemas"]["SurveyFindingOut"][];
+            /** Warnings */
+            warnings: number;
         };
         /** SurveyCatalogs */
         SurveyCatalogs: {
@@ -12084,6 +12255,98 @@ export interface components {
              */
             severity: "BLOCKER" | "WARNING" | "INFO";
         };
+        /** SurveyHistoryCandidate */
+        SurveyHistoryCandidate: {
+            /** Content Sha256 */
+            content_sha256: string;
+            /** Draft Revision */
+            draft_revision: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Last Event */
+            last_event: string | null;
+            /** Last Event At */
+            last_event_at: string | null;
+            /** Last Event By */
+            last_event_by: string | null;
+            /** Last Event Reason */
+            last_event_reason: string | null;
+            /** Makers */
+            makers: number;
+            /** Manifest Sha256 */
+            manifest_sha256: string;
+            /** N */
+            n: number;
+            /** Note */
+            note: string;
+            /** Status */
+            status: string;
+            /**
+             * Submitted At
+             * Format: date-time
+             */
+            submitted_at: string;
+            /** Submitted By */
+            submitted_by: string | null;
+        };
+        /** SurveyHistoryOut */
+        SurveyHistoryOut: {
+            /** Candidates */
+            candidates: components["schemas"]["SurveyHistoryCandidate"][];
+            /** Code */
+            code: string;
+            /** Draft Content Sha256 */
+            draft_content_sha256: string;
+            /** Draft Revision */
+            draft_revision: number;
+            /** Name */
+            name: string;
+            /**
+             * Note
+             * @default Synthetic content, unapproved for operational use. No survey here is eligible for a live call.
+             */
+            note: string;
+            /**
+             * Survey Id
+             * Format: uuid
+             */
+            survey_id: string;
+            /** Versions */
+            versions: components["schemas"]["SurveyHistoryVersion"][];
+        };
+        /** SurveyHistoryVersion */
+        SurveyHistoryVersion: {
+            /**
+             * Candidate Id
+             * Format: uuid
+             */
+            candidate_id: string;
+            /** Candidate N */
+            candidate_n: number;
+            /** Content Sha256 */
+            content_sha256: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Label */
+            label: string;
+            /**
+             * Published At
+             * Format: date-time
+             */
+            published_at: string;
+            /** Published By */
+            published_by: string | null;
+            /** Status */
+            status: string;
+            /** Version No */
+            version_no: number;
+        };
         /** SurveyLibraryItem */
         SurveyLibraryItem: {
             /** Candidates */
@@ -12182,6 +12445,13 @@ export interface components {
             open_candidate_status: string | null;
             /** Purpose */
             purpose: string;
+        };
+        /** SurveyPerson */
+        SurveyPerson: {
+            /** Name */
+            name: string | null;
+            /** Ref */
+            ref: string;
         };
         /** SurveyPublishIn */
         SurveyPublishIn: {
@@ -25134,6 +25404,82 @@ export interface operations {
             };
         };
     };
+    survey_candidate_documents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                candidate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyCandidateDocumentsOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     survey_candidate_publish: {
         parameters: {
             query?: never;
@@ -26010,6 +26356,82 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SurveyValidationOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_definition_history: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                survey_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyHistoryOut"];
                 };
             };
             /** @description Unauthorized */

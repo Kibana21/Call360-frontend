@@ -108,7 +108,7 @@ export function StudioBar({ crumbs, badge, issues, onIssue, wording }: {
                   <div className={wording && wording.unapproved ? 'warn' : 'done'}><dt>Wording approval</dt>
                     <dd>{wording ? (wording.unapproved ? `${wording.unapproved} of ${wording.total} question${wording.total === 1 ? '' : 's'} use wording that is not approved.` : `All ${wording.total} questions use approved wording.`) : 'Not assessed here.'}</dd></div>
                   <div className="warn"><dt>Ready to publish</dt>
-                    <dd><strong>No.</strong> {errors.length ? 'Routing is incomplete. ' : ''}{wording && wording.unapproved ? 'Wording is not approved. ' : ''}The Validate step shows everything that stands in the way. {persisted ? 'Review and publishing of a saved survey are not available yet.' : 'Review and publishing in this prototype are a simulation: nothing is really approved or published.'}</dd></div>
+                    <dd><strong>No.</strong> {errors.length ? 'Routing is incomplete. ' : ''}{wording && wording.unapproved ? 'Wording is not approved. ' : ''}The Validate step shows everything that stands in the way. {persisted ? 'Submission is decided by the server, on the Review and publish step.' : 'Review and publishing in this prototype are a simulation: nothing is really approved or published.'}</dd></div>
                 </dl>
                 {errors.length ? <h3>Routing — fix these</h3> : null}
                 <ul>

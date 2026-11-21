@@ -268,7 +268,6 @@ test('FI-1.4 the server\'s validation is the one that counts', async ({ browser 
   expect(codes.length).toBeGreaterThan(0);
   for (const c of codes) expect(c).toMatch(/^[A-Z_]+$/); // stable codes from the server, not messages
   await expect(page.getByTestId('ss-editor-checks-title')).toContainText('not authoritative');
-  await expect(page.getByTestId('ss-val-to-review')).toHaveAttribute('aria-disabled', 'true');
   await expect(page.getByTestId('ss-val-notice')).toContainText('cannot override the server');
   await expect(page.getByTestId('ss-val-notice')).toContainText('No survey here is eligible for a live call');
   await shot(page, 'FI12-server-validation-blocked');
@@ -280,10 +279,11 @@ test('FI-1.4 the server\'s validation is the one that counts', async ({ browser 
   expect(submit.status(), await submit.text()).toBe(422);
   expect((await submit.json()).code).toBe('VALIDATION_BLOCKED');
 
-  // review and publication are a later checkpoint: said plainly, nothing simulated
+  // the review step says the same thing: the server blocks the submission (review itself is exercised in fi2.persisted.ts)
   await page.getByTestId('ss-journey-review').click();
-  await expect(page.getByTestId('ss-review-later')).toContainText('not available yet');
-  await shot(page, 'FI13-review-not-available');
+  await expect(page.getByTestId('ss-submit-why')).toContainText('The server blocks this draft');
+  await expect(page.getByTestId('ss-submit')).toBeDisabled();
+  await shot(page, 'FI13-review-blocked-by-server');
 
   // an unsaved edit: the server says it has not seen it
   await page.goto(MODULE);

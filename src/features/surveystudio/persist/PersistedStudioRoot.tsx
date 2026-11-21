@@ -1,8 +1,8 @@
 // Survey Studio (FI-1) — the PERSISTED application: the same Lego Composer, Guided Builder, Graph, Simulator, Call plan
 // and Validation screens as the prototype, on real surveys saved to Call360 through the survey-definition API.
 // Shown only when the build setting VITE_SURVEY_STUDIO_PERSISTED=1 is on, to people who hold `survey.read`.
-// Synthetic content only. Review and publishing on real candidates are not part of this checkpoint.
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+// Synthetic content only. Review and publication run on the real, immutable candidates of the API (persist/ReviewPages).
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import '../../../styles/survey-studio.css';
 import { ApiFailure } from '../../../api/client';
@@ -11,15 +11,14 @@ import { BuilderPage } from '../BuilderPage';
 import { CallPlanPage } from '../CallPlanPage';
 import { ComposerPage } from '../ComposerPage';
 import { SimulatorPage } from '../SimulatorPage';
-import { StudioBar } from '../StudioRoot';
 import { ValidationPage } from '../ValidationPage';
-import { JourneyNav } from '../JourneyNav';
 import { MappingError } from '../model/documents';
 import type { Workspace } from '../model/types';
-import { StudioProvider, forgetPersistedMemory, hasPersistedMemory, useStudio } from '../store';
+import { StudioProvider, forgetPersistedMemory, hasPersistedMemory } from '../store';
 import { Glyph, Tag } from '../ui';
 import { createSurvey, listSurveys, loadDraft, type SurveySummary } from './api';
 import { PersistenceProvider, open, versionLabelOf, type Baseline } from './Persistence';
+import { CandidatePage, ReviewPage, VersionPage } from './ReviewPages';
 import { STANDING_NOTE } from './standing';
 
 
@@ -175,28 +174,12 @@ function OpenOne({ code }: { code: string }) {
           <Route path="simulate" element={<SimulatorPage />} />
           <Route path="plan" element={<CallPlanPage />} />
           <Route path="validate" element={<ValidationPage />} />
-          <Route path="review" element={<ReviewLater />} />
+          <Route path="review" element={<ReviewPage />} />
+          <Route path="candidates/:candidateId" element={<CandidatePage />} />
+          <Route path="versions/:versionId" element={<VersionPage />} />
           <Route path="modules/:instanceId" element={<BuilderPage />} />
         </Routes>
       </PersistenceProvider>
     </StudioProvider>
-  );
-}
-
-/** Review and publishing on real candidates are a later checkpoint: said plainly, with nothing simulated in its place. */
-function ReviewLater() {
-  const { ws } = useStudio();
-  const survey = ws.surveys[0]!;
-  const base = useMemo(() => `/survey-studio/surveys/${survey.id}`, [survey.id]);
-  return (
-    <>
-      <StudioBar crumbs={[{ label: 'Survey Studio', to: '/survey-studio' }, { label: survey.name, to: base }, { label: 'Review and publish' }]} />
-      <JourneyNav survey={survey} at="review" />
-      <div className="ss-empty page" data-testid="ss-review-later">
-        <p><strong>Submitting, reviewing and publishing a saved survey are not available yet.</strong> This checkpoint saves and reloads drafts. Review and publication by separate people on real, immutable candidates come in a later one.</p>
-        <p className="ss-muted">{STANDING_NOTE}</p>
-        <Link className="ss-btn" to={`${base}/validate`}>Back to validation</Link>
-      </div>
-    </>
   );
 }

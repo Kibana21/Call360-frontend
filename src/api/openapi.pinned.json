@@ -23411,6 +23411,269 @@
         "title": "SubmitIn",
         "type": "object"
       },
+      "SurveyAcknowledgement": {
+        "properties": {
+          "acknowledged_by": {
+            "title": "Acknowledged By",
+            "type": "string"
+          },
+          "acknowledged_by_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acknowledged By Name"
+          },
+          "at": {
+            "title": "At",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "content_sha256": {
+            "title": "Content Sha256",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "at",
+          "message",
+          "reason",
+          "content_sha256",
+          "acknowledged_by",
+          "acknowledged_by_name"
+        ],
+        "title": "SurveyAcknowledgement",
+        "type": "object"
+      },
+      "SurveyCandidateAsset": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "document": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document"
+          },
+          "intact": {
+            "description": "True when the stored, frozen document still has exactly that hash.",
+            "title": "Intact",
+            "type": "boolean"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "sha256": {
+            "description": "The hash the candidate's manifest pins.",
+            "title": "Sha256",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "kind",
+          "code",
+          "version",
+          "sha256",
+          "intact",
+          "document"
+        ],
+        "title": "SurveyCandidateAsset",
+        "type": "object"
+      },
+      "SurveyCandidateDocumentsOut": {
+        "properties": {
+          "acknowledgements": {
+            "items": {
+              "$ref": "#/components/schemas/SurveyAcknowledgement"
+            },
+            "title": "Acknowledgements",
+            "type": "array"
+          },
+          "approver": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SurveyPerson"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "assets": {
+            "items": {
+              "$ref": "#/components/schemas/SurveyCandidateAsset"
+            },
+            "title": "Assets",
+            "type": "array"
+          },
+          "content": {
+            "additionalProperties": true,
+            "title": "Content",
+            "type": "object"
+          },
+          "content_sha256": {
+            "title": "Content Sha256",
+            "type": "string"
+          },
+          "draft_revision": {
+            "title": "Draft Revision",
+            "type": "integer"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/SurveyLifecycleEvent"
+            },
+            "title": "History",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "makers": {
+            "items": {
+              "$ref": "#/components/schemas/SurveyPerson"
+            },
+            "title": "Makers",
+            "type": "array"
+          },
+          "manifest_intact": {
+            "title": "Manifest Intact",
+            "type": "boolean"
+          },
+          "manifest_problems": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Manifest Problems",
+            "type": "array"
+          },
+          "manifest_sha256": {
+            "title": "Manifest Sha256",
+            "type": "string"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "note_standing": {
+            "default": "Synthetic content, unapproved for operational use. No survey here is eligible for a live call.",
+            "title": "Note Standing",
+            "type": "string"
+          },
+          "restrictions": {
+            "$ref": "#/components/schemas/SurveyCandidateRestrictions"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "submitted_at": {
+            "format": "date-time",
+            "title": "Submitted At",
+            "type": "string"
+          },
+          "submitted_by": {
+            "$ref": "#/components/schemas/SurveyPerson"
+          },
+          "survey_code": {
+            "title": "Survey Code",
+            "type": "string"
+          },
+          "survey_id": {
+            "format": "uuid",
+            "title": "Survey Id",
+            "type": "string"
+          },
+          "validation": {
+            "$ref": "#/components/schemas/SurveyCandidateValidation"
+          },
+          "version_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version Id"
+          },
+          "version_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version Label"
+          }
+        },
+        "required": [
+          "id",
+          "survey_id",
+          "survey_code",
+          "n",
+          "status",
+          "draft_revision",
+          "note",
+          "submitted_at",
+          "submitted_by",
+          "makers",
+          "approver",
+          "content",
+          "content_sha256",
+          "manifest_sha256",
+          "manifest_intact",
+          "manifest_problems",
+          "assets",
+          "acknowledgements",
+          "validation",
+          "restrictions",
+          "version_id",
+          "version_label",
+          "history"
+        ],
+        "title": "SurveyCandidateDocumentsOut",
+        "type": "object"
+      },
       "SurveyCandidateOut": {
         "properties": {
           "content": {
@@ -23497,6 +23760,101 @@
           "history"
         ],
         "title": "SurveyCandidateOut",
+        "type": "object"
+      },
+      "SurveyCandidateRestrictions": {
+        "properties": {
+          "can_decide": {
+            "title": "Can Decide",
+            "type": "boolean"
+          },
+          "can_publish": {
+            "title": "Can Publish",
+            "type": "boolean"
+          },
+          "can_withdraw": {
+            "title": "Can Withdraw",
+            "type": "boolean"
+          },
+          "decide_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decide Reason"
+          },
+          "is_approver": {
+            "title": "Is Approver",
+            "type": "boolean"
+          },
+          "is_maker": {
+            "title": "Is Maker",
+            "type": "boolean"
+          },
+          "publish_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publish Reason"
+          },
+          "withdraw_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Withdraw Reason"
+          }
+        },
+        "required": [
+          "is_maker",
+          "is_approver",
+          "can_decide",
+          "decide_reason",
+          "can_publish",
+          "publish_reason",
+          "can_withdraw",
+          "withdraw_reason"
+        ],
+        "title": "SurveyCandidateRestrictions",
+        "type": "object"
+      },
+      "SurveyCandidateValidation": {
+        "properties": {
+          "blockers": {
+            "title": "Blockers",
+            "type": "integer"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/SurveyFindingOut"
+            },
+            "title": "Findings",
+            "type": "array"
+          },
+          "warnings": {
+            "title": "Warnings",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "blockers",
+          "warnings",
+          "findings"
+        ],
+        "title": "SurveyCandidateValidation",
         "type": "object"
       },
       "SurveyCatalogs": {
@@ -23947,6 +24305,240 @@
         "title": "SurveyFindingOut",
         "type": "object"
       },
+      "SurveyHistoryCandidate": {
+        "properties": {
+          "content_sha256": {
+            "title": "Content Sha256",
+            "type": "string"
+          },
+          "draft_revision": {
+            "title": "Draft Revision",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "last_event": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Event"
+          },
+          "last_event_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Event At"
+          },
+          "last_event_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Event By"
+          },
+          "last_event_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Event Reason"
+          },
+          "makers": {
+            "title": "Makers",
+            "type": "integer"
+          },
+          "manifest_sha256": {
+            "title": "Manifest Sha256",
+            "type": "string"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "submitted_at": {
+            "format": "date-time",
+            "title": "Submitted At",
+            "type": "string"
+          },
+          "submitted_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted By"
+          }
+        },
+        "required": [
+          "id",
+          "n",
+          "status",
+          "draft_revision",
+          "content_sha256",
+          "manifest_sha256",
+          "note",
+          "submitted_by",
+          "submitted_at",
+          "makers",
+          "last_event",
+          "last_event_by",
+          "last_event_at",
+          "last_event_reason"
+        ],
+        "title": "SurveyHistoryCandidate",
+        "type": "object"
+      },
+      "SurveyHistoryOut": {
+        "properties": {
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/SurveyHistoryCandidate"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "draft_content_sha256": {
+            "title": "Draft Content Sha256",
+            "type": "string"
+          },
+          "draft_revision": {
+            "title": "Draft Revision",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "default": "Synthetic content, unapproved for operational use. No survey here is eligible for a live call.",
+            "title": "Note",
+            "type": "string"
+          },
+          "survey_id": {
+            "format": "uuid",
+            "title": "Survey Id",
+            "type": "string"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/SurveyHistoryVersion"
+            },
+            "title": "Versions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "survey_id",
+          "code",
+          "name",
+          "draft_revision",
+          "draft_content_sha256",
+          "candidates",
+          "versions"
+        ],
+        "title": "SurveyHistoryOut",
+        "type": "object"
+      },
+      "SurveyHistoryVersion": {
+        "properties": {
+          "candidate_id": {
+            "format": "uuid",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "candidate_n": {
+            "title": "Candidate N",
+            "type": "integer"
+          },
+          "content_sha256": {
+            "title": "Content Sha256",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "published_at": {
+            "format": "date-time",
+            "title": "Published At",
+            "type": "string"
+          },
+          "published_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published By"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "version_no": {
+            "title": "Version No",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "version_no",
+          "label",
+          "status",
+          "candidate_id",
+          "candidate_n",
+          "content_sha256",
+          "published_by",
+          "published_at"
+        ],
+        "title": "SurveyHistoryVersion",
+        "type": "object"
+      },
       "SurveyLibraryItem": {
         "properties": {
           "candidates": {
@@ -24216,6 +24808,31 @@
           "latest_version_label"
         ],
         "title": "SurveyOut",
+        "type": "object"
+      },
+      "SurveyPerson": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "ref": {
+            "title": "Ref",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ref",
+          "name"
+        ],
+        "title": "SurveyPerson",
         "type": "object"
       },
       "SurveyPublishIn": {
@@ -42906,6 +43523,100 @@
         ]
       }
     },
+    "/api/v1/survey-candidates/{candidate_id}/documents": {
+      "get": {
+        "description": "FI-2 — what a reviewer inspects: the frozen content and every pinned document with its hash and integrity, the\nmakers, the recorded acknowledgements, the server's validation of exactly this content, and what the identity rules\nallow the reader. Read-only: a candidate is never changed.",
+        "operationId": "survey_candidate_documents",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurveyCandidateDocumentsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Survey Candidate Documents",
+        "tags": [
+          "survey-definitions"
+        ]
+      }
+    },
     "/api/v1/survey-candidates/{candidate_id}/publish": {
       "post": {
         "description": "Publish an approved candidate as an immutable version. Never by a maker (``SELF_PUBLISH_DENIED``) nor, until\ngovernance rules otherwise, by its approver (``APPROVER_PUBLISH_DENIED``). Publishing makes nothing eligible for a\nlive call.",
@@ -44060,6 +44771,100 @@
           }
         },
         "summary": "Survey Draft Validate",
+        "tags": [
+          "survey-definitions"
+        ]
+      }
+    },
+    "/api/v1/survey-definitions/{survey_id}/history": {
+      "get": {
+        "description": "FI-2 — every candidate and every published version of a survey, oldest first, with derived status.",
+        "operationId": "survey_definition_history",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "survey_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Survey Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurveyHistoryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Survey Definition History",
         "tags": [
           "survey-definitions"
         ]

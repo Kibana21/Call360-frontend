@@ -22,7 +22,9 @@ export default defineConfig({
     {
       command: 'uv run uvicorn --factory app.main:app_factory --host 127.0.0.1 --port 8001',
       cwd: backend,
-      env: { CALL360_ENV_FILE: '.env.test', SURVEY_DEFINITIONS_ENABLED: 'true' },
+      // These journeys sign several different people in within a minute; the per-address sign-in limit of the product
+      // (20 a minute) is raised for THIS test server only. The limit itself is covered by the backend's own tests.
+      env: { CALL360_ENV_FILE: '.env.test', SURVEY_DEFINITIONS_ENABLED: 'true', LOGIN_IP_PER_MINUTE: '300' },
       url: 'http://127.0.0.1:8001/health/live',
       reuseExistingServer: false,
       timeout: 60_000,
