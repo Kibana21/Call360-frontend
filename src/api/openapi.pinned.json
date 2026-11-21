@@ -23499,6 +23499,39 @@
         "title": "SurveyCandidateOut",
         "type": "object"
       },
+      "SurveyCatalogs": {
+        "properties": {
+          "fields": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Fields",
+            "type": "object"
+          },
+          "outcomes": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Outcomes",
+            "type": "object"
+          },
+          "response_obligations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Response Obligations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "fields",
+          "outcomes",
+          "response_obligations"
+        ],
+        "title": "SurveyCatalogs",
+        "type": "object"
+      },
       "SurveyConditionEvaluateIn": {
         "properties": {
           "answers": {
@@ -23683,6 +23716,135 @@
         "title": "SurveyDraftAsset",
         "type": "object"
       },
+      "SurveyDraftAssetDocument": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "document": {
+            "additionalProperties": true,
+            "title": "Document",
+            "type": "object"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "owned": {
+            "description": "True when this survey owns the version; a frozen version of another survey is pinned.",
+            "title": "Owned",
+            "type": "boolean"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "DRAFT",
+              "FROZEN"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "kind",
+          "code",
+          "version",
+          "state",
+          "sha256",
+          "owned",
+          "document"
+        ],
+        "title": "SurveyDraftAssetDocument",
+        "type": "object"
+      },
+      "SurveyDraftDocumentsOut": {
+        "properties": {
+          "assets": {
+            "items": {
+              "$ref": "#/components/schemas/SurveyDraftAssetDocument"
+            },
+            "title": "Assets",
+            "type": "array"
+          },
+          "catalogs": {
+            "$ref": "#/components/schemas/SurveyCatalogs"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "content": {
+            "additionalProperties": true,
+            "title": "Content",
+            "type": "object"
+          },
+          "content_sha256": {
+            "title": "Content Sha256",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "default": "Synthetic content, unapproved for operational use. No survey here is eligible for a live call.",
+            "title": "Note",
+            "type": "string"
+          },
+          "purpose": {
+            "title": "Purpose",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "survey_id": {
+            "format": "uuid",
+            "title": "Survey Id",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "updated_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated By"
+          }
+        },
+        "required": [
+          "survey_id",
+          "code",
+          "name",
+          "purpose",
+          "revision",
+          "content",
+          "content_sha256",
+          "updated_at",
+          "updated_by",
+          "assets",
+          "catalogs"
+        ],
+        "title": "SurveyDraftDocumentsOut",
+        "type": "object"
+      },
       "SurveyDraftOut": {
         "properties": {
           "assets": {
@@ -23725,6 +23887,31 @@
           "updated_at"
         ],
         "title": "SurveyDraftOut",
+        "type": "object"
+      },
+      "SurveyDraftSaveIn": {
+        "properties": {
+          "expected_revision": {
+            "minimum": 0.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "operations": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Operations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "expected_revision",
+          "operations"
+        ],
+        "title": "SurveyDraftSaveIn",
         "type": "object"
       },
       "SurveyFindingOut": {
@@ -43482,9 +43669,103 @@
         ]
       }
     },
+    "/api/v1/survey-definitions/{survey_id}/draft/documents": {
+      "get": {
+        "description": "FI-1 — everything needed to open the draft in an editor: the content document, the full document of every asset\nversion the survey owns or pins, the server's hash and state of each, and the governed catalogs.",
+        "operationId": "survey_draft_documents",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "survey_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Survey Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurveyDraftDocumentsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Survey Draft Documents",
+        "tags": [
+          "survey-definitions"
+        ]
+      }
+    },
     "/api/v1/survey-definitions/{survey_id}/draft/operations": {
       "post": {
-        "description": "Apply ONE operation to the draft: ``PUT_ASSET``, ``REMOVE_ASSET`` or ``SET_CONTENT``. ``expected_revision``\nmust be the draft's current revision; a stale one is refused with ``STALE_DRAFT`` and nothing is changed.",
+        "description": "Apply ONE operation to the draft: ``PUT_ASSET``, ``REMOVE_ASSET``, ``SET_CONTENT`` or ``SET_DETAILS``.\n``expected_revision`` must be the draft's current revision; a stale one is refused with ``STALE_DRAFT`` and\nnothing is changed.",
         "operationId": "survey_draft_operation",
         "parameters": [
           {
@@ -43581,6 +43862,110 @@
           }
         },
         "summary": "Survey Draft Operation",
+        "tags": [
+          "survey-definitions"
+        ]
+      }
+    },
+    "/api/v1/survey-definitions/{survey_id}/draft/save": {
+      "post": {
+        "description": "FI-1 — one SAVE, atomically: every operation, in order, as ONE revision, or none of them. ``expected_revision``\nmust be the draft's current revision (``STALE_DRAFT`` otherwise, nothing changed). If any operation is refused the\nwhole save is rolled back and the error names the operation. The response is the complete saved draft with the\nserver's hashes: a client reports success only from it.",
+        "operationId": "survey_draft_save",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "survey_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Survey Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SurveyDraftSaveIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurveyDraftDocumentsOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Survey Draft Save",
         "tags": [
           "survey-definitions"
         ]

@@ -2872,6 +2872,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/survey-definitions/{survey_id}/draft/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Survey Draft Documents
+         * @description FI-1 — everything needed to open the draft in an editor: the content document, the full document of every asset
+         *     version the survey owns or pins, the server's hash and state of each, and the governed catalogs.
+         */
+        get: operations["survey_draft_documents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/survey-definitions/{survey_id}/draft/operations": {
         parameters: {
             query?: never;
@@ -2883,10 +2904,34 @@ export interface paths {
         put?: never;
         /**
          * Survey Draft Operation
-         * @description Apply ONE operation to the draft: ``PUT_ASSET``, ``REMOVE_ASSET`` or ``SET_CONTENT``. ``expected_revision``
-         *     must be the draft's current revision; a stale one is refused with ``STALE_DRAFT`` and nothing is changed.
+         * @description Apply ONE operation to the draft: ``PUT_ASSET``, ``REMOVE_ASSET``, ``SET_CONTENT`` or ``SET_DETAILS``.
+         *     ``expected_revision`` must be the draft's current revision; a stale one is refused with ``STALE_DRAFT`` and
+         *     nothing is changed.
          */
         post: operations["survey_draft_operation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-definitions/{survey_id}/draft/save": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Draft Save
+         * @description FI-1 — one SAVE, atomically: every operation, in order, as ONE revision, or none of them. ``expected_revision``
+         *     must be the draft's current revision (``STALE_DRAFT`` otherwise, nothing changed). If any operation is refused the
+         *     whole save is rolled back and the error names the operation. The response is the complete saved draft with the
+         *     server's hashes: a client reports success only from it.
+         */
+        post: operations["survey_draft_save"];
         delete?: never;
         options?: never;
         head?: never;
@@ -11823,6 +11868,21 @@ export interface components {
              */
             survey_id: string;
         };
+        /** SurveyCatalogs */
+        SurveyCatalogs: {
+            /** Fields */
+            fields: {
+                [key: string]: {
+                    [key: string]: unknown;
+                };
+            };
+            /** Outcomes */
+            outcomes: {
+                [key: string]: string;
+            };
+            /** Response Obligations */
+            response_obligations: string[];
+        };
         /** SurveyConditionEvaluateIn */
         SurveyConditionEvaluateIn: {
             /** Answers */
@@ -11916,6 +11976,68 @@ export interface components {
             /** Version */
             version: number;
         };
+        /** SurveyDraftAssetDocument */
+        SurveyDraftAssetDocument: {
+            /** Code */
+            code: string;
+            /** Document */
+            document: {
+                [key: string]: unknown;
+            };
+            /** Kind */
+            kind: string;
+            /**
+             * Owned
+             * @description True when this survey owns the version; a frozen version of another survey is pinned.
+             */
+            owned: boolean;
+            /** Sha256 */
+            sha256: string;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "DRAFT" | "FROZEN";
+            /** Version */
+            version: number;
+        };
+        /** SurveyDraftDocumentsOut */
+        SurveyDraftDocumentsOut: {
+            /** Assets */
+            assets: components["schemas"]["SurveyDraftAssetDocument"][];
+            catalogs: components["schemas"]["SurveyCatalogs"];
+            /** Code */
+            code: string;
+            /** Content */
+            content: {
+                [key: string]: unknown;
+            };
+            /** Content Sha256 */
+            content_sha256: string;
+            /** Name */
+            name: string;
+            /**
+             * Note
+             * @default Synthetic content, unapproved for operational use. No survey here is eligible for a live call.
+             */
+            note: string;
+            /** Purpose */
+            purpose: string;
+            /** Revision */
+            revision: number;
+            /**
+             * Survey Id
+             * Format: uuid
+             */
+            survey_id: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Updated By */
+            updated_by: string | null;
+        };
         /** SurveyDraftOut */
         SurveyDraftOut: {
             /** Assets */
@@ -11938,6 +12060,15 @@ export interface components {
              * Format: date-time
              */
             updated_at: string;
+        };
+        /** SurveyDraftSaveIn */
+        SurveyDraftSaveIn: {
+            /** Expected Revision */
+            expected_revision: number;
+            /** Operations */
+            operations: {
+                [key: string]: unknown;
+            }[];
         };
         /** SurveyFindingOut */
         SurveyFindingOut: {
@@ -25625,6 +25756,82 @@ export interface operations {
             };
         };
     };
+    survey_draft_documents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                survey_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyDraftDocumentsOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     survey_draft_operation: {
         parameters: {
             query?: never;
@@ -25647,6 +25854,86 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SurveyDraftOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_draft_save: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                survey_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyDraftSaveIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyDraftDocumentsOut"];
                 };
             };
             /** @description Unauthorized */

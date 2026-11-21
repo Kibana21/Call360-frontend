@@ -7,6 +7,8 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { JourneyNav, useGovernance, who } from './JourneyNav';
 import { AREAS, acknowledge, canAuthor, unacknowledge, type Area, type Finding } from './model/governance';
 import { findSurvey } from './model/ops';
+import { ServerValidationPanel } from './persist/ServerValidationPanel';
+import { STANDING_NOTE } from './persist/standing';
 import { StudioBar } from './StudioRoot';
 import { useStudio } from './store';
 import { Glyph, Tag } from './ui';
@@ -15,7 +17,7 @@ const SEVERITY = { BLOCKER: { label: 'Blocker', hint: 'Must be fixed', glyph: 's
 
 export function ValidationPage() {
   const { surveyId = '' } = useParams();
-  const { ws, gov, govern, requestFocus } = useStudio();
+  const { ws, gov, govern, requestFocus, persisted } = useStudio();
   const nav = useNavigate();
   const [params, setParams] = useSearchParams();
   const survey = findSurvey(ws, surveyId);
@@ -43,6 +45,8 @@ export function ValidationPage() {
       <StudioBar crumbs={[{ label: 'Survey Studio', to: '/survey-studio' }, { label: survey.name, to: base }, { label: 'Validation' }]} badge={<Tag tone="draft">Draft v{survey.versionLabel}</Tag>} />
       <JourneyNav survey={survey} at="validate" />
       <div className="ss-val" data-testid="ss-validation">
+        {persisted ? <ServerValidationPanel /> : null}
+        {persisted ? <h2 className="ss-val-own" data-testid="ss-editor-checks-title">Editor checks <small>immediate, in your browser — not authoritative. Warnings and information items come only from here; the server reports blockers.</small></h2> : null}
         <header className={`ss-vsum ${state}`} data-testid="ss-val-verdict" data-state={state}>
           <div>
             <p className="ss-vsum-kicker">Validation of this draft · fingerprint <span className="ss-code" data-testid="ss-val-fingerprint">{r.fingerprint}</span></p>
@@ -61,12 +65,13 @@ export function ValidationPage() {
               <div><dt>Blockers</dt><dd data-testid="ss-val-blockers">{r.blockers}</dd></div>
               <div><dt>Warnings open</dt><dd data-testid="ss-val-open">{r.open}<small> of {r.warnings}</small></dd></div>
             </dl>
-            {r.ready ? <Link className="ss-btn primary" to={`${base}/review`} data-testid="ss-val-to-review">Go to review and publish <Glyph name="right" size={14} /></Link>
+            {persisted ? <span className="ss-btn primary" aria-disabled="true" data-testid="ss-val-to-review" title="Submitting a saved survey for review is not available yet.">Submit is not available yet</span>
+              : r.ready ? <Link className="ss-btn primary" to={`${base}/review`} data-testid="ss-val-to-review">Go to review and publish <Glyph name="right" size={14} /></Link>
               : <span className="ss-btn primary" aria-disabled="true" data-testid="ss-val-to-review" title={r.reasons.join('; ')}>Submit is not available yet</span>}
           </div>
         </header>
         <p className="ss-note" data-testid="ss-val-notice"><Glyph name="info" size={14} />
-          <span>Checked in your browser by the prototype’s own rules. In Call360 the server validates the exact saved revision; this screen shows how that result would be presented. Nothing here is submitted or approved.</span></p>
+          <span>{persisted ? `These checks run in your browser on what is on screen, saved or not. They cannot override the server: a draft the server blocks stays blocked. ${STANDING_NOTE}` : 'Checked in your browser by the prototype’s own rules. In Call360 the server validates the exact saved revision; this screen shows how that result would be presented. Nothing here is submitted or approved.'}</span></p>
 
         <div className="ss-val-body">
           <aside className="ss-val-areas" aria-label="Areas checked">

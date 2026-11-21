@@ -66,6 +66,11 @@ export interface Question {
   intent: string;
   options: Option[]; // YES_NO carries YES / NO
   /**
+   * FI-1: the versioned option set these answers are stored as. Absent = the question's own set, named from its code
+   * when it is first saved. Several questions may share one set (for example Yes / No).
+   */
+  optionSet?: { code: string; version: number };
+  /**
    * MULTI_SELECT limits, present only once the author has set them. Absent = at least one, up to every answer that can
    * be combined. Stored limits are NEVER changed by another edit (owner correction, SS-02B.2): when removing an answer
    * or changing exclusivity makes them impossible, that is a conflict the author resolves explicitly.
@@ -82,11 +87,13 @@ export interface Question {
    * carried to evaluation and review; what a call does when it is not answered is undecided (no-answer contract).
    */
   mandatory?: boolean;
+  /** FI-1: a response-obligation code of the governed catalog other than MANDATORY, kept exactly as stored. */
+  obligation?: string;
   /**
    * The pinned Wording Version. `text` may contain controlled variables written {{field_code}}; each must name a field
    * of the governed catalog and is rendered deterministically (model/wording.ts). `delivery` absent = CONTROLLED_TTS.
    */
-  wording: { version: number; text: string; approval: 'SYNTHETIC_UNAPPROVED'; delivery?: DeliveryMode };
+  wording: { version: number; text: string; approval: 'SYNTHETIC_UNAPPROVED'; delivery?: DeliveryMode; /** FI-1: per-answer spoken text, kept exactly as stored. */ optionTexts?: Record<string, string> };
   /** true = approved shared library version (immutable here); false = draft created in this session. */
   published: boolean;
 }

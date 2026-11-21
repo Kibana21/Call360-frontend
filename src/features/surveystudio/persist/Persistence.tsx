@@ -1,0 +1,242 @@
+// Survey Studio (FI-1) — what makes the editor's workspace a SAVED survey: the known server revision it started from,
+// an explicit Save, and an explicit resolution when someone else saved first. There is no autosave and nothing is kept
+// in browser storage: unsaved edits live in memory (store.tsx) and the author is warned before leaving them.
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ApiFailure } from '../../../api/client';
+import { useAuth } from '../../../auth/AuthContext';
+import { MappingError, assetKey, changes, fromDocuments, isEmpty, seqFor, toDocuments, type DocumentSet } from '../model/documents';
+import type { Workspace } from '../model/types';
+import { useStudio } from '../store';
+import { documentsOf, loadDraft, saveDraft, type DraftDocuments } from './api';
+import { compare, onTop, operationsFor, serverHolds, type Comparison, type Details } from './saving';
+
+/** What the editor knows about the server's draft: the revision it started from and the documents at that revision. */
+export interface Baseline {
+  surveyId: string; code: string; revision: number;
+  /** The server's documents in the editor's own form (what `toDocuments` gives for the loaded workspace). */
+  editor: DocumentSet;
+  frozen: Set<string>; owned: Set<string>; details: Details;
+  updatedAt: string; updatedBy: string | null; note: string; versionLabel: string;
+}
+
+export type SaveStatus = 'saved' | 'unsaved' | 'saving' | 'failed' | 'conflict';
+export interface SaveError { message: string; code?: string; network: boolean; where?: string }
+export interface Conflict { latest: DraftDocuments; server: DocumentSet; comparison: Comparison; open: boolean }
+
+export interface Persistence {
+  surveyId: string; code: string; status: SaveStatus; revision: number; savedAt: string; savedBy: string | null;
+  canEdit: boolean; dirty: boolean; changed: number; error: SaveError | null; mappingError: string | null;
+  conflict: Conflict | null; note: string; lastSavedNotice: string | null;
+  save: () => Promise<void>;
+  reloadServerDraft: () => void;
+  saveOnTop: () => Promise<void>;
+  keepEditing: () => void;
+  openConflict: () => void;
+}
+
+const Ctx = createContext<Persistence | null>(null);
+/** The persistence of the open survey, or null in the in-memory prototype. */
+export const usePersistence = (): Persistence | null => useContext(Ctx);
+
+export const versionLabelOf = (latest: string | null | undefined) => (latest ? `${latest}+` : '0.1');
+
+/** The baseline and the workspace for a draft the server returned. Throws MappingError when the editor cannot show it. */
+export function open(d: DraftDocuments, versionLabel: string): { baseline: Baseline; ws: Workspace } {
+  const s = documentsOf(d);
+  const ws = fromDocuments(s.set, { meta: { name: d.name, purpose: d.purpose, versionLabel }, frozen: s.frozen, seq: seqFor(d.code, s.set) });
+  const editor = toDocuments(ws, ws.surveys[0]!);
+  return { ws, baseline: { surveyId: d.survey_id, code: d.code, revision: d.revision, editor, frozen: s.frozen, owned: s.owned, details: { name: d.name, purpose: d.purpose }, updatedAt: d.updated_at, updatedBy: d.updated_by ?? null, note: d.note, versionLabel } };
+}
+
+const describe = (e: unknown): SaveError => {
+  if (e instanceof ApiFailure) {
+    const first = (e.body?.details as Array<Record<string, unknown>> | undefined)?.[0];
+    const where = first && typeof first.operation_index === 'number' ? `${String(first.kind ?? first.op ?? 'operation')} (item ${Number(first.operation_index) + 1} of this save)` : undefined;
+    const message = e.status === 403 ? 'You do not have permission to save this survey.' : e.status === 401 ? 'Your session has ended. Sign in again; your changes are still here.' : e.message;
+    return { message, code: e.code, network: false, where };
+  }
+  return { message: 'The server could not be reached. Nothing was lost: your changes are still here.', network: true };
+};
+
+export function PersistenceProvider({ initial, onBaseline, children }: { initial: Baseline; onBaseline: (b: Baseline) => void; children: ReactNode }) {
+  const { ws, replace } = useStudio();
+  const { can } = useAuth();
+  const [baseline, setBaselineState] = useState(initial);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<SaveError | null>(null);
+  const [conflict, setConflict] = useState<Conflict | null>(null);
+  const [saved, setSaved] = useState<string | null>(null);
+  /** The documents of a save whose reply never arrived: checked against the server before anything is sent again. */
+  const unconfirmed = useRef<{ intended: DocumentSet; details: Details; from: number } | null>(null);
+  const baseRef = useRef(baseline);
+  const setBaseline = useCallback((b: Baseline) => { baseRef.current = b; setBaselineState(b); onBaseline(b); }, [onBaseline]);
+
+  const survey = ws.surveys[0]!;
+  const current = useMemo((): { set: DocumentSet | null; problem: string | null } => {
+    try { return { set: toDocuments(ws, survey), problem: null }; } catch (e) { if (e instanceof MappingError) return { set: null, problem: e.message }; throw e; }
+  }, [ws, survey]);
+  const details: Details = useMemo(() => ({ name: survey.name, purpose: survey.purpose }), [survey.name, survey.purpose]);
+  const detailsChanged = details.name !== baseline.details.name || details.purpose !== baseline.details.purpose;
+  const change = useMemo(() => (current.set ? changes(baseline.editor, current.set) : null), [baseline.editor, current.set]);
+  const changed = (change ? change.put.length + change.remove.length + (change.content ? 1 : 0) : 0) + (detailsChanged ? 1 : 0);
+  const dirty = changed > 0 || current.set === null;
+  const live = useRef({ current, details, detailsChanged });
+  live.current = { current, details, detailsChanged };
+
+  const adopt = useCallback((d: DraftDocuments, editor: DocumentSet) => {
+    const s = documentsOf(d);
+    setBaseline({ ...baseRef.current, revision: d.revision, editor, frozen: s.frozen, owned: s.owned, details: { name: d.name, purpose: d.purpose }, updatedAt: d.updated_at, updatedBy: d.updated_by ?? null });
+    unconfirmed.current = null;
+    setError(null);
+    setConflict(null);
+    setSaved(`Saved as revision ${d.revision}`);
+  }, [setBaseline]);
+
+  const raise = useCallback((latest: DraftDocuments, mine: DocumentSet) => {
+    const b = baseRef.current;
+    const server = open(latest, b.versionLabel).baseline.editor;
+    setError(null);
+    setConflict({ latest, server, comparison: compare(b.editor, mine, server), open: true });
+  }, []);
+
+  const save = useCallback(async () => {
+    const b = baseRef.current;
+    const { current: cur, details: det, detailsChanged: detCh } = live.current;
+    if (busy || !cur.set) return;
+    const intended = cur.set;
+    setBusy(true);
+    setSaved(null);
+    try {
+      // a save whose reply was lost: ask the server what it has before sending anything again
+      const u = unconfirmed.current;
+      if (u) {
+        const latest = await loadDraft(b.surveyId);
+        const s = documentsOf(latest);
+        if (latest.revision === u.from + 1 && serverHolds(s.set, u.intended) && latest.name === u.details.name && latest.purpose === u.details.purpose) {
+          adopt(latest, u.intended); // it HAD been saved: nothing is sent twice
+          return;
+        }
+        if (latest.revision !== b.revision) { unconfirmed.current = null; raise(latest, intended); return; }
+        unconfirmed.current = null; // the server never received it: send it now
+      }
+      const ops = operationsFor(b.editor, intended, { removable: new Set([...b.owned].filter((k) => !b.frozen.has(k))), details: detCh ? det : null });
+      if (!ops.length) { setError(null); return; }
+      let reply: DraftDocuments;
+      try { reply = await saveDraft(b.surveyId, b.revision, ops); }
+      catch (e) {
+        if (e instanceof ApiFailure && e.status === 409 && e.code === 'STALE_DRAFT') { raise(await loadDraft(b.surveyId), intended); return; }
+        const problem = describe(e);
+        if (problem.network) unconfirmed.current = { intended, details: det, from: b.revision };
+        setError(problem);
+        return;
+      }
+      // saved only when the server's reply holds every document that was sent
+      if (!serverHolds(documentsOf(reply).set, intended)) { setError({ message: 'The server answered, but its saved draft does not match what was sent. Your changes are still here; reload the saved draft to compare.', network: false }); return; }
+      adopt(reply, intended);
+    } catch (e) { setError(describe(e)); } finally { setBusy(false); }
+  }, [busy, adopt, raise]);
+
+  const reloadServerDraft = useCallback(() => {
+    const c = conflict;
+    if (!c) return;
+    const o = open(c.latest, baseRef.current.versionLabel);
+    setBaseline(o.baseline);
+    setConflict(null);
+    setError(null);
+    unconfirmed.current = null;
+    replace(o.ws, `Loaded the newer saved draft (revision ${c.latest.revision})`);
+  }, [conflict, replace, setBaseline]);
+
+  const saveOnTop = useCallback(async () => {
+    const c = conflict, b = baseRef.current;
+    const { current: cur, details: det, detailsChanged: detCh } = live.current;
+    if (!c || !cur.set || busy) return;
+    setBusy(true);
+    try {
+      const target = onTop(b.editor, cur.set, c.server);
+      const s = documentsOf(c.latest);
+      const ops = operationsFor(c.server, target, { removable: new Set([...s.owned].filter((k) => !s.frozen.has(k))), details: detCh ? det : null });
+      let reply: DraftDocuments;
+      if (ops.length) {
+        try { reply = await saveDraft(b.surveyId, c.latest.revision, ops); }
+        catch (e) {
+          if (e instanceof ApiFailure && e.status === 409 && e.code === 'STALE_DRAFT') { raise(await loadDraft(b.surveyId), cur.set); return; }
+          setError(describe(e));
+          setConflict({ ...c, open: false });
+          return;
+        }
+      } else reply = c.latest;
+      if (!serverHolds(documentsOf(reply).set, target)) { setError({ message: 'The server answered, but its saved draft does not match what was sent. Your changes are still here.', network: false }); return; }
+      const o = open(reply, b.versionLabel);
+      setBaseline(o.baseline);
+      setConflict(null);
+      setError(null);
+      unconfirmed.current = null;
+      setSaved(`Saved as revision ${reply.revision}`);
+      replace(o.ws, `Saved your changes on top of revision ${c.latest.revision}`);
+    } catch (e) { setError(describe(e)); } finally { setBusy(false); }
+  }, [conflict, busy, raise, replace, setBaseline]);
+
+  const keepEditing = useCallback(() => setConflict((c) => (c ? { ...c, open: false } : c)), []);
+  const openConflict = useCallback(() => setConflict((c) => (c ? { ...c, open: true } : c)), []);
+
+  // leaving the page (reload, close, another site) with unsaved work asks first; the browser shows its own wording
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [dirty]);
+
+  const status: SaveStatus = busy ? 'saving' : conflict ? 'conflict' : error ? 'failed' : dirty ? 'unsaved' : 'saved';
+  const value = useMemo<Persistence>(() => ({
+    surveyId: baseline.surveyId, code: baseline.code, status, revision: baseline.revision, savedAt: baseline.updatedAt, savedBy: baseline.updatedBy,
+    canEdit: can('survey.edit'), dirty, changed, error, mappingError: current.problem, conflict, note: baseline.note, lastSavedNotice: status === 'saved' ? saved : null,
+    save, reloadServerDraft, saveOnTop, keepEditing, openConflict,
+  }), [baseline, status, can, dirty, changed, error, current.problem, conflict, saved, save, reloadServerDraft, saveOnTop, keepEditing, openConflict]);
+
+  return <Ctx.Provider value={value}>{children}<LeaveGuard dirty={dirty} code={baseline.code} /></Ctx.Provider>;
+}
+
+/**
+ * Following a link out of this survey with unsaved work asks first. The changes are not lost by leaving: they stay in
+ * memory for as long as this page is open, and are still here on coming back. They are lost by closing or reloading the
+ * page, which the browser itself asks about.
+ */
+function LeaveGuard({ dirty, code }: { dirty: boolean; code: string }) {
+  const nav = useNavigate();
+  const [to, setTo] = useState<string | null>(null);
+  const stay = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => {
+    if (!dirty) return;
+    const inside = `/survey-studio/surveys/${code}`;
+    const onClick = (e: MouseEvent) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const a = (e.target as HTMLElement | null)?.closest?.('a[href]') as HTMLAnchorElement | null;
+      if (!a || a.target === '_blank' || a.origin !== window.location.origin) return;
+      if (a.pathname === inside || a.pathname.startsWith(`${inside}/`)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setTo(a.pathname + a.search + a.hash);
+    };
+    document.addEventListener('click', onClick, true);
+    return () => document.removeEventListener('click', onClick, true);
+  }, [dirty, code]);
+  useEffect(() => { if (to) stay.current?.focus(); }, [to]);
+  if (!to) return null;
+  return (
+    <div className="ss-modal-back" data-testid="ss-leave">
+      <div className="ss-modal" role="dialog" aria-modal="true" aria-labelledby="ss-leave-title" onKeyDown={(e) => { if (e.key === 'Escape') setTo(null); }}>
+        <h2 id="ss-leave-title">You have unsaved changes</h2>
+        <p>They have not been saved to Call360. If you leave now they stay in this browser tab only, and are lost if the tab is closed or reloaded.</p>
+        <div className="ss-actions">
+          <button type="button" className="ss-btn primary" ref={stay} onClick={() => setTo(null)} data-testid="ss-leave-stay">Stay and keep editing</button>
+          <button type="button" className="ss-btn" onClick={() => { const dest = to; setTo(null); nav(dest); }} data-testid="ss-leave-go">Leave without saving</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export { assetKey, isEmpty };

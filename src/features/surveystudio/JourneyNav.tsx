@@ -24,17 +24,18 @@ export function useGovernance(survey: Survey | undefined): { readiness: Readines
 
 /** `compact` = one slim row with no role switch, for the editing screens where the canvas needs the height. */
 export function JourneyNav({ survey, at, compact }: { survey: Survey; at: JourneyStep; compact?: boolean }) {
-  const { gov, govern } = useStudio();
+  const { gov, govern, persisted } = useStudio();
   const { readiness, standing: st } = useGovernance(survey);
   const base = `/survey-studio/surveys/${survey.id}`;
   const first = survey.sequence[0]?.id;
   const steps: Array<{ id: JourneyStep | 'library'; label: string; to: string | null; state: string; tone?: 'warn' | 'ok' }> = [
-    { id: 'library', label: 'Library', to: '/survey-studio', state: 'Modules and surveys' },
+    { id: 'library', label: persisted ? 'Surveys' : 'Library', to: '/survey-studio', state: persisted ? 'Saved in Call360' : 'Modules and surveys' },
     { id: 'compose', label: 'Compose', to: base, state: `${survey.sequence.length} module${survey.sequence.length === 1 ? '' : 's'}` },
     { id: 'build', label: 'Build modules', to: first ? `${base}/modules/${first}` : null, state: 'Guided or graph' },
     { id: 'simulate', label: 'Simulate', to: survey.sequence.length ? `${base}/simulate` : null, state: 'Try a journey' },
     { id: 'validate', label: 'Validate', to: `${base}/validate`, ...(readiness?.blockers ? { state: `${readiness.blockers} blocker${readiness.blockers === 1 ? '' : 's'}`, tone: 'warn' as const } : readiness?.open ? { state: `${readiness.open} to acknowledge`, tone: 'warn' as const } : { state: 'Ready for review', tone: 'ok' as const }) },
-    { id: 'review', label: 'Review and publish', to: `${base}/review`, state: st ? STAGE_LABEL[st.stage] : 'Draft', ...(st?.stage === 'REJECTED' ? { tone: 'warn' as const } : st?.stage === 'APPROVED' || st?.stage === 'PUBLISHED' ? { tone: 'ok' as const } : {}) },
+    persisted ? { id: 'review', label: 'Review and publish', to: `${base}/review`, state: 'Not available yet' }
+      : { id: 'review', label: 'Review and publish', to: `${base}/review`, state: st ? STAGE_LABEL[st.stage] : 'Draft', ...(st?.stage === 'REJECTED' ? { tone: 'warn' as const } : st?.stage === 'APPROVED' || st?.stage === 'PUBLISHED' ? { tone: 'ok' as const } : {}) },
   ];
   return (
     <div className={`ss-journey ${compact ? 'compact' : ''}`} data-testid="ss-journey">
@@ -52,7 +53,7 @@ export function JourneyNav({ survey, at, compact }: { survey: Survey; at: Journe
           })}
         </ol>
       </nav>
-      {compact ? null : <label className="ss-actor" title="Invented people. A role here is a label in the prototype, not a Call360 permission.">
+      {compact || persisted ? null : <label className="ss-actor" title="Invented people. A role here is a label in the prototype, not a Call360 permission.">
         <span>Acting as <em>simulated</em></span>
         <select value={gov.actor} onChange={(e) => govern((g) => setActor(g, e.target.value))} data-testid="ss-actor">
           {PEOPLE.map((p) => <option key={p.id} value={p.id}>{p.name} — {p.title}</option>)}

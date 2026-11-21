@@ -15,6 +15,7 @@ import { addDemoSurvey, addReadinessDemo, demoBaseline } from './model/demo';
 import { seedPublication, snapshot } from './model/governance';
 import { addLargeModule } from './model/large';
 import type { Issue } from './model/types';
+import { SaveControl, SaveMessages } from './persist/SaveControl';
 import { StudioProvider, useStudio } from './store';
 import { Glyph, Popover } from './ui';
 
@@ -45,7 +46,7 @@ export function StudioBar({ crumbs, badge, issues, onIssue, wording }: {
   /** Question versions in scope and how many carry unapproved wording — shown apart from routing. */
   wording?: { total: number; unapproved: number };
 }) {
-  const { ws, apply, undo, redo, undoLabel, redoLabel, notice, reset, govern } = useStudio();
+  const { ws, apply, undo, redo, undoLabel, redoLabel, notice, reset, govern, persisted } = useStudio();
   const nav = useNavigate();
   // one value for the whole canonical model: equal models give equal values, whichever view made the edits
   const stamp = useMemo(() => fingerprint(ws), [ws]);
@@ -65,6 +66,7 @@ export function StudioBar({ crumbs, badge, issues, onIssue, wording }: {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
   return (
+    <>
     <div className="ss-bar">
       <nav className="ss-crumbs" aria-label="Survey Studio breadcrumb">
         {crumbs.map((c, i) => (
@@ -106,7 +108,7 @@ export function StudioBar({ crumbs, badge, issues, onIssue, wording }: {
                   <div className={wording && wording.unapproved ? 'warn' : 'done'}><dt>Wording approval</dt>
                     <dd>{wording ? (wording.unapproved ? `${wording.unapproved} of ${wording.total} question${wording.total === 1 ? '' : 's'} use wording that is not approved.` : `All ${wording.total} questions use approved wording.`) : 'Not assessed here.'}</dd></div>
                   <div className="warn"><dt>Ready to publish</dt>
-                    <dd><strong>No.</strong> {errors.length ? 'Routing is incomplete. ' : ''}{wording && wording.unapproved ? 'Wording is not approved. ' : ''}The Validate step shows everything that stands in the way. Review and publishing in this prototype are a simulation: nothing is really approved or published.</dd></div>
+                    <dd><strong>No.</strong> {errors.length ? 'Routing is incomplete. ' : ''}{wording && wording.unapproved ? 'Wording is not approved. ' : ''}The Validate step shows everything that stands in the way. {persisted ? 'Review and publishing of a saved survey are not available yet.' : 'Review and publishing in this prototype are a simulation: nothing is really approved or published.'}</dd></div>
                 </dl>
                 {errors.length ? <h3>Routing — fix these</h3> : null}
                 <ul>
@@ -119,11 +121,12 @@ export function StudioBar({ crumbs, badge, issues, onIssue, wording }: {
                     </li>
                   ))}
                 </ul>
-                <p className="ss-muted">Checked by the prototype's own routing rules. A real submission is validated by the server.</p>
+                <p className="ss-muted">{persisted ? "Checked in your browser by the editor's own routing rules, for immediate feedback. The server's validation, on the Validate step, is the one that counts." : "Checked by the prototype's own routing rules. A real submission is validated by the server."}</p>
               </div>
             )}
           </Popover>
         ) : null}
+        {persisted ? <SaveControl /> : (
         <Popover label="About this prototype" align="end"
           trigger={(p) => <button type="button" className="ss-proto" {...p} data-testid="ss-prototype-tag" title="Sample data in memory only. Nothing is saved; reloading the page starts again."><Glyph name="info" size={14} /> Prototype · not saved</button>}>
           {(close) => (
@@ -149,8 +152,10 @@ export function StudioBar({ crumbs, badge, issues, onIssue, wording }: {
               <button type="button" className="ss-btn" onClick={() => { reset(); close(); }} data-testid="ss-reset">Reset to the sample library</button>
             </div>
           )}
-        </Popover>
+        </Popover>)}
       </div>
     </div>
+    {persisted ? <SaveMessages /> : null}
+    </>
   );
 }

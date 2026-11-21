@@ -32,6 +32,10 @@ export interface Studio {
   gov: GovState;
   /** Applies one governance step. Returns the plain-English reason when the rules refuse it, otherwise null. */
   govern: (step: (g: GovState) => GovState) => string | null;
+  /** FI-1: put a whole workspace in place (a reloaded or merged saved draft). Clears undo: it is not an edit. */
+  replace: (ws: Workspace, notice: string) => void;
+  /** FI-1: true when this workspace is a saved survey of the server, false for the in-memory prototype. */
+  persisted: boolean;
 }
 
 const Ctx = createContext<Studio | null>(null);
@@ -41,22 +45,32 @@ const Ctx = createContext<Studio | null>(null);
 let memory: State | null = null;
 let govMemory: GovState | null = null;
 const load = (): State => memory ?? { ws: sampleWorkspace(), past: [], future: [] };
+// FI-1: one saved survey's unsaved edits, kept in memory (never in browser storage) for the life of the page, so moving
+// to another Call360 screen and back loses nothing. Keyed by survey; a reload of the page starts from the server.
+const persistedMemory = new Map<string, State>();
+export const forgetPersistedMemory = (key?: string) => { if (key === undefined) persistedMemory.clear(); else persistedMemory.delete(key); };
+export const hasPersistedMemory = (key: string) => persistedMemory.has(key);
 
-export function StudioProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<State>(load);
+/**
+ * Without props: the in-memory prototype, exactly as before. With `memoryKey` and `initial` (FI-1): the workspace of one
+ * saved survey, started from the documents the server returned.
+ */
+export function StudioProvider({ children, memoryKey, initial }: { children: ReactNode; memoryKey?: string; initial?: () => Workspace }) {
+  const persisted = memoryKey !== undefined;
+  const [state, setState] = useState<State>(() => (persisted ? persistedMemory.get(memoryKey) ?? { ws: initial!(), past: [], future: [] } : load()));
   const [notice, setNotice] = useState<Studio['notice']>(null);
   const [focus, setFocus] = useState<Studio['focus']>(null);
-  const [gov, setGov] = useState<GovState>(() => govMemory ?? emptyGov());
+  const [gov, setGov] = useState<GovState>(() => (persisted ? emptyGov() : govMemory ?? emptyGov()));
   const govRef = useRef(gov);
   govRef.current = gov;
-  useEffect(() => { govMemory = gov; }, [gov]);
+  useEffect(() => { if (!persisted) govMemory = gov; }, [gov, persisted]);
   const govern = useCallback<Studio['govern']>((step) => {
     try { const next = step(govRef.current); govRef.current = next; setGov(next); return null; } catch (e) { return e instanceof Error ? e.message : 'That is not allowed.'; }
   }, []);
   const ref = useRef(state);
   ref.current = state;
 
-  useEffect(() => { memory = state; }, [state]);
+  useEffect(() => { if (persisted) persistedMemory.set(memoryKey, state); else memory = state; }, [state, persisted, memoryKey]);
 
   const say = useCallback((text: string) => setNotice({ text, at: Date.now() }), []);
 
@@ -92,14 +106,22 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     say(`Redid: ${first.label}`);
   }, [say]);
 
+  const replace = useCallback<Studio['replace']>((ws, text) => {
+    const next = { ws, past: [], future: [] };
+    ref.current = next;
+    setState(next);
+    say(text);
+  }, [say]);
+
   const reset = useCallback(() => {
+    if (persisted) return; // a saved survey is never "reset to the sample library"
     const next = { ws: sampleWorkspace(), past: [], future: [] };
     ref.current = next;
     setState(next);
     govRef.current = emptyGov();
     setGov(govRef.current);
     say('Prototype reset to the sample library');
-  }, [say]);
+  }, [say, persisted]);
 
   const requestFocus = useCallback((key: string) => setFocus({ key, at: Date.now() }), []);
 
@@ -116,10 +138,10 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   }, [undo, redo]);
 
   const value = useMemo<Studio>(() => ({
-    ws: state.ws, apply, undo, redo, reset, notice, focus, requestFocus, gov, govern,
+    ws: state.ws, apply, undo, redo, reset, notice, focus, requestFocus, gov, govern, replace, persisted,
     undoLabel: state.past[state.past.length - 1]?.label ?? null,
     redoLabel: state.future[0]?.label ?? null,
-  }), [state, apply, undo, redo, reset, notice, focus, requestFocus, gov, govern]);
+  }), [state, apply, undo, redo, reset, notice, focus, requestFocus, gov, govern, replace, persisted]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
