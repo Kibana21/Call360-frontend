@@ -3,10 +3,10 @@
 // They never mutate their input, so undo/redo restores the canonical model itself, not a picture of it.
 // Rules encoded here, not in components: safe insertion (the former destination is inherited only by the normal
 // answer), no invented exceptional routes, and "a placement never edits a shared definition".
-import { ALL_OUTCOMES } from './sample';
+import { ALL_OUTCOMES, ESCALATION_OUTCOMES } from './sample';
 import {
   isQuestion, mKey, qKey,
-  type AnswerType, type Condition, type Edge, type Entry, type Instance, type Interrupt, type InterruptClass, type InterruptPolicy, type Module, type ModuleKind, type ModuleNode,
+  type Activation, type AnswerType, type Condition, type Edge, type Entry, type Instance, type Interrupt, type InterruptClass, type InterruptPolicy, type Module, type ModuleKind, type ModuleNode,
   type Binding, type DecisionNode, type Option, type OutcomeCode, type Question, type QuestionNode, type RoutingMode, type SetRule, type Survey, type SurveyTarget,
   type Target, type TextRule, type Workspace,
 } from './types';
@@ -91,7 +91,7 @@ function syncOutcomes(ws: Workspace, m: Module) {
     if (mKey(inst.module) !== mKey(m)) continue;
     const routes: Instance['routes'] = {};
     // a new exceptional outcome starts undecided; the normal one follows the normal sequence, as when a module is added
-    for (const o of m.outcomes) routes[o] = o === 'REVIEW_REQUIRED' ? HALT : o in inst.routes ? inst.routes[o]! : o === 'COMPLETED' ? '@CONTINUE' : null;
+    for (const o of m.outcomes) routes[o] = o === 'REVIEW_REQUIRED' ? HALT : o in inst.routes ? inst.routes[o]! : ESCALATION_OUTCOMES.includes(o) ? { surveyOutcome: o } : o === 'COMPLETED' ? '@CONTINUE' : null;
     inst.routes = routes;
   }
 }
@@ -138,7 +138,8 @@ export function addInstance(ws0: Workspace, surveyId: string, index: number, mod
   let id = base;
   for (let k = 2; s.sequence.some((x) => x.id === id); k++) id = `${base}-${k}`;
   const routes: Instance['routes'] = {};
-  for (const o of m.outcomes) routes[o] = o === 'REVIEW_REQUIRED' ? HALT : o === 'COMPLETED' ? '@CONTINUE' : null;
+  // governed endings are set, not left to choose: review required halts, and an escalation always ends the call as itself
+  for (const o of m.outcomes) routes[o] = o === 'REVIEW_REQUIRED' ? HALT : ESCALATION_OUTCOMES.includes(o) ? { surveyOutcome: o } : o === 'COMPLETED' ? '@CONTINUE' : null;
   const inst: Instance = { id, module: { code: m.code, revision: m.revision }, entry: clone(m.defaultEntry ?? { mode: 'ALWAYS' }) as Entry, routes };
   s.sequence.splice(index, 0, inst);
   return [ws, id];
@@ -158,9 +159,65 @@ export function removeInstance(ws0: Workspace, surveyId: string, instanceId: str
   const ws = clone(ws0);
   const s = findSurvey(ws, surveyId)!;
   s.sequence = s.sequence.filter((x) => x.id !== instanceId);
-  for (const inst of s.sequence) for (const [o, t] of Object.entries(inst.routes)) {
-    if (t && typeof t === 'object' && 'instance' in t && t.instance === instanceId) inst.routes[o] = null;
+  for (const inst of s.sequence) {
+    for (const [o, t] of Object.entries(inst.routes)) if (t && typeof t === 'object' && 'instance' in t && t.instance === instanceId) inst.routes[o] = null;
+    const d = inst.ifIneligible;
+    if (d && typeof d === 'object' && 'instance' in d && d.instance === instanceId) inst.ifIneligible = null; // undecided again, never re-pointed
+    const q = inst.ifSkippedInSequence;
+    if (q && typeof q === 'object' && 'instance' in q && q.instance === instanceId) inst.ifSkippedInSequence = null;
   }
+  return ws;
+}
+
+/** Sets what happens when a module is reached by a jump and is not eligible (its skip disposition). null = undecided. */
+export function setIfIneligible(ws0: Workspace, surveyId: string, instanceId: string, target: SurveyTarget | null): Workspace {
+  const ws = clone(ws0);
+  findSurvey(ws, surveyId)!.sequence.find((x) => x.id === instanceId)!.ifIneligible = target;
+  return ws;
+}
+/** Sets what happens when a module is reached IN SEQUENCE and is not eligible. null = back to the default (the next module). */
+export function setIfSkippedInSequence(ws0: Workspace, surveyId: string, instanceId: string, target: SurveyTarget | null): Workspace {
+  const ws = clone(ws0);
+  const inst = findSurvey(ws, surveyId)!.sequence.find((x) => x.id === instanceId)!;
+  if (target === null || target === '@CONTINUE') delete inst.ifSkippedInSequence; else inst.ifSkippedInSequence = target;
+  return ws;
+}
+
+/** The modules whose outcome routes or skip dispositions JUMP to this one (the next module in sequence is not a jump). */
+export function jumpSources(s: Survey, instanceId: string): Array<{ from: string; via: string }> {
+  const out: Array<{ from: string; via: string }> = [];
+  for (const inst of s.sequence) {
+    for (const [o, t] of Object.entries(inst.routes)) if (t && typeof t === 'object' && 'instance' in t && t.instance === instanceId) out.push({ from: inst.id, via: o });
+    const d = inst.ifIneligible;
+    if (d && typeof d === 'object' && 'instance' in d && d.instance === instanceId) out.push({ from: inst.id, via: '@SKIP' });
+    const q = inst.ifSkippedInSequence;
+    if (q && typeof q === 'object' && 'instance' in q && q.instance === instanceId) out.push({ from: inst.id, via: '@SKIP_SEQ' });
+  }
+  return out;
+}
+/** Whether a module can turn out not to be eligible: only one with an eligibility condition can. */
+export const canBeIneligible = (inst: Instance): boolean => inst.entry.mode === 'RULE';
+/** The activation trigger of a module, read from either shape (see `Instance.entry`). null = selected in sequence. */
+export const activationOf = (inst: Instance): Activation | null =>
+  inst.activation ?? (inst.entry.mode === 'ON_OUTCOME' ? { of: inst.entry.of, outcomes: inst.entry.outcomes } : null);
+/** The eligibility condition of a module, or null when it has none. */
+export const eligibilityOf = (inst: Instance): Binding | null => (inst.entry.mode === 'RULE' ? inst.entry.binding : null);
+
+/** Sets or clears the activation trigger. Independent of eligibility: the eligibility condition is left as it is. */
+export function setActivation(ws0: Workspace, surveyId: string, instanceId: string, a: Activation | null): Workspace {
+  const ws = clone(ws0);
+  const inst = findSurvey(ws, surveyId)!.sequence.find((x) => x.id === instanceId)!;
+  if (inst.entry.mode === 'ON_OUTCOME') inst.entry = { mode: 'ALWAYS' }; // the earlier shape is rewritten as the new one
+  if (a) inst.activation = clone(a); else delete inst.activation;
+  return ws;
+}
+/** Sets or clears the eligibility condition. Independent of activation: the trigger is left as it is. */
+export function setEligibility(ws0: Workspace, surveyId: string, instanceId: string, b: Binding | null): Workspace {
+  const ws = clone(ws0);
+  const inst = findSurvey(ws, surveyId)!.sequence.find((x) => x.id === instanceId)!;
+  const act = activationOf(inst);
+  inst.entry = b ? { mode: 'RULE', binding: clone(b) } : { mode: 'ALWAYS' };
+  if (act) inst.activation = act;
   return ws;
 }
 
@@ -644,12 +701,13 @@ export function setDecisionBinding(ws0: Workspace, moduleKey: string, nodeId: st
  * What a decision does when information is missing: follow an explicit Unknown route, or stop and flag for review.
  * Stopping is the governed REVIEW_REQUIRED outcome: the run halts pending an authorised review. Never "no".
  */
-export function setDecisionUnknown(ws0: Workspace, moduleKey: string, nodeId: string, choice: { stop: true } | { to: Target }): Workspace {
+export function setDecisionUnknown(ws0: Workspace, moduleKey: string, nodeId: string, choice: { stop: true } | { to: Target } | { clear: true }): Workspace {
   const ws = clone(ws0);
   const m = mod(ws, moduleKey);
   const d = dNode(m, nodeId);
   const base: Binding = d.binding ?? { condition: { code: '', version: 0 }, params: {}, unknownPolicy: null };
-  if ('stop' in choice) { d.binding = { ...base, unknownPolicy: 'BLOCK' }; setEdgeIn(m, nodeId, 'UNKNOWN', { outcome: 'REVIEW_REQUIRED' }); }
+  if ('clear' in choice) { d.binding = { ...base, unknownPolicy: null }; setEdgeIn(m, nodeId, 'UNKNOWN', null); } // undecided again: flagged, never read as "otherwise"
+  else if ('stop' in choice) { d.binding = { ...base, unknownPolicy: 'BLOCK' }; setEdgeIn(m, nodeId, 'UNKNOWN', { outcome: 'REVIEW_REQUIRED' }); }
   else { d.binding = { ...base, unknownPolicy: 'ROUTE' }; setEdgeIn(m, nodeId, 'UNKNOWN', choice.to); }
   syncOutcomes(ws, m);
   return ws;

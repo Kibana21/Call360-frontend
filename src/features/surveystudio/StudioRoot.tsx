@@ -6,7 +6,12 @@ import '../../styles/survey-studio.css';
 import { BuilderPage } from './BuilderPage';
 import { ComposerPage } from './ComposerPage';
 import { HomePage } from './HomePage';
+import { ReviewPage } from './ReviewPage';
+import { SimulatorPage } from './SimulatorPage';
+import { ValidationPage } from './ValidationPage';
 import { fingerprint } from './model/canonical';
+import { addDemoSurvey, demoBaseline } from './model/demo';
+import { seedPublication, snapshot } from './model/governance';
 import { addLargeModule } from './model/large';
 import type { Issue } from './model/types';
 import { StudioProvider, useStudio } from './store';
@@ -19,6 +24,9 @@ export function StudioRoot() {
         <Routes>
           <Route index element={<HomePage />} />
           <Route path="surveys/:surveyId" element={<ComposerPage />} />
+          <Route path="surveys/:surveyId/simulate" element={<SimulatorPage />} />
+          <Route path="surveys/:surveyId/validate" element={<ValidationPage />} />
+          <Route path="surveys/:surveyId/review" element={<ReviewPage />} />
           <Route path="surveys/:surveyId/modules/:instanceId" element={<BuilderPage />} />
           <Route path="modules/:moduleKey" element={<BuilderPage />} />
         </Routes>
@@ -35,7 +43,7 @@ export function StudioBar({ crumbs, badge, issues, onIssue, wording }: {
   /** Question versions in scope and how many carry unapproved wording — shown apart from routing. */
   wording?: { total: number; unapproved: number };
 }) {
-  const { ws, apply, undo, redo, undoLabel, redoLabel, notice, reset } = useStudio();
+  const { ws, apply, undo, redo, undoLabel, redoLabel, notice, reset, govern } = useStudio();
   const nav = useNavigate();
   // one value for the whole canonical model: equal models give equal values, whichever view made the edits
   const stamp = useMemo(() => fingerprint(ws), [ws]);
@@ -96,7 +104,7 @@ export function StudioBar({ crumbs, badge, issues, onIssue, wording }: {
                   <div className={wording && wording.unapproved ? 'warn' : 'done'}><dt>Wording approval</dt>
                     <dd>{wording ? (wording.unapproved ? `${wording.unapproved} of ${wording.total} question${wording.total === 1 ? '' : 's'} use wording that is not approved.` : `All ${wording.total} questions use approved wording.`) : 'Not assessed here.'}</dd></div>
                   <div className="warn"><dt>Ready to publish</dt>
-                    <dd><strong>No.</strong> {errors.length ? 'Routing is incomplete. ' : ''}{wording && wording.unapproved ? 'Wording is not approved. ' : ''}This is a prototype: nothing can be submitted, approved or published from it.</dd></div>
+                    <dd><strong>No.</strong> {errors.length ? 'Routing is incomplete. ' : ''}{wording && wording.unapproved ? 'Wording is not approved. ' : ''}The Validate step shows everything that stands in the way. Review and publishing in this prototype are a simulation: nothing is really approved or published.</dd></div>
                 </dl>
                 {errors.length ? <h3>Routing — fix these</h3> : null}
                 <ul>
@@ -122,6 +130,16 @@ export function StudioBar({ crumbs, badge, issues, onIssue, wording }: {
               <p>Everything here is sample data held in memory while this page is open. Nothing is stored in the browser or sent to the Call360 server, nothing can be published, and reloading the page starts again from the sample library.</p>
               <p>Previews and checks come from a small demonstration evaluator in the browser. They illustrate the design; they are not the Call360 runtime.</p>
               <p>Model fingerprint <span className="ss-code" data-testid="ss-fingerprint-shown">{stamp}</span> — one value for the whole model. The Guided and Graph views edit the same model, so equivalent edits give the same value.</p>
+              <button type="button" className="ss-btn" data-testid="ss-add-demo"
+                onClick={() => {
+                  const [next, id] = addDemoSurvey(ws);
+                  apply('Added the demonstration survey', () => [next, id]);
+                  // an earlier revision, seeded as a clearly labelled simulated publication, so revisions can be compared at once
+                  const before = demoBaseline(next, id);
+                  govern((g) => seedPublication(g, snapshot(before, before.surveys.find((x) => x.id === id)!), Date.UTC(2026, 9, 12, 2, 30)));
+                  close();
+                  nav(`/survey-studio/surveys/${id}/simulate`);
+                }}>Add a demonstration survey and simulate it</button>
               <button type="button" className="ss-btn" data-testid="ss-add-large"
                 onClick={() => { const key = apply('Added the 40-question sample module', addLargeModule); close(); if (key) nav(`/survey-studio/modules/${encodeURIComponent(key)}`); }}>Add a 40-question sample module</button>
               <button type="button" className="ss-btn" onClick={() => { reset(); close(); }} data-testid="ss-reset">Reset to the sample library</button>

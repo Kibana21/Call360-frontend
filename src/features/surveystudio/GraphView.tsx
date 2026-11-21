@@ -4,23 +4,30 @@
 // store, so there is one undo history. Positions, zoom, collapse and selection are presentation state only: moving a
 // card never changes what is asked next.
 import {
-  Background, BaseEdge, Controls, EdgeLabelRenderer, Handle, MarkerType, MiniMap, Position, ReactFlow, ReactFlowProvider, getSmoothStepPath, useConnection, useReactFlow, useUpdateNodeInternals,
-  type Connection, type Edge, type EdgeProps, type Node, type NodeChange, type NodeProps,
+  Background, BaseEdge, Controls, EdgeLabelRenderer, Handle, MarkerType, MiniMap, Position, ReactFlow, ReactFlowProvider, getSmoothStepPath, useConnection, useReactFlow, useUpdateNodeInternals, useViewport,
+  type Connection, type Edge, type EdgeChange, type EdgeProps, type Node, type NodeChange, type NodeProps,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { connectProblem, connectRoute, connectSurveyRoute, layoutGraph, moduleGraph, surveyGraph, surveyRouteFor, targetOfNodeId, type GEdge, type GNode, type SNode } from './model/graph';
+import {
+  connectProblem, connectRoute, connectSurveyRoute, disconnectProblem, disconnectRoute, disconnectSurveyRoute, layoutGraph, moduleGraph, surveyDisconnectProblem, surveyGraph, surveyRouteFor,
+  targetOfNodeId, type GEdge, type GNode, type SNode,
+} from './model/graph';
 import type { InsertAt } from './model/ops';
-import { KIND_LABEL, OUTCOME_LABEL } from './model/sample';
-import type { Issue, Module, Survey, SurveyTarget, Target } from './model/types';
+import { ESCALATION_OUTCOMES, KIND_LABEL, OUTCOMES, OUTCOME_LABEL } from './model/sample';
+import { isQuestion, type Issue, type Module, type OutcomeCode, type Survey, type SurveyTarget, type Target } from './model/types';
 import { useStudio } from './store';
-import { Glyph, KIND_GLYPH, type GlyphName } from './ui';
+import { Glyph, KIND_GLYPH, Picker, Popover, type GlyphName, type PickItem } from './ui';
 
 const TYPE_GLYPH: Record<string, GlyphName> = { YES_NO: 'yesno', SINGLE_SELECT: 'single', MULTI_SELECT: 'multi', FREE_TEXT: 'text' };
 const TYPE_TEXT: Record<string, string> = { YES_NO: 'Yes / No', SINGLE_SELECT: 'Single choice', MULTI_SELECT: 'Multiple choice', FREE_TEXT: 'Free text' };
 const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
 
-interface GraphCtx { editable: boolean; short: (t: Target | SurveyTarget | null) => string; onInsert?: (at: InsertAt) => void }
+interface GraphCtx {
+  editable: boolean; short: (t: Target | SurveyTarget | null) => string; onInsert?: (at: InsertAt) => void;
+  /** The selected route tells the canvas where its middle is, so the route toolbar can sit beside it. */
+  anchor?: (id: string, x: number, y: number) => void;
+}
 const Ctx = createContext<GraphCtx>({ editable: false, short: () => '' });
 
 /**
@@ -41,10 +48,12 @@ function SlotRows({ slots, id }: { slots: Array<{ via: string; label: string; to
       {slots.map((s) => (
         <li key={s.via} className={`ss-g-row ${s.tone ?? ''} ${s.undecided ? 'undecided' : ''}`} data-testid={`ss-g-slot-${id}-${s.via}`}>
           <span className="ss-g-row-label">{s.must ? <Glyph name="stop" size={12} /> : null}{clip(s.label, 24)}</span>
-          <span className="ss-g-row-to">{s.undecided ? 'not decided' : short(s.target)}</span>
+          <span className="ss-g-row-to">{s.undecided ? 'Choose destination' : short(s.target)}</span>
           {/* the handle a connection is dragged from; the same route can be set from the panel with the keyboard */}
           <Handle type="source" id={s.via} position={s.tone === 'normal' ? Position.Bottom : Position.Right} isConnectable={editable && s.connect}
             className={`ss-g-handle ${s.tone === 'normal' ? 'spine' : ''} ${s.undecided ? 'undecided' : ''}`} title={editable && s.connect ? `Drag to choose where “${s.label}” leads` : undefined} />
+          {/* a route with no destination is shown, not hidden: a short broken line that leads nowhere */}
+          {s.undecided ? <span className={`ss-g-broken ${s.tone === 'normal' ? 'down' : 'side'}`} aria-hidden="true" data-testid={`ss-g-broken-${id}-${s.via}`} /> : null}
         </li>
       ))}
     </ul>
@@ -128,10 +137,11 @@ function SurveyTerminal({ data }: NodeProps<Node<InstanceData>>) {
 
 // ---- edges --------------------------------------------------------------------------------------------------------
 type RouteData = { e: GEdge };
-function RouteEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, data, markerEnd }: EdgeProps<Edge<RouteData>>) {
-  const { editable, onInsert } = useContext(Ctx);
+function RouteEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, data, markerEnd, selected }: EdgeProps<Edge<RouteData>>) {
+  const { editable, onInsert, anchor } = useContext(Ctx);
   const e = data!.e;
-  const [path] = getSmoothStepPath({ sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition, borderRadius: 14, offset: 18 });
+  const [path, mx, my] = getSmoothStepPath({ sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition, borderRadius: 14, offset: 18 });
+  useEffect(() => { if (selected) anchor?.(id, mx, my); }, [selected, id, mx, my, anchor]);
   const side = sourcePosition === Position.Right;
   // "+" is offered on routes that leave from the bottom of a card, where there is room for a full-size target. A route
   // that leaves from a row on the side gets its new step from the selected card's panel ("create a new question here").
@@ -159,7 +169,7 @@ function RouteEdge({ id, sourceX, sourceY, targetX, targetY, sourcePosition, tar
 
 const nodeTypes = { step: StepNode, terminal: TerminalNode, stub: StubNode, instance: InstanceNode, sterminal: SurveyTerminal };
 const edgeTypes = { route: RouteEdge };
-const marker = (tone: string) => ({ type: MarkerType.ArrowClosed, width: 16, height: 16, color: tone === 'escalate' ? '#b3263a' : tone === 'unknown' ? '#9a5a00' : tone === 'queue' ? '#3d4f9f' : '#6b7789' });
+const marker = (tone: string) => ({ type: MarkerType.ArrowClosed, width: 16, height: 16, color: tone === 'selected' ? '#2f6fed' : tone === 'escalate' ? '#b3263a' : tone === 'unknown' ? '#9a5a00' : tone === 'queue' ? '#3d4f9f' : '#6b7789' });
 
 // ---- the canvas both graphs share --------------------------------------------------------------------------------
 interface CanvasProps {
@@ -174,10 +184,23 @@ interface CanvasProps {
   message: string | null;
   testId: string;
   minimapColor: (id: string) => string;
+  /** The selected route (an edge id), its contextual toolbar, and what Delete / Backspace does to it. */
+  route: string | null;
+  onRoute: (id: string | null) => void;
+  routeBar: (edge: GEdge, close: () => void) => ReactNode;
+  onDisconnect: (edge: GEdge) => void;
+  routeLabel: (edge: GEdge) => string;
+  editable: boolean;
 }
 
-function Canvas({ nodes, edges, selected, focusTick, onPick, onConnect, toolbar, message, testId, minimapColor }: CanvasProps) {
+function Canvas({ nodes, edges, selected, focusTick, onPick, onConnect, toolbar, message, testId, minimapColor, route, onRoute, routeBar, onDisconnect, routeLabel, editable }: CanvasProps) {
   const flow = useReactFlow();
+  useViewport(); // the route toolbar follows the canvas as it is panned and zoomed
+  const [mid, setMid] = useState<{ id: string; x: number; y: number } | null>(null);
+  const graph = useContext(Ctx);
+  const anchor = useMemo(() => (id: string, x: number, y: number) => setMid((m) => (m && m.id === id && m.x === x && m.y === y ? m : { id, x, y })), []);
+  const picked = route ? edges.find((e) => e.id === route) ?? null : null;
+  useEffect(() => { if (route && !picked) onRoute(null); }, [route, picked, onRoute]); // the route was removed or folded away
   const [moved, setMoved] = useState<Record<string, { x: number; y: number }>>({});
   const positions = useMemo(() => layoutGraph(nodes, edges), [nodes, edges]);
   const rf: Node[] = useMemo(() => nodes.map((n) => ({
@@ -187,8 +210,11 @@ function Canvas({ nodes, edges, selected, focusTick, onPick, onConnect, toolbar,
     selected: n.id === selected, selectable: n.selectable, focusable: n.selectable, ariaLabel: n.label, draggable: true,
   })), [nodes, positions, moved, selected]);
   const re: Edge[] = useMemo(() => edges.map((e) => ({
-    id: e.id, source: e.source, sourceHandle: e.handle, target: e.target, targetHandle: 'in', type: 'route', data: { e }, markerEnd: marker(e.tone), focusable: false, selectable: false,
-  })), [edges]);
+    id: e.id, source: e.source, sourceHandle: e.handle, target: e.target, targetHandle: 'in', type: 'route', data: { e }, markerEnd: marker(e.id === route ? 'selected' : e.tone),
+    selected: e.id === route, selectable: true, focusable: true, interactionWidth: 22, ariaLabel: `Route: ${routeLabel(e)}. Press Enter for route actions.`,
+    // an ordinary route can also be re-pointed by dragging its far end onto another card
+    reconnectable: editable && !e.synthetic && !e.fixed ? 'target' : false,
+  })), [edges, route, routeLabel, editable]);
   const byId = useRef(new Map<string, Node>());
   byId.current = new Map(rf.map((n) => [n.id, n]));
   const box = useRef<HTMLDivElement | null>(null);
@@ -227,11 +253,33 @@ function Canvas({ nodes, edges, selected, focusTick, onPick, onConnect, toolbar,
     for (const c of changes) {
       // dragging is presentation only: it is remembered here and never reaches the model
       if (c.type === 'position' && c.position) setMoved((m) => ({ ...m, [c.id]: c.position! }));
-      if (c.type === 'select' && c.selected) onPick(c.id);
+      if (c.type === 'select' && c.selected) { onRoute(null); onPick(c.id); }
     }
   };
+  const onEdgesChange = (changes: EdgeChange[]) => {
+    for (const c of changes) {
+      if (c.type !== 'select') continue;
+      if (c.selected) onRoute(c.id);
+      else if (c.id === route && !changes.some((x) => x.type === 'select' && x.selected)) onRoute(null);
+    }
+  };
+  const typing = (t: EventTarget | null) => { const el = t as HTMLElement | null; return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable); };
+  // where the toolbar sits: beside the middle of the selected route, kept inside the canvas
+  const bar = (() => {
+    const el = box.current;
+    if (!picked || !mid || mid.id !== picked.id || !el) return null;
+    const r = el.getBoundingClientRect();
+    const p = flow.flowToScreenPosition({ x: mid.x, y: mid.y });
+    return { left: Math.min(Math.max(p.x - r.left, 150), Math.max(150, r.width - 150)), top: Math.min(Math.max(p.y - r.top - 12, 44), r.height - 12) };
+  })();
   return (
-    <div className="ss-g-wrap" data-testid={testId}>
+    <div className="ss-g-wrap" data-testid={testId}
+      onKeyDown={(e) => {
+        if (!picked || typing(e.target)) return;
+        if (e.key === 'Escape') { onRoute(null); return; }
+        // Delete / Backspace disconnects the selected route — never while the author is typing in a field
+        if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); onDisconnect(picked); }
+      }}>
       <div className="ss-g-toolbar">
         {toolbar}
         <button type="button" className="ss-btn small" onClick={() => { setMoved({}); window.setTimeout(fitAll, 40); }} data-testid="ss-g-tidy" title="Put every card back where the automatic layout places it">Tidy layout</button>
@@ -239,18 +287,37 @@ function Canvas({ nodes, edges, selected, focusTick, onPick, onConnect, toolbar,
         {message ? <span className="ss-g-message" role="status" data-testid="ss-g-message"><Glyph name="alert" size={14} /> {message}</span> : null}
       </div>
       <div className="ss-g-canvas" ref={box}>
-        <ReactFlow nodes={rf} edges={re} onInit={() => { if (selected && byId.current.has(selected)) return; opening(); }} nodeTypes={nodeTypes} edgeTypes={edgeTypes} onNodesChange={onNodesChange}
+        <Ctx.Provider value={{ ...graph, anchor }}>
+        <ReactFlow nodes={rf} edges={re} onEdgesChange={onEdgesChange} edgesReconnectable={editable} reconnectRadius={14}
+          onReconnect={(old, c) => { if (c.source === old.source && c.sourceHandle === old.sourceHandle && c.target && c.target !== old.target) onConnect(old.source, old.sourceHandle ?? '', c.target); }}
+          onPaneClick={() => onRoute(null)} onInit={() => { if (selected && byId.current.has(selected)) return; opening(); }} nodeTypes={nodeTypes} edgeTypes={edgeTypes} onNodesChange={onNodesChange}
           onConnect={(c: Connection) => { if (c.source && c.sourceHandle && c.target) onConnect(c.source, c.sourceHandle, c.target); }}
           minZoom={0.12} maxZoom={1.6} deleteKeyCode={null} multiSelectionKeyCode={null} selectionKeyCode={null}
-          nodesConnectable edgesFocusable={false} elevateEdgesOnSelect={false} proOptions={{ hideAttribution: false }} onlyRenderVisibleElements={false}
+          nodesConnectable edgesFocusable elevateEdgesOnSelect proOptions={{ hideAttribution: false }} onlyRenderVisibleElements={false}
           aria-label="Graph. Use the outline or Tab to reach a step; Enter selects it and opens its routes in the panel.">
           <Background gap={22} size={1.2} color="#d5dbe5" />
           <Controls showInteractive={false} position="bottom-left" />
           <MiniMap pannable zoomable position="bottom-right" style={{ width: 132, height: 96 }} nodeColor={(n) => minimapColor(n.id)} nodeStrokeWidth={2} ariaLabel="Overview of the whole graph" />
         </ReactFlow>
+        </Ctx.Provider>
+        {picked && bar ? (
+          <div className="ss-g-edgebar" style={{ left: bar.left, top: bar.top }} role="toolbar" aria-label={`Route: ${routeLabel(picked)}`} data-testid="ss-g-edgebar">
+            {routeBar(picked, () => onRoute(null))}
+            <button type="button" className="ss-icon-btn" aria-label="Close the route actions" onClick={() => onRoute(null)} data-testid="ss-g-edge-close"><Glyph name="close" size={14} /></button>
+          </div>
+        ) : null}
       </div>
     </div>
   );
+}
+
+/** Moves keyboard focus to a card on the canvas (after a route is disconnected, its source is where the author continues). */
+const focusCard = (id: string) => window.setTimeout(() => document.querySelector<HTMLElement>(`.react-flow__node[data-id="${CSS.escape(id)}"]`)?.focus(), 80);
+/** Focus goes to the first action when a route's toolbar opens, so Enter / Delete work at once and a screen reader hears the route. */
+function BarFocus({ id }: { id: string }) {
+  const ref = useRef<HTMLSpanElement | null>(null);
+  useEffect(() => { ref.current?.parentElement?.querySelector<HTMLElement>('button')?.focus({ preventScroll: true }); }, [id]);
+  return <span ref={ref} hidden />;
 }
 
 // ---- module question graph ---------------------------------------------------------------------------------------
@@ -262,7 +329,7 @@ export interface ModuleGraphProps {
   tools?: ReactNode;
 }
 
-function ModuleGraphInner({ m, moduleKey, editable, issues, collapsed, setCollapsed, selected, focusTick, onSelect, onInsert, tools }: ModuleGraphProps) {
+function ModuleGraphInner({ m, moduleKey, editable, issues, collapsed, setCollapsed, selected, focusTick, onSelect, onInsert, tools, label }: ModuleGraphProps) {
   const { ws, apply } = useStudio();
   const [message, setMessage] = useState<string | null>(null);
   const g = useMemo(() => moduleGraph(ws, m, collapsed, issues), [ws, m, collapsed, issues]);
@@ -289,17 +356,62 @@ function ModuleGraphInner({ m, moduleKey, editable, issues, collapsed, setCollap
     if (n?.kind === 'STUB' && n.laneKey) { const next = new Set(collapsed); next.delete(n.laneKey); setCollapsed(next); return; }
     if (n?.kind === 'QUESTION' || n?.kind === 'DECISION') onSelect(id);
   };
-  const connect = (source: string, via: string, targetId: string) => {
-    const problem = editable ? connectProblem(ws, m, source, via, targetId) : 'This is the approved library version. Edit a copy to change its routes.';
-    if (problem) { setMessage(problem); return; }
+  const [route, setRoute] = useState<string | null>(null);
+  const LOCKED = 'This is the approved library version. Edit a copy to change its routes.';
+  const connect = (source: string, via: string, targetId: string): boolean => {
+    const problem = editable ? connectProblem(ws, m, source, via, targetId) : LOCKED;
+    if (problem) { setMessage(problem); return false; }
     setMessage(null);
     apply(`Routed ${numbers.get(source) ?? source} in the graph`, (w) => connectRoute(w, moduleKey, source, via, targetOfNodeId(targetId)!));
-    onSelect(source);
+    return true;
   };
+  const stepName = (id: string) => (id === 'start' ? 'Module starts' : by.get(id)?.kind === 'STUB' ? 'a folded branch' : numbers.get(id) ?? by.get(id)?.title ?? id);
+  const routeLabel = (e: GEdge) => `${stepName(e.source)}${e.route ? ` · ${e.route}` : ''} → ${by.get(e.target)?.kind === 'OUTCOME' ? by.get(e.target)!.title : stepName(e.target)}`;
+  const disconnect = (e: GEdge) => {
+    const problem = e.synthetic || e.fixed ? e.why ?? 'This line shows structure; it is not a route of its own.' : !editable ? LOCKED : disconnectProblem(m, e.source, e.handle);
+    if (problem) { setMessage(problem); return; }
+    setMessage(null);
+    // the route becomes UNDECIDED in the draft model; the step, its answer and the former destination all stay
+    apply(`Disconnected ${stepName(e.source)}${e.route ? ` · ${e.route}` : ''} — it needs a destination`, (w) => disconnectRoute(w, moduleKey, e.source, e.handle));
+    setRoute(null);
+    focusCard(e.source);
+  };
+  const destinations = (e: GEdge): PickItem[] => {
+    const from = m.nodes.find((x) => x.id === e.source);
+    return [
+      ...(e.must ? [] : m.nodes.filter((nd) => nd.id !== e.source && !(isQuestion(nd) && nd.role === 'FOLLOWUP'))
+        .map((nd) => ({ id: nd.id, label: label({ node: nd.id }), group: isQuestion(nd) ? 'A question in this module' : 'A condition in this module', glyph: (isQuestion(nd) ? 'right' : 'branch') as GlyphName }))),
+      ...(e.handle === 'UNKNOWN' && from && !isQuestion(from) ? [{ id: `out:REVIEW_REQUIRED@${e.source}`, label: 'Stop and flag for review', hint: 'Review required: the call halts and is not completed', group: 'Do not continue', glyph: 'stop' as const }] : []),
+      ...OUTCOMES.filter((o) => !e.must || ESCALATION_OUTCOMES.includes(o)).map((o: OutcomeCode) => ({ id: `out:${o}@${e.source}`, label: `End module: ${OUTCOME_LABEL[o]}`, group: e.must ? 'Mandatory escalation — end the module with' : 'End the module', glyph: (o === 'COMPLETED' ? 'check' : 'stop') as GlyphName })),
+    ];
+  };
+  const routeBar = (e: GEdge, close: () => void) => (
+    <>
+      <BarFocus id={e.id} />
+      <span className="ss-g-edgebar-name" data-testid="ss-g-edge-name">{e.must ? <Glyph name="stop" size={13} /> : null}{routeLabel(e)}</span>
+      {e.synthetic || e.fixed ? (
+        <>
+          <span className="ss-g-edgebar-why" data-testid="ss-g-edge-why">{e.why}</span>
+          {e.owner ? <button type="button" className="ss-btn small" data-testid="ss-g-edge-owner" onClick={() => { close(); onSelect(e.owner!); }}>Edit on {stepName(e.owner)}</button> : null}
+        </>
+      ) : editable ? (
+        <>
+          <Popover label={`Change where ${routeLabel(e)} leads`} wide
+            trigger={(p) => <button type="button" className="ss-btn small" {...p} data-testid="ss-g-edge-change">Change destination</button>}>
+            {(shut) => <Picker items={destinations(e)} placeholder="Search questions and outcomes"
+              footer={e.must ? <p className="ss-muted">A mandatory escalation can lead only to an approved escalation outcome.</p> : undefined}
+              onPick={(id) => { shut(); if (connect(e.source, e.handle, id)) { close(); focusCard(e.source); } }} />}
+          </Popover>
+          <button type="button" className="ss-btn small danger" data-testid="ss-g-edge-disconnect" onClick={() => disconnect(e)} aria-keyshortcuts="Delete Backspace" title="Disconnect this route (Delete). The question, its answer and the destination all stay.">Disconnect route</button>
+        </>
+      ) : <span className="ss-g-edgebar-why">{LOCKED}</span>}
+    </>
+  );
   const tone = (id: string) => { const n = by.get(id); return !n ? '#c9d1dd' : n.issues ? '#e6b656' : n.kind === 'DECISION' ? '#cfd6ff' : n.kind === 'OUTCOME' || n.kind === 'START' ? '#1d2b44' : n.kind === 'STUB' ? '#e9edf3' : n.main ? '#9fb0c9' : '#d5dbe5'; };
   return (
     <Ctx.Provider value={{ editable, short, onInsert }}>
-      <Canvas nodes={nodes} edges={g.edges} selected={selected} focusTick={focusTick} onPick={pick} onConnect={connect} message={message} testId="ss-graph" minimapColor={tone}
+      <Canvas nodes={nodes} edges={g.edges} selected={selected} focusTick={focusTick} onPick={pick} onConnect={(a, b, c) => { if (connect(a, b, c)) setRoute(null); }} message={message} testId="ss-graph" minimapColor={tone}
+        route={route} onRoute={setRoute} routeBar={routeBar} onDisconnect={disconnect} routeLabel={routeLabel} editable={editable}
         toolbar={<>
           {tools}
           {g.lanes.length ? (
@@ -334,18 +446,59 @@ function SurveyGraphInner({ survey, issues, selected, focusTick, onSelect, entry
     id: n.id, width: n.width, height: n.height, main: n.main, type: n.kind === 'INSTANCE' ? 'instance' : 'sterminal', data: { s: n }, selectable: n.kind === 'INSTANCE',
     label: n.kind === 'INSTANCE' ? `Module ${(n.index ?? 0) + 1}: ${n.title}. ${n.subtitle ?? ''}${n.issues ? `, ${n.issues} to fix` : ''}` : n.title,
   })), [g.nodes]);
+  const [route, setRoute] = useState<string | null>(null);
+  const outcomeName = (via: string) => (via === '@SKIP' ? 'If it does not apply' : OUTCOME_LABEL[via as keyof typeof OUTCOME_LABEL] ?? via);
   const connect = (source: string, via: string, targetId: string) => {
-    const r = surveyRouteFor(survey, source, via, targetId);
+    const r = surveyRouteFor(survey, source, via, targetId, ws);
     if ('problem' in r) { setMessage(r.problem); return; }
     setMessage(null);
-    apply(`Routed "${OUTCOME_LABEL[via as keyof typeof OUTCOME_LABEL] ?? via}" of ${name(source)} in the graph`, (w) => connectSurveyRoute(w, survey.id, source, via, r.target));
-    onSelect(source);
+    apply(`Routed "${outcomeName(via)}" of ${name(source)} in the graph`, (w) => connectSurveyRoute(w, survey.id, source, via, r.target));
+    setRoute(null);
   };
+  const routeLabel = (e: GEdge) => `${name(e.source)}${e.route ? ` · ${e.route}` : ''} → ${name(e.target)}`;
+  const disconnect = (e: GEdge) => {
+    const problem = e.synthetic || e.fixed ? e.why ?? 'This line is not a route of its own.' : surveyDisconnectProblem(survey, e.source, e.handle);
+    if (problem) { setMessage(problem); return; }
+    setMessage(null);
+    apply(`Disconnected "${outcomeName(e.handle)}" of ${name(e.source)} — it needs a destination`, (w) => disconnectSurveyRoute(w, survey.id, e.source, e.handle));
+    setRoute(null);
+    focusCard(e.source);
+  };
+  // the Composer's own choices for a module outcome: continue, jump ahead, or end the call
+  const destinations = (e: GEdge): PickItem[] => {
+    const i = survey.sequence.findIndex((x) => x.id === e.source);
+    return [
+      { id: '@CONTINUE', label: i === survey.sequence.length - 1 ? 'End the call: Completed' : `Continue to ${name(survey.sequence[i + 1]!.id)}`, hint: 'The normal sequence', glyph: 'down' },
+      ...survey.sequence.slice(i + 2).map((x) => ({ id: `i:${x.id}`, label: `Jump to ${name(x.id)}`, hint: 'Modules in between are skipped', group: 'Jump ahead', glyph: 'branch' as const })),
+      ...OUTCOMES.filter((o) => o !== 'COMPLETED').map((o) => ({ id: `o:${o}`, label: `End the call: ${OUTCOME_LABEL[o]}`, group: 'End the call', glyph: 'stop' as const })),
+    ];
+  };
+  const routeBar = (e: GEdge, close: () => void) => (
+    <>
+      <BarFocus id={e.id} />
+      <span className="ss-g-edgebar-name" data-testid="ss-g-edge-name">{routeLabel(e)}</span>
+      {e.synthetic || e.fixed ? <span className="ss-g-edgebar-why" data-testid="ss-g-edge-why">{e.why}</span> : (
+        <>
+          <Popover label={`Change where ${routeLabel(e)} leads`} wide
+            trigger={(p) => <button type="button" className="ss-btn small" {...p} data-testid="ss-g-edge-change">Change destination</button>}>
+            {(shut) => <Picker items={destinations(e)} placeholder="Choose what happens" onPick={(id) => {
+              const target: SurveyTarget = id === '@CONTINUE' ? '@CONTINUE' : id.startsWith('i:') ? { instance: id.slice(2) } : { surveyOutcome: id.slice(2) as OutcomeCode };
+              shut(); setMessage(null);
+              apply(`Routed "${outcomeName(e.handle)}" of ${name(e.source)} in the graph`, (w) => connectSurveyRoute(w, survey.id, e.source, e.handle, target));
+              close(); focusCard(e.source);
+            }} />}
+          </Popover>
+          <button type="button" className="ss-btn small danger" data-testid="ss-g-edge-disconnect" onClick={() => disconnect(e)} aria-keyshortcuts="Delete Backspace" title="Disconnect this route (Delete). Both modules stay.">Disconnect route</button>
+        </>
+      )}
+    </>
+  );
   const tone = (id: string) => { const n = g.nodes.find((x) => x.id === id); return !n ? '#c9d1dd' : n.issues ? '#e6b656' : n.kind === 'INSTANCE' ? '#9fb0c9' : '#1d2b44'; };
   return (
     <Ctx.Provider value={{ editable: true, short }}>
       <Canvas nodes={nodes} edges={g.edges} selected={selected} focusTick={focusTick} onPick={(id) => { if (survey.sequence.some((x) => x.id === id)) onSelect(id); }} onConnect={connect}
-        message={message} testId="ss-survey-graph" minimapColor={tone} toolbar={tools} />
+        message={message} testId="ss-survey-graph" minimapColor={tone} toolbar={tools}
+        route={route} onRoute={setRoute} routeBar={routeBar} onDisconnect={disconnect} routeLabel={routeLabel} editable />
     </Ctx.Provider>
   );
 }

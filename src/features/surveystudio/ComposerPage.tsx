@@ -8,9 +8,10 @@ import { Suspense, lazy, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { EntryRuleDrawer, entrySentence } from './EntryRuleDrawer';
 import { ModuleTile } from './HomePage';
+import { JourneyNav } from './JourneyNav';
 import { NewModuleForm } from './NewModule';
-import { validateSurvey, wordingStatus } from './model/flow';
-import { addInstance, findModule, findSurvey, moveInstance, removeInstance, renameSurvey, setRoute } from './model/ops';
+import { escalationOutcomes, mandatoryOutcomes, validateSurvey, wordingStatus } from './model/flow';
+import { activationOf, addInstance, canBeIneligible, findModule, findSurvey, jumpSources, moveInstance, removeInstance, renameSurvey, setIfIneligible, setIfSkippedInSequence, setRoute } from './model/ops';
 import { KIND_LABEL, OUTCOMES, OUTCOME_LABEL } from './model/sample';
 import { mKey, type Instance, type Issue, type Module, type Survey, type SurveyTarget } from './model/types';
 import { StudioBar } from './StudioRoot';
@@ -44,7 +45,7 @@ export function ComposerPage() {
   const view: 'blocks' | 'graph' = params.get('view') === 'graph' ? 'graph' : 'blocks';
   const picked = params.get('inst');
   const go = (next: Record<string, string | null>) => {
-    const p = new URLSearchParams(params);
+    const p = new URLSearchParams(window.location.search) /* the address itself: the router's state can lag a quick second change */;
     for (const [k, v] of Object.entries(next)) { if (v) p.set(k, v); else p.delete(k); }
     setParams(p, { replace: true });
   };
@@ -72,6 +73,7 @@ export function ComposerPage() {
     <>
       <StudioBar crumbs={[{ label: 'Survey Studio', to: '/survey-studio' }, { label: survey.name }]} badge={<Tag tone="draft">Draft v{survey.versionLabel}</Tag>} issues={issues} onIssue={onIssue}
         wording={wordingStatus(ws, survey.sequence.map((x) => findModule(ws, mKey(x.module))).filter((x): x is Module => !!x))} />
+      <JourneyNav survey={survey} at="compose" compact />
       <div className={`ss-composer ${shelf && view === 'blocks' ? '' : 'no-shelf'}`}>
         {shelf && view === 'blocks' ? (
           <aside className="ss-shelf" aria-label="Module library">
@@ -107,6 +109,7 @@ export function ComposerPage() {
             <InlineText className="ss-title" value={survey.name} label="Survey name" placeholder="Survey name"
               onCommit={(v) => { if (v.trim()) apply('Renamed the survey', (w) => renameSurvey(w, survey.id, v.trim())); }} />
             {survey.purpose ? <p className="ss-muted">{survey.purpose}</p> : null}
+            {survey.sequence.length ? <Link className="ss-btn small" to={`/survey-studio/surveys/${survey.id}/simulate`} data-testid="ss-simulate"><Glyph name="spark" size={14} /> Simulate a journey</Link> : null}
             {survey.sequence.length ? (
               <Segmented<'blocks' | 'graph'> label="View of this survey" value={view} onChange={(v) => { go({ view: v === 'graph' ? 'graph' : null }); setTick((t) => t + 1); }}
                 options={[{ value: 'blocks', label: 'Blocks', hint: 'Modules in order' }, { value: 'graph', label: 'Graph', hint: 'The same survey as a map of modules and outcomes' }]} />
@@ -117,7 +120,7 @@ export function ComposerPage() {
             <div className="ss-graph-page survey" data-testid="ss-survey-graph-page" ref={fill}>
               <Suspense fallback={<p className="ss-muted ss-g-loading">Opening the graph…</p>}>
                 <SurveyGraphView survey={survey} issues={issues} selected={picked} focusTick={tick} entryText={(id) => entrySentence(ws, survey, survey.sequence.find((x) => x.id === id)!)}
-                  onSelect={(id) => { go({ inst: id }); window.setTimeout(() => panel.current?.focus(), 60); }} />
+                  onSelect={(id) => { go({ inst: id }); window.setTimeout(() => { if (panel.current && !panel.current.contains(document.activeElement)) panel.current.focus(); }, 60) /* never steal focus from a control inside the panel */; }} />
               </Suspense>
               {pickedInst ? <InstancePanel innerRef={panel} survey={survey} inst={pickedInst} index={pickedIndex} issues={issues.filter((x) => x.where.instanceId === pickedInst.id)}
                 onRule={() => go({ rule: pickedInst.id })} onClose={() => go({ inst: null })} /> : null}
@@ -210,12 +213,18 @@ export function OutcomeRoutes({ survey, inst, index }: { survey: Survey; inst: I
   const { ws, apply } = useStudio();
   const m = findModule(ws, mKey(inst.module))!;
   const last = index === survey.sequence.length - 1;
+  const jumps = jumpSources(survey, inst.id);
+  const must = mandatoryOutcomes(ws, m);
+  const terminal = escalationOutcomes(m); // Escalate ends the call however the module reached it
   return (
     <ul className="ss-outcomes" aria-label={`What happens after ${m.name}`}>
           {m.outcomes.length === 0 ? <li className="ss-muted">No way to finish yet — open the module and add a question.</li> : null}
           {m.outcomes.map((o) => {
             const t = inst.routes[o] ?? null;
-            const choices: PickItem[] = [
+            // a mandatory escalation cannot be overridden by survey routing (A-4): only its own governed ending is offered
+            const choices: PickItem[] = terminal.includes(o) ? [
+              { id: `o:${o}`, label: `End the call: ${OUTCOME_LABEL[o]}`, hint: must.includes(o) ? 'Mandatory escalation — survey routing cannot continue, complete or re-route it' : 'An escalation always ends the call — it cannot be continued or re-routed', group: must.includes(o) ? 'Mandatory escalation' : 'Escalation', glyph: 'stop' },
+            ] : [
               { id: '@CONTINUE', label: last ? 'End the call: Completed' : 'Continue to the next module', hint: 'The normal sequence', glyph: 'down' },
               ...survey.sequence.slice(index + 2).map((x) => ({ id: `i:${x.id}`, label: `Jump to ${findModule(ws, mKey(x.module))?.name}`, hint: 'Modules in between are skipped', group: 'Jump ahead', glyph: 'branch' as const })),
               ...OUTCOMES.filter((x) => x !== 'COMPLETED').map((x) => ({ id: `o:${x}`, label: `End the call: ${OUTCOME_LABEL[x]}`, group: 'End the call', glyph: 'stop' as const })),
@@ -230,7 +239,7 @@ export function OutcomeRoutes({ survey, inst, index }: { survey: Survey; inst: I
             }
             return (
               <li key={o}>
-                <span className={`ss-outcome ${o === 'COMPLETED' ? 'ok' : 'alt'}`}>{OUTCOME_LABEL[o]}</span>
+                <span className={`ss-outcome ${o === 'COMPLETED' ? 'ok' : 'alt'}`} title={must.includes(o) ? 'A mandatory-escalation answer in this module ends it this way. It can only end the call.' : terminal.includes(o) ? 'An escalation always ends the call.' : undefined}>{OUTCOME_LABEL[o]}{terminal.includes(o) ? <Glyph name="lock" size={12} /> : null}</span>
                 <Popover label={`What happens on ${OUTCOME_LABEL[o]}`} wide
                   trigger={(p) => <button type="button" className={`ss-route ${t === null ? 'undecided' : ''}`} {...p} data-testid={`ss-route-${inst.id}-${o}`}>
                     {t === null ? <Glyph name="alert" size={14} /> : <Glyph name="right" size={13} />} {routeText(survey, index, t, ws)}</button>}>
@@ -243,6 +252,36 @@ export function OutcomeRoutes({ survey, inst, index }: { survey: Survey; inst: I
               </li>
             );
           })}
+          {/* The skip disposition (D-135, A-3). After a JUMP it must be chosen — nothing is invented — so that row shows
+              on every jump target that has an eligibility condition. In SEQUENCE the normal default is to consider the next
+              module; that row shows only once something else has been configured (it is set in the condition drawer). */}
+          {canBeIneligible(inst) ? (['SEQ', 'JUMP'] as const).filter((k) => (k === 'JUMP' ? jumps.length > 0 : inst.ifSkippedInSequence !== undefined)).map((k) => {
+            const t = (k === 'JUMP' ? inst.ifIneligible : inst.ifSkippedInSequence) ?? null;
+            const from = [...new Set(jumps.map((x) => findModule(ws, mKey(survey.sequence.find((y) => y.id === x.from)!.module))?.name ?? x.from))].join(', ');
+            const what = k === 'JUMP' ? 'is jumped to but does not apply' : 'is reached in sequence but does not apply';
+            const choices: PickItem[] = [
+              { id: '@CONTINUE', label: last ? 'End the call: Completed' : 'Continue to the next module', hint: k === 'JUMP' ? 'As if it had been skipped in sequence' : 'The normal default', glyph: 'down' },
+              ...survey.sequence.slice(index + 2).map((x) => ({ id: `i:${x.id}`, label: `Go to ${findModule(ws, mKey(x.module))?.name}`, hint: 'Its own condition is checked in turn', group: 'A later module', glyph: 'branch' as const })),
+              ...OUTCOMES.filter((x) => x !== 'COMPLETED').map((x) => ({ id: `o:${x}`, label: `End the call: ${OUTCOME_LABEL[x]}`, group: 'End the call', glyph: 'stop' as const })),
+              ...(t && k === 'JUMP' ? [{ id: 'clear', label: 'Leave undecided for now', group: 'Other', glyph: 'close' as const }] : []),
+            ];
+            return (
+              <li key={k} className="ss-skip-row" data-testid={k === 'JUMP' ? `ss-skip-row-${inst.id}` : `ss-skipseq-row-${inst.id}`}>
+                <span className="ss-outcome skip" title={k === 'JUMP' ? `${from} can jump here. A jump does not bypass this module's condition.` : 'What happens when this module is reached in order and its condition is not met.'}>{k === 'JUMP' ? 'Jumped to, but does not apply' : 'In sequence, but does not apply'}</span>
+                <Popover label={`What happens when ${m.name} ${what}`} wide
+                  trigger={(p) => <button type="button" className={`ss-route ${t === null ? 'undecided' : ''}`} {...p} data-testid={k === 'JUMP' ? `ss-skip-${inst.id}` : `ss-skipseq-${inst.id}`}>
+                    {t === null ? <Glyph name="alert" size={14} /> : <Glyph name="right" size={13} />} {routeText(survey, index, t, ws)}</button>}>
+                  {(close) => <Picker items={choices} placeholder="Choose what happens"
+                    footer={<p className="ss-muted">{k === 'JUMP' ? `${from} can jump to this module. The jump only selects it: its condition is still checked. This is what happens when the condition is not met.` : 'Reached in order, the call normally continues with the next module. This replaces that default.'}</p>}
+                    onPick={(id) => {
+                      const target: SurveyTarget | null = id === 'clear' ? null : id === '@CONTINUE' ? '@CONTINUE' : id.startsWith('i:') ? { instance: id.slice(2) } : { surveyOutcome: id.slice(2) as keyof typeof OUTCOME_LABEL };
+                      apply(`Set what happens when ${m.name} ${what}`, (w) => (k === 'JUMP' ? setIfIneligible(w, survey.id, inst.id, target) : setIfSkippedInSequence(w, survey.id, inst.id, target)));
+                      close();
+                    }} />}
+                </Popover>
+              </li>
+            );
+          }) : null}
         </ul>
   );
 }
@@ -269,7 +308,7 @@ function ModuleCard({ survey, inst, index, issues }: { survey: Survey; inst: Ins
   const inside = issues.filter((x) => x.where.moduleKey).length; // problems inside the module's own questions and routes
   const usedBy = survey.sequence.flatMap((other) => Object.entries(other.routes).filter(([, t]) => t && typeof t === 'object' && 'instance' in t && t.instance === inst.id)
     .map(([o]) => `${findModule(ws, mKey(other.module))?.name}: ${OUTCOME_LABEL[o as keyof typeof OUTCOME_LABEL]}`));
-  const waiting = survey.sequence.filter((o) => o.entry.mode === 'ON_OUTCOME' && o.entry.of === inst.id).map((o) => findModule(ws, mKey(o.module))?.name ?? '');
+  const waiting = survey.sequence.filter((o) => activationOf(o)?.of === inst.id).map((o) => findModule(ws, mKey(o.module))?.name ?? '');
 
   return (
     <article ref={(el) => { setNodeRef(el); ref.current = el as HTMLDivElement | null; }} style={{ transform: CSS.Translate.toString(transform), transition }}

@@ -4,9 +4,9 @@
 // There is no second routing model. Positions, zoom, collapse and selection are presentation state kept by the view.
 import { Graph, layout as dagreLayout } from '@dagrejs/dagre';
 import { describeAst } from './engine';
-import { buildFlow, normalNext, ruleText, validateModule, type Flow, type FlowEntry } from './flow';
+import { escalationOutcomes, mandatoryOutcomes, buildFlow, normalNext, ruleText, validateModule, type Flow, type FlowEntry } from './flow';
 import {
-  defaultOn, edgeOf, findCondition, findModule, findQuestion, setDecisionUnknown, setEdge, setFallback, setRejoin, setRoute, updateRule, type InsertAt,
+  canBeIneligible, defaultOn, edgeOf, findCondition, findModule, findQuestion, jumpSources, setDecisionUnknown, setEdge, setFallback, setIfIneligible, setIfSkippedInSequence, setRejoin, setRoute, updateRule, type InsertAt,
 } from './ops';
 import { ESCALATION_OUTCOMES, OUTCOME_LABEL } from './sample';
 import { isQuestion, mKey, type AnswerType, type Issue, type Module, type ModuleKind, type OutcomeCode, type Survey, type SurveyTarget, type Target, type Workspace } from './types';
@@ -57,10 +57,24 @@ export interface GEdge {
   label: string;
   tone: Tone;
   main: boolean;
-  /** Drawn to explain the flow (queue order, a collapsed lane); not a route an author can re-point on the canvas. */
+  /**
+   * Drawn to explain a canonical STRUCTURE (the order of a follow-up queue, a folded branch, where the module starts).
+   * It is not a business route of its own, so it cannot be disconnected or re-pointed; `why` says what it shows and
+   * `owner` is the step on which the structure is edited.
+   */
   synthetic?: boolean;
+  why?: string;
+  owner?: string;
   insert?: InsertAt;
+  /** The route's own name ("No", "Matches", "Rule 1 …") — the edge label may be empty when the card already says it. */
+  route?: string;
+  /** A mandatory escalation: may be redirected only to an approved escalation outcome. */
+  must?: boolean;
+  /** Set by an interruption rule on the answer, not by a connection. */
+  fixed?: boolean;
 }
+
+const QUEUE_WHY = 'The order in which follow-up questions are asked. It is not a route of its own: change the order, or what each answer asks, on the question that owns the queue.';
 
 export interface ModuleGraph { nodes: GNode[]; edges: GEdge[]; flow: Flow; lanes: string[] }
 
@@ -180,32 +194,29 @@ export function moduleGraph(ws: Workspace, m: Module, collapsed: ReadonlySet<str
       const rejoin = isQuestion(nd) ? nd.routing.rejoin ?? null : null;
       if (collapsed.has(key)) {
         stub(key, queue.map((x) => x.node), `${queue.length} follow-up question${queue.length === 1 ? '' : 's'}, asked in order`, rejoin, nd.id);
-        edges.push({ id: `${nd.id}|QUEUE`, source: nd.id, handle: 'REJOIN', target: `stub:${key}`, label: 'for each selected answer', tone: 'queue', main: false, synthetic: true });
+        edges.push({ id: `${nd.id}|QUEUE`, source: nd.id, handle: 'REJOIN', target: `stub:${key}`, label: 'for each selected answer', tone: 'queue', main: false, synthetic: true, why: QUEUE_WHY, owner: nd.id });
       } else {
         queue.forEach((it, i) => {
-          edges.push({ id: `${nd.id}|QUEUE|${i}`, source: i === 0 ? nd.id : queue[i - 1]!.node, handle: i === 0 ? 'REJOIN' : 'NEXT', target: it.node, label: `${i + 1} · if ${it.because}`, tone: 'queue', main: false, synthetic: true });
+          edges.push({ id: `${nd.id}|QUEUE|${i}`, source: i === 0 ? nd.id : queue[i - 1]!.node, handle: i === 0 ? 'REJOIN' : 'NEXT', target: it.node, label: `${i + 1} · if ${it.because}`, tone: 'queue', main: false, synthetic: true, why: QUEUE_WHY, owner: nd.id });
         });
         const last = queue[queue.length - 1]!.node;
-        if (rejoin && !('ret' in rejoin)) edges.push({ id: `${nd.id}|QUEUE|END`, source: last, handle: 'NEXT', target: 'node' in rejoin ? rejoin.node : outcomeNodeId(rejoin.outcome, nd.id), label: 'then rejoins', tone: 'queue', main: false, synthetic: true });
+        if (rejoin && !('ret' in rejoin)) edges.push({ id: `${nd.id}|QUEUE|END`, source: last, handle: 'NEXT', target: 'node' in rejoin ? rejoin.node : outcomeNodeId(rejoin.outcome, nd.id), label: 'then rejoins', tone: 'queue', main: false, synthetic: true, why: 'Where everyone continues after the follow-ups. It is the “After the follow-ups” route of the question that owns the queue.', owner: nd.id });
         for (const f of entry.followups) visit(f);
       }
     }
 
-    // ordinary slots → edges, merged per destination so five answers to one place draw one line
+    // ordinary slots → edges. One edge per ROUTE (never merged), so each keeps its own identity — source step, route key —
+    // and can be selected, disconnected and re-pointed on its own even when several answers share a destination.
     const drawn = queue.length ? slots.filter((s) => s.via !== 'REJOIN') : slots;
-    const byTarget = new Map<string, Slot[]>();
-    for (const s of drawn) {
-      if (!s.target || 'ret' in s.target) continue;
-      const to = 'node' in s.target ? s.target.node : outcomeNodeId(s.target.outcome, nd.id);
-      byTarget.set(to, [...(byTarget.get(to) ?? []), s]);
-    }
     const next = normalNext(m, nd, isQuestion(nd) ? findQuestion(ws, nd.q) : undefined);
-    for (const [to, group] of byTarget) {
-      const first = group[0]!;
-      const label = slots.length === 1 ? '' : group.length <= 2 ? group.map((s) => clip(s.label, 28)).join(' · ') : `${clip(first.label, 20)}, ${clip(group[1]!.label, 20)} +${group.length - 2}`;
-      const tone: Tone = group.some((s) => s.must) ? 'escalate' : group.some((s) => s.tone === 'normal') ? 'normal' : first.tone;
-      const isMain = mainIds.has(nd.id) && !!next && 'node' in next && next.node === to && mainIds.has(to);
-      edges.push({ id: `${nd.id}|${first.via}`, source: nd.id, handle: first.via, target: to, label, tone, main: isMain, ...(group.length === 1 && first.insert ? { insert: first.insert } : {}) });
+    for (const sl of drawn) {
+      if (!sl.target || 'ret' in sl.target) continue;
+      const to = 'node' in sl.target ? sl.target.node : outcomeNodeId(sl.target.outcome, nd.id);
+      const isMain = sl.tone === 'normal' && mainIds.has(nd.id) && !!next && 'node' in next && next.node === to && mainIds.has(to);
+      edges.push({
+        id: `${nd.id}|${sl.via}`, source: nd.id, handle: sl.via, target: to, label: slots.length === 1 ? '' : clip(sl.label, 28), route: sl.label, tone: sl.must ? 'escalate' : sl.tone, main: isMain,
+        ...(sl.insert ? { insert: sl.insert } : {}), ...(sl.must ? { must: true } : {}), ...(sl.connect ? {} : { fixed: true, owner: nd.id, why: 'This answer interrupts the follow-ups. Where it leads is part of its interruption rule, set on the answer.' }),
+      });
     }
 
     for (const row of entry.rows) {
@@ -222,10 +233,10 @@ export function moduleGraph(ws: Workspace, m: Module, collapsed: ReadonlySet<str
   };
 
   nodes.push({ id: 'start', kind: 'START', title: 'Module starts', slots: [], issues: 0, main: true, width: 150, height: 36 });
-  if (m.entry) edges.push({ id: 'start|ENTRY', source: 'start', handle: 'ENTRY', target: m.entry, label: '', tone: 'normal', main: true, insert: { entry: true } });
+  if (m.entry) edges.push({ id: 'start|ENTRY', source: 'start', handle: 'ENTRY', target: m.entry, label: '', tone: 'normal', main: true, insert: { entry: true }, synthetic: true, why: 'Where the module starts. It follows the first step; add a step before it to change what comes first.', owner: m.entry });
   for (const e of flow.main) visit(e);
   for (const e of flow.orphans) visit(e, true);
-  for (const s of pendingStubEnds) edges.push({ id: `${s.id}|END`, source: s.id, handle: 'NEXT', target: 'node' in s.end ? s.end.node : outcomeNodeId((s.end as { outcome: OutcomeCode }).outcome, s.source), label: '', tone: 'alt', main: false, synthetic: true });
+  for (const s of pendingStubEnds) edges.push({ id: `${s.id}|END`, source: s.id, handle: 'NEXT', target: 'node' in s.end ? s.end.node : outcomeNodeId((s.end as { outcome: OutcomeCode }).outcome, s.source), label: '', tone: 'alt', main: false, synthetic: true, why: 'A folded branch. Open it to see and edit the routes inside.' });
 
   // collapsed lanes: an edge into a hidden step goes to its stub; edges out of hidden steps are covered by the stub
   const visibleEdges: GEdge[] = [];
@@ -237,7 +248,7 @@ export function moduleGraph(ws: Workspace, m: Module, collapsed: ReadonlySet<str
     const key = `${e.source}|${e.handle}|${target}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    visibleEdges.push(target === e.target ? e : { ...e, target, insert: undefined });
+    visibleEdges.push(target === e.target ? e : { ...e, target, insert: undefined }); // the route itself is unchanged; only its far end is folded
   }
   const visibleNodes = nodes.filter((n) => !hidden.has(n.id));
 
@@ -320,6 +331,28 @@ export function connectRoute(ws: Workspace, moduleKey: string, source: string, v
   return setEdge(ws, moduleKey, source, via, target);
 }
 
+/**
+ * Why a route cannot be disconnected — or null when it can. Disconnecting leaves the route UNDECIDED in the draft (a
+ * validation blocker until a destination is chosen); it never removes the step, the answer or the former destination.
+ */
+export function disconnectProblem(m: Module, source: string, via: string): string | null {
+  const from = m.nodes.find((x) => x.id === source);
+  if (!from) return 'This line shows structure; it is not a route of its own.';
+  if (via.startsWith('INT:')) return 'This route is part of the answer’s interruption rule. Change it on the answer.';
+  if (via === 'NEXT' || via === 'ENTRY') return 'This line shows structure; it is not a route of its own.';
+  return null;
+}
+
+/** Disconnects one route: the same "leave undecided" the Guided destination picker offers, through the same operations. */
+export function disconnectRoute(ws: Workspace, moduleKey: string, source: string, via: string): Workspace {
+  const from = findModule(ws, moduleKey)!.nodes.find((x) => x.id === source)!;
+  if (via === 'REJOIN') return setRejoin(ws, moduleKey, source, null);
+  if (via === 'FALLBACK') return setFallback(ws, moduleKey, source, null);
+  if (via.startsWith('RULE:')) return updateRule(ws, moduleKey, source, via.slice(5), { to: null });
+  if (via === 'UNKNOWN' && !isQuestion(from)) return setDecisionUnknown(ws, moduleKey, source, { clear: true });
+  return setEdge(ws, moduleKey, source, via, null);
+}
+
 // ---- the survey-level graph: module instances, entry conditions, named outcomes and transitions ---------------------
 export interface SNode {
   id: string;
@@ -331,24 +364,33 @@ export interface SNode {
   version?: string;
   questions?: number;
   index?: number;
-  slots: Array<{ via: OutcomeCode; label: string; target: SurveyTarget | null; undecided: boolean; connect: boolean }>;
+  /** One per named outcome; plus '@SKIP' ("if it does not apply") when a jump can arrive at a module that has an eligibility condition. */
+  slots: Array<{ via: string; label: string; target: SurveyTarget | null; undecided: boolean; connect: boolean }>;
   issues: number;
   outcome?: OutcomeCode;
   width: number;
   height: number;
 }
+/** The route key of a module's skip disposition in the survey graph. */
+export const SKIP = '@SKIP';
+/** The route key of a module's skip disposition when it is reached in sequence (shown only when one is configured). */
+export const SKIP_SEQ = '@SKIP_SEQ';
 export interface SurveyGraph { nodes: SNode[]; edges: GEdge[] }
 
 export function surveyGraph(ws: Workspace, s: Survey, issues: Issue[], entryText: (instanceId: string) => string): SurveyGraph {
   const nodes: SNode[] = [{ id: 'start', kind: 'START', title: 'Start of call', slots: [], issues: 0, main: true, width: 150, height: 36 }];
   const edges: GEdge[] = [];
   const END = 'end:COMPLETED';
-  if (s.sequence[0]) edges.push({ id: 'start|ENTRY', source: 'start', handle: 'ENTRY', target: s.sequence[0].id, label: '', tone: 'normal', main: true, synthetic: true });
+  if (s.sequence[0]) edges.push({ id: 'start|ENTRY', source: 'start', handle: 'ENTRY', target: s.sequence[0].id, label: '', tone: 'normal', main: true, synthetic: true, why: 'Where the call starts: the first module in the order. Reorder the modules to change it.' });
   s.sequence.forEach((inst, i) => {
     const m = findModule(ws, mKey(inst.module));
     if (!m) return;
     const runs = entryText(inst.id);
-    const slots = m.outcomes.map((o) => ({ via: o, label: OUTCOME_LABEL[o], target: inst.routes[o] ?? null, undecided: (inst.routes[o] ?? null) === null, connect: o !== 'REVIEW_REQUIRED' }));
+    const slots: SNode['slots'] = m.outcomes.map((o) => ({ via: o, label: OUTCOME_LABEL[o], target: inst.routes[o] ?? null, undecided: (inst.routes[o] ?? null) === null, connect: o !== 'REVIEW_REQUIRED' }));
+    const must = mandatoryOutcomes(ws, m);
+    const terminal = escalationOutcomes(m);
+    if (canBeIneligible(inst) && inst.ifSkippedInSequence !== undefined) slots.push({ via: SKIP_SEQ, label: 'If it does not apply (in sequence)', target: inst.ifSkippedInSequence, undecided: inst.ifSkippedInSequence === null, connect: true });
+    if (jumpSources(s, inst.id).length && canBeIneligible(inst)) slots.push({ via: SKIP, label: 'If it does not apply', target: inst.ifIneligible ?? null, undecided: (inst.ifIneligible ?? null) === null, connect: true });
     nodes.push({
       id: inst.id, kind: 'INSTANCE', main: true, title: m.name, subtitle: `Runs ${runs}`, moduleKind: m.kind, index: i,
       version: m.published ? `v${m.revision}` : `draft v${m.revision}`, questions: m.nodes.filter((x) => x.type === 'QUESTION').length,
@@ -362,7 +404,8 @@ export function surveyGraph(ws: Workspace, s: Survey, issues: Issue[], entryText
       else if ('instance' in t) { if (!s.sequence.some((x) => x.id === t.instance)) continue; to = t.instance; }
       else to = `sout:${t.surveyOutcome}@${inst.id}`;
       const jump = t !== '@CONTINUE' && 'instance' in t;
-      edges.push({ id: `${inst.id}|${sl.via}`, source: inst.id, handle: sl.via, target: to, label: jump ? `${sl.label} · jumps` : sl.label, tone: sl.via === 'COMPLETED' ? 'normal' : sl.via === 'REVIEW_REQUIRED' ? 'unknown' : 'alt', main: t === '@CONTINUE' && sl.via === 'COMPLETED' });
+      if (sl.via === SKIP || sl.via === SKIP_SEQ) { edges.push({ id: `${inst.id}|${sl.via}`, source: inst.id, handle: sl.via, target: to, route: sl.label, label: sl.via === SKIP ? 'if it does not apply' : 'if it does not apply · in sequence', tone: 'unknown', main: false }); continue; }
+      edges.push({ id: `${inst.id}|${sl.via}`, source: inst.id, handle: sl.via, target: to, route: sl.label, ...(sl.connect ? {} : { fixed: true, owner: inst.id, why: 'Review required is governed: the call halts and waits for an authorised review. It cannot be disconnected or routed elsewhere.' }), label: must.includes(sl.via as OutcomeCode) && !jump ? `${sl.label} · mandatory escalation` : terminal.includes(sl.via as OutcomeCode) && !jump ? `${sl.label} · ends the call` : jump ? `${sl.label} · jumps` : sl.label, tone: sl.via === 'COMPLETED' ? 'normal' : sl.via === 'REVIEW_REQUIRED' ? 'unknown' : 'alt', main: t === '@CONTINUE' && sl.via === 'COMPLETED' });
     }
   });
   const have = new Set(nodes.map((n) => n.id));
@@ -380,9 +423,16 @@ export function surveyGraph(ws: Workspace, s: Survey, issues: Issue[], entryText
 }
 
 /** A survey-level connection as a route, or the reason it is not allowed. Uses the Composer's own rules. */
-export function surveyRouteFor(s: Survey, source: string, via: string, targetId: string): { target: SurveyTarget } | { problem: string } {
+export function surveyRouteFor(s: Survey, source: string, via: string, targetId: string, ws?: Workspace): { target: SurveyTarget } | { problem: string } {
   const from = s.sequence.findIndex((x) => x.id === source);
   if (from < 0) return { problem: 'Routes start from a module outcome.' };
+  // a mandatory escalation cannot be overridden by survey-level routing (A-4)
+  const mod = ws ? findModule(ws, mKey(s.sequence[from]!.module)) : undefined;
+  if (ws && mod && (escalationOutcomes(mod) as string[]).includes(via) && targetId.slice(5).split('@')[0] !== via) {
+    return { problem: (mandatoryOutcomes(ws, mod) as string[]).includes(via)
+      ? `“${OUTCOME_LABEL[via as OutcomeCode]}” of ${mod.name} is a mandatory escalation: it can only end the call with “${OUTCOME_LABEL[via as OutcomeCode]}”. Survey routing cannot override it.`
+      : `“${OUTCOME_LABEL[via as OutcomeCode]}” of ${mod.name} is an escalation: it can only end the call with “${OUTCOME_LABEL[via as OutcomeCode]}”. An escalation is never continued or re-routed.` };
+  }
   if (via === 'REVIEW_REQUIRED') return { problem: 'Review required always halts the call; it cannot be routed elsewhere.' };
   if (targetId === 'end:COMPLETED') return from === s.sequence.length - 1 ? { target: '@CONTINUE' } : { problem: 'To end the call early, connect to one of the “End of call” outcomes, or route to the last module.' };
   if (targetId.startsWith('sout:')) {
@@ -394,6 +444,15 @@ export function surveyRouteFor(s: Survey, source: string, via: string, targetId:
   if (to <= from) return { problem: 'A route may only go to a later module.' };
   return { target: to === from + 1 ? '@CONTINUE' : { instance: targetId } };
 }
-export const connectSurveyRoute = (ws: Workspace, surveyId: string, instanceId: string, outcome: string, target: SurveyTarget): Workspace => setRoute(ws, surveyId, instanceId, outcome, target);
+/** Why a survey route cannot be disconnected, or null. A disconnected route is undecided in the draft, as in the Composer. */
+export function surveyDisconnectProblem(s: Survey, source: string, via: string): string | null {
+  if (!s.sequence.some((x) => x.id === source)) return 'This line shows where the call starts; it is not a route of its own.';
+  if (via === 'REVIEW_REQUIRED') return 'Review required is governed: the call halts and waits for an authorised review. It cannot be disconnected or routed elsewhere.';
+  return null;
+}
+export const disconnectSurveyRoute = (ws: Workspace, surveyId: string, instanceId: string, outcome: string): Workspace =>
+  (outcome === SKIP ? setIfIneligible(ws, surveyId, instanceId, null) : outcome === SKIP_SEQ ? setIfSkippedInSequence(ws, surveyId, instanceId, null) : setRoute(ws, surveyId, instanceId, outcome, null));
+export const connectSurveyRoute = (ws: Workspace, surveyId: string, instanceId: string, outcome: string, target: SurveyTarget): Workspace =>
+  (outcome === SKIP ? setIfIneligible(ws, surveyId, instanceId, target) : outcome === SKIP_SEQ ? setIfSkippedInSequence(ws, surveyId, instanceId, target) : setRoute(ws, surveyId, instanceId, outcome, target));
 
 export { canonical, fingerprint } from './canonical';

@@ -67,8 +67,12 @@ export function Popover({ trigger, children, align = 'start', label, open: contr
   const btn = useRef<HTMLButtonElement | null>(null);
   const panel = useRef<HTMLDivElement>(null);
   const [flip, setFlip] = useState(false);
-  /** Inside a scrolling side panel the popover is placed against the window, so the panel cannot clip it. */
-  const [fixed, setFixed] = useState<{ left: number; top: number } | null>(null);
+  /**
+   * In the graph editors the popover is placed against the WINDOW, so neither a scrolling side panel nor the bottom of
+   * the screen can clip it. Placement is collision-aware: below the trigger when it fits, otherwise above, otherwise on
+   * the side with more room with its own height limited to that room (it scrolls inside). Never off-screen.
+   */
+  const [fixed, setFixed] = useState<{ left: number; top: number; maxHeight?: number; side: 'below' | 'above' } | null>(null);
   const close = () => { setOpen(false); btn.current?.focus(); };
 
   useEffect(() => {
@@ -81,20 +85,42 @@ export function Popover({ trigger, children, align = 'start', label, open: contr
 
   useLayoutEffect(() => {
     if (!open || !panel.current) return;
-    const r = panel.current.getBoundingClientRect();
-    const host = wrap.current?.closest<HTMLElement>('.ss-g-panel');
+    const el = panel.current;
+    // a graph surface, but not inside the zoomed canvas itself (a transformed ancestor would capture "fixed")
+    const host = wrap.current?.closest('.react-flow__viewport') ? null : wrap.current?.closest<HTMLElement>('.ss-g-panel, .ss-g-wrap, .ss-graph-page');
     if (host && btn.current) {
-      const b = btn.current.getBoundingClientRect();
-      const below = b.bottom + 6 + r.height <= window.innerHeight - 8;
-      setFixed({ left: Math.max(8, Math.min(b.left, window.innerWidth - r.width - 8)), top: below ? b.bottom + 6 : Math.max(8, b.top - 6 - r.height) });
+      const place = () => {
+        if (!btn.current) return;
+        el.style.maxHeight = '';
+        const r = el.getBoundingClientRect();
+        const b = btn.current.getBoundingClientRect();
+        const GAP = 6, EDGE = 8;
+        const below = window.innerHeight - b.bottom - GAP - EDGE, above = b.top - GAP - EDGE;
+        const side: 'below' | 'above' = r.height <= below || below >= above ? 'below' : 'above';
+        const room = Math.max(120, side === 'below' ? below : above);
+        const height = Math.min(r.height, room);
+        // The route toolbar is itself positioned with a transform, which makes it the containing block of anything
+        // "fixed" inside it: window coordinates are converted to that block's own.
+        const block = wrap.current?.closest<HTMLElement>('.ss-g-edgebar');
+        const o = block ? block.getBoundingClientRect() : null;
+        const dx = o && block ? o.left + block.clientLeft : 0, dy = o && block ? o.top + block.clientTop : 0;
+        setFixed({ left: Math.max(EDGE, Math.min(b.left, window.innerWidth - r.width - EDGE)) - dx, top: (side === 'below' ? b.bottom + GAP : Math.max(EDGE, b.top - GAP - height)) - dy, side, ...(r.height > room ? { maxHeight: room } : {}) });
+      };
+      place();
       const shut = () => setOpen(false); // the anchor moves when the panel scrolls
-      host.addEventListener('scroll', shut, { once: true });
-    } else {
-      setFixed(null);
-      setFlip(r.bottom > window.innerHeight - 8 && r.top - r.height > 80);
+      const scroller = host.classList.contains('ss-g-panel') ? host : null;
+      scroller?.addEventListener('scroll', shut, { once: true });
+      window.addEventListener('resize', place);
+      const first = el.querySelector<HTMLElement>('[data-autofocus], input, button');
+      first?.focus({ preventScroll: true });
+      return () => { window.removeEventListener('resize', place); scroller?.removeEventListener('scroll', shut); };
     }
+    setFixed(null);
+    const r = el.getBoundingClientRect();
+    setFlip(r.bottom > window.innerHeight - 8 && r.top - r.height > 80);
     const first = panel.current.querySelector<HTMLElement>('[data-autofocus], input, button');
     first?.focus({ preventScroll: true });
+    return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
@@ -103,7 +129,8 @@ export function Popover({ trigger, children, align = 'start', label, open: contr
       {trigger({ onClick: () => setOpen(!open), 'aria-expanded': open, 'aria-haspopup': 'dialog', ref: (el) => { btn.current = el; } })}
       {open ? (
         <div ref={panel} className={`ss-pop-panel ${align === 'end' ? 'end' : ''} ${flip ? 'flip' : ''} ${wide ? 'wide' : ''}`} role="dialog" aria-label={label}
-          style={fixed ? { position: 'fixed', left: fixed.left, top: fixed.top, right: 'auto', bottom: 'auto' } : undefined}
+          data-placed={fixed ? fixed.side : undefined}
+          style={fixed ? { position: 'fixed', left: fixed.left, top: fixed.top, right: 'auto', bottom: 'auto', ...(fixed.maxHeight ? { maxHeight: fixed.maxHeight, overflowY: 'auto' as const } : {}) } : undefined}
           onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } }}>
           {children(close)}
         </div>

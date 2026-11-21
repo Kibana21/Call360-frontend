@@ -183,7 +183,7 @@ describe('follow-up queue (demonstration evaluator)', () => {
     w = setFollowupBehaviour(w, key, id, 'PREMIUM', { kind: 'INTERRUPT', interrupt: { policy: 'STOP_ESCALATE', outcome: 'ESCALATE' } });
     expect(problems().filter((p) => p.includes('choose what'))).toEqual([]);
     expect(findModule(w, key)!.outcomes).toContain('ESCALATE'); // declared outcomes follow the routes
-    expect(w.surveys[0]!.sequence[1]!.routes.ESCALATE).toBeNull(); // …and the survey must decide what it leads to
+    expect(w.surveys[0]!.sequence[1]!.routes.ESCALATE).toEqual({ surveyOutcome: 'ESCALATE' }); // …and it is terminal: an escalation always ends the call as itself (SS-02 closure)
   });
 });
 
@@ -328,7 +328,7 @@ describe('SS-02A.1: duplicate option and blank module', () => {
     expect(findModule(w2, made.moduleKey)!.outcomes).toEqual(['COMPLETED']);
     expect(w2.surveys[0]!.sequence[1]!.routes).toEqual({ COMPLETED: '@CONTINUE' }); // the normal outcome follows the normal sequence
     const w3 = setRejoin(setMode(insertQuestion(w2, made.moduleKey, { from: 'n1', on: 'ANY' }, { type: 'MULTI_SELECT' })[0], made.moduleKey, 'n2', 'SEQUENTIAL_FOLLOWUPS'), made.moduleKey, 'n2', { outcome: 'ESCALATE' });
-    expect(w3.surveys[0]!.sequence[1]!.routes).toEqual({ ESCALATE: null }); // the module now only ends by escalating; that outcome is never routed for the author
+    expect(w3.surveys[0]!.sequence[1]!.routes).toEqual({ ESCALATE: { surveyOutcome: 'ESCALATE' } }); // the module now only ends by escalating; Escalate is governed: it ends the call (SS-02 closure)
   });
 });
 

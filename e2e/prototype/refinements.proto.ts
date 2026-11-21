@@ -242,8 +242,7 @@ test('SS-02A.1 refinements: blank module, duplicate, interruptions, unresolved b
   await page.getByRole('link', { name: 'Refinement check' }).click();
   const card = page.getByTestId('ss-card-mi-payment-method-check');
   await expect(card).toContainText('Draft · not in the shared library');
-  await expect(page.getByTestId('ss-route-mi-payment-method-check-ESCALATE')).toContainText('Choose what happens');
-  await expect(card).toHaveClass(/has-issue/);
+  await expect(page.getByTestId('ss-route-mi-payment-method-check-ESCALATE')).toContainText('ends the call: Escalate'); // an escalation is terminal: its route is governed, not left to choose (SS-02 closure)
   await atWidths(page, 'composer-with-issues', [page.getByTestId('ss-route-mi-payment-method-check-ESCALATE')]);
   await page.setViewportSize({ width: 1024, height: 900 });
   await page.reload(); // at 1024 the library starts closed and opens as an overlay

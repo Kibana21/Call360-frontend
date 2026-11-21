@@ -2,7 +2,10 @@
 // snapshots: an edit made by a graph gesture and the equivalent edit made in the Guided view give the identical model.
 import { describe, expect, it } from 'vitest';
 import { buildFlow, validateModule, validateSurvey } from './flow';
-import { canonical, connectProblem, connectRoute, connectSurveyRoute, fingerprint, layoutGraph, moduleGraph, slotsOf, surveyGraph, surveyRouteFor, targetOfNodeId } from './graph';
+import {
+  canonical, connectProblem, connectRoute, connectSurveyRoute, disconnectProblem, disconnectRoute, disconnectSurveyRoute, fingerprint, layoutGraph, moduleGraph, slotsOf, surveyDisconnectProblem,
+  surveyGraph, surveyRouteFor, targetOfNodeId,
+} from './graph';
 import { addLargeModule } from './large';
 import {
   addInstance, createSurvey, deriveModule, findModule, insertDecision, insertQuestion, moveInstance, routesFrom, setDecisionUnknown, setEdge, setFallback, setMode, setRejoin, setRoute,
@@ -33,10 +36,10 @@ describe('the 40-question module', () => {
     const steps = g.nodes.filter((n) => n.kind === 'QUESTION' || n.kind === 'DECISION').map((n) => n.id);
     expect(steps.slice().sort()).toEqual(m.nodes.map((n) => n.id).sort()); // no step missing, none duplicated
     expect(new Set(g.nodes.map((n) => n.id)).size).toBe(g.nodes.length);
-    // two answers of n6 merge into ONE question, drawn as one node and one labelled edge
+    // two answers of n6 merge into ONE question: one node, and one edge PER ROUTE so each can be edited on its own
     const into27 = g.edges.filter((e) => e.target === 'n27');
-    expect(into27).toHaveLength(1);
-    expect(into27[0]!.label).toBe('By phone · In writing only');
+    expect(into27.map((e) => [e.id, e.handle, e.route])).toEqual([['n6|BY_PHONE', 'BY_PHONE', 'By phone'], ['n6|IN_WRITING', 'IN_WRITING', 'In writing only']]);
+    expect(g.nodes.filter((n) => n.id === 'n27')).toHaveLength(1);
     expect(g.edges.filter((e) => e.target === 'n7').map((e) => e.source).sort()).toEqual(['n27', 'n6']); // a shared destination with two incoming edges
   });
 
@@ -200,5 +203,93 @@ describe('Guided / Graph parity: equivalent edits give the identical canonical m
     const shuffled = JSON.parse(JSON.stringify(ws, (_k, v: unknown) => (v && typeof v === 'object' && !Array.isArray(v) ? Object.fromEntries(Object.entries(v as object).reverse()) : v))) as Workspace;
     expect(fingerprint(shuffled)).toBe(fingerprint(ws));
     expect(fingerprint(setEdge(ws, draft().key, findModule(ws, draft().key)!.nodes[0]!.id, 'X', { outcome: 'ESCALATE' }))).not.toBe(fingerprint(ws));
+  });
+});
+
+// ---- SS-02B.2.1: selecting, disconnecting and re-pointing a route ---------------------------------------------------
+describe('connection editing goes through the canonical model', () => {
+  const same = (a: Workspace, b: Workspace) => expect(canonical(a)).toBe(canonical(b));
+  /**
+   * The routes of a module by their IDENTITY — source step and route key — with their destinations. A route that is
+   * disconnected and connected again is the same route; the edge record that carries it is a new record (new record id,
+   * last in the list), so "the same routing" is compared on identities, and undo is what restores the record itself.
+   */
+  const routing = (w: Workspace, key: string) => { const m = findModule(w, key)!; return m.nodes.flatMap((n) => routesFrom(m, n).map((r) => `${n.id}|${r.via}→${JSON.stringify(r.to)}`)).sort(); };
+
+  it('disconnecting a route removes the routing binding only: the step, its answer and the former destination all stay', () => {
+    const { ws, key, m } = large();
+    const off = disconnectRoute(ws, key, 'n3', 'NO');
+    const m2 = findModule(off, key)!;
+    expect(m2.edges.some((e) => e.from === 'n3' && e.on === 'NO')).toBe(false); // gone from the model, not merely hidden
+    expect(m2.nodes.map((n) => n.id)).toEqual(m.nodes.map((n) => n.id)); // no step deleted or duplicated
+    expect(off.questions).toEqual(ws.questions); // the answer option is untouched
+    expect(m2.edges.filter((e) => e.from === 'n3').map((e) => e.on)).toEqual(['YES']); // the other route keeps its identity
+    same(off, setEdge(ws, key, 'n3', 'NO', null)); // exactly Guided's "Leave undecided for now"
+    // shown as incomplete, with a navigable issue, and the draft is not routing-complete
+    const g = moduleGraph(off, m2);
+    expect(slotsOf(off, m2, g.flow.main.find((e) => e.node.id === 'n3')!).find((s) => s.via === 'NO')).toMatchObject({ undecided: true, target: null });
+    expect(g.edges.some((e) => e.id === 'n3|NO')).toBe(false);
+    const issues = validateModule(off, m2);
+    expect(issues.some((i) => i.severity === 'ERROR' && i.where.nodeId === 'n3' && i.where.on === 'NO')).toBe(true);
+    expect(issues.length).toBeGreaterThan(0);
+    // reconnecting gives back exactly the previous routing; nothing else in the model differs
+    const back = connectRoute(off, key, 'n3', 'NO', { node: 'n25' });
+    expect(routing(back, key)).toEqual(routing(ws, key));
+    expect(findModule(back, key)!.nodes).toEqual(m.nodes);
+    expect(back.questions).toEqual(ws.questions);
+  });
+
+  it('works for every kind of route, each through the operation Guided uses', () => {
+    const { ws, key } = large();
+    same(disconnectRoute(ws, key, 'n6', 'BY_PHONE'), setEdge(ws, key, 'n6', 'BY_PHONE', null)); // single choice, option-specific
+    same(disconnectRoute(ws, key, 'n1', 'ANY'), setEdge(ws, key, 'n1', 'ANY', null)); // everybody continues
+    same(disconnectRoute(ws, key, 'd1', 'MATCH'), setEdge(ws, key, 'd1', 'MATCH', null)); // decision: matches
+    same(disconnectRoute(ws, key, 'd1', 'NO_MATCH'), setEdge(ws, key, 'd1', 'NO_MATCH', null)); // decision: otherwise
+    same(disconnectRoute(ws, key, 'd1', 'UNKNOWN'), setDecisionUnknown(ws, key, 'd1', { clear: true })); // decision: unknown
+    same(disconnectRoute(ws, key, 'n12', 'REJOIN'), setRejoin(ws, key, 'n12', null)); // multi-select: after the follow-ups
+    same(disconnectRoute(ws, key, 'n23', 'FALLBACK'), setFallback(ws, key, 'n23', null)); // multi-select rules: otherwise
+    same(disconnectRoute(ws, key, 'n23', 'RULE:r1'), updateRule(ws, key, 'n23', 'r1', { to: null })); // one prioritised rule
+    same(disconnectRoute(ws, key, 'n15', 'NO'), setEdge(ws, key, 'n15', 'NO', null)); // a module outcome connection
+    // an Unknown route left undecided is flagged and is never read as "otherwise"
+    const off = disconnectRoute(ws, key, 'd1', 'UNKNOWN');
+    expect(validateModule(off, findModule(off, key)!).some((i) => i.where.nodeId === 'd1' && i.where.on === 'UNKNOWN')).toBe(true);
+    // a mandatory escalation may be disconnected (the draft is then incomplete) but re-pointed only to an approved escalation outcome
+    const esc = disconnectRoute(ws, key, 'n17', 'PRESSURED');
+    const m = findModule(esc, key)!;
+    expect(validateModule(esc, m).some((i) => i.where.nodeId === 'n17' && i.where.on === 'PRESSURED')).toBe(true);
+    expect(connectProblem(esc, m, 'n17', 'PRESSURED', 'n18')).toMatch(/mandatory escalation/);
+    expect(connectProblem(esc, m, 'n17', 'PRESSURED', 'out:ESCALATE@n17')).toBeNull();
+    expect(routing(connectRoute(esc, key, 'n17', 'PRESSURED', { outcome: 'ESCALATE' }), key)).toEqual(routing(ws, key));
+  });
+
+  it('tells a business route from a line that only shows structure, and says where the structure is edited', () => {
+    const { ws, m } = large();
+    const g = moduleGraph(ws, m);
+    const queue = g.edges.filter((e) => e.id.startsWith('n12|QUEUE'));
+    expect(queue.every((e) => e.synthetic && e.owner === 'n12' && !!e.why)).toBe(true);
+    expect(g.edges.find((e) => e.id === 'start|ENTRY')).toMatchObject({ synthetic: true });
+    expect(g.edges.find((e) => e.id === 'n12|INT:NEVER_AGREED')).toMatchObject({ fixed: true, owner: 'n12' });
+    expect(disconnectProblem(m, 'n12', 'INT:NEVER_AGREED')).toMatch(/interruption rule/);
+    expect(disconnectProblem(m, 'n32', 'NEXT')).toMatch(/not a route of its own/);
+    expect(disconnectProblem(m, 'n3', 'NO')).toBeNull();
+    // every ordinary route is one edge with a stable identity: source step + route key
+    const ordinary = g.edges.filter((e) => !e.synthetic);
+    expect(new Set(ordinary.map((e) => e.id)).size).toBe(ordinary.length);
+    expect(ordinary.every((e) => e.id === `${e.source}|${e.handle}`)).toBe(true);
+  });
+
+  it('survey level: disconnect is the Composer route set to undecided; the governed halt cannot be disconnected', () => {
+    const { ws, surveyId } = draft();
+    const s = ws.surveys.find((x) => x.id === surveyId)!;
+    const off = disconnectSurveyRoute(ws, surveyId, 'mi-general-verification', 'COMPLETED');
+    same(off, setRoute(ws, surveyId, 'mi-general-verification', 'COMPLETED', null));
+    const s2 = off.surveys.find((x) => x.id === surveyId)!;
+    expect(s2.sequence.map((x) => x.id)).toEqual(s.sequence.map((x) => x.id)); // both modules stay
+    expect(validateSurvey(off, s2).some((i) => i.where.instanceId === 'mi-general-verification' && i.where.on === 'COMPLETED')).toBe(true);
+    expect(surveyGraph(off, s2, [], () => 'always').edges.some((e) => e.id === 'mi-general-verification|COMPLETED')).toBe(false);
+    same(connectSurveyRoute(off, surveyId, 'mi-general-verification', 'COMPLETED', '@CONTINUE'), ws);
+    expect(surveyDisconnectProblem(s, 'mi-affordability-check', 'REVIEW_REQUIRED')).toMatch(/governed/);
+    expect(surveyDisconnectProblem(s, 'mi-general-verification', 'COMPLETED')).toBeNull();
+    expect(surveyGraph(ws, s, [], () => 'always').edges.find((e) => e.id === 'mi-affordability-check|REVIEW_REQUIRED')).toMatchObject({ fixed: true });
   });
 });

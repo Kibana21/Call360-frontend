@@ -175,14 +175,40 @@ export type Entry =
   | { mode: 'RULE'; binding: Binding }
   | { mode: 'ON_OUTCOME'; of: string; outcomes: OutcomeCode[] };
 
+/**
+ * The ACTIVATION TRIGGER of a module (owner decision A-2, SS-02C): when it is SELECTED in sequence — only after a named
+ * earlier module ends with one of these outcomes. It is independent of the eligibility condition (`entry`), which
+ * decides whether a selected module may EXECUTE. An explicit jump is another way of selecting the module.
+ */
+export interface Activation { of: string; outcomes: OutcomeCode[] }
+
 export type SurveyTarget = '@CONTINUE' | { instance: string } | { surveyOutcome: OutcomeCode };
 
 export interface Instance {
   id: string; // stable instance code, e.g. mi-suitability
   module: { code: string; revision: number };
+  /**
+   * The ELIGIBILITY condition: ALWAYS = none; RULE = a condition with an explicit policy for UNKNOWN.
+   * (`mode: 'ON_OUTCOME'` is the earlier shape of an activation trigger with no eligibility condition; it is still
+   * read, and is equivalent to `activation` + `entry: ALWAYS`. New edits write `activation`.)
+   */
   entry: Entry;
+  /** The activation trigger, when the module is not simply selected in sequence. Absent = in sequence. */
+  activation?: Activation;
   /** One route per declared module outcome; null = not yet decided by the author (a blocker). */
   routes: Record<string, SurveyTarget | null>;
+  /**
+   * The skip disposition AFTER A JUMP (D-135): what happens when this module is reached by a jump and is not eligible
+   * (FALSE, or UNKNOWN with the policy "skip and record why"). Absent or null = not chosen: a validation error whenever
+   * a jump can arrive here and the module can be skipped — never an invented fallback. Forward only.
+   */
+  ifIneligible?: SurveyTarget | null;
+  /**
+   * The skip disposition IN SEQUENCE (owner decision A-3, SS-02C): what happens when this module is reached in order
+   * and is not eligible. Absent = the normal default, the next module is considered. A later module or an approved
+   * terminal outcome may be configured instead. null = it pointed at a module that was removed: undecided, an error.
+   */
+  ifSkippedInSequence?: SurveyTarget | null;
 }
 
 export interface Survey {

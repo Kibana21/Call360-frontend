@@ -2,6 +2,7 @@
 // Holds the canonical workspace plus undo and redo stacks of whole workspaces, so undo restores the model itself.
 // Kept in memory only: PROTOTYPE, nothing is stored in the browser or sent to the server; a page reload resets it.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { emptyGov, type GovState } from './model/governance';
 import { sampleWorkspace } from './model/sample';
 import type { Workspace } from './model/types';
 
@@ -24,6 +25,13 @@ export interface Studio {
   /** Ask a screen to bring one control into view (used by the issues list). */
   focus: { key: string; at: number } | null;
   requestFocus: (key: string) => void;
+  /**
+   * The SIMULATED review-and-publish state (SS-02C): who is acting, acknowledgements, submissions, decisions, publications
+   * and the audit trail. Kept apart from the canonical model and from undo: an approval is not an edit of the survey.
+   */
+  gov: GovState;
+  /** Applies one governance step. Returns the plain-English reason when the rules refuse it, otherwise null. */
+  govern: (step: (g: GovState) => GovState) => string | null;
 }
 
 const Ctx = createContext<Studio | null>(null);
@@ -31,12 +39,20 @@ const Ctx = createContext<Studio | null>(null);
 // Held in memory for the life of the page so the workspace survives moving between Call360 screens. The project's
 // security rule IAM-008 forbids browser storage, and the prototype does not need it: a page reload starts afresh.
 let memory: State | null = null;
+let govMemory: GovState | null = null;
 const load = (): State => memory ?? { ws: sampleWorkspace(), past: [], future: [] };
 
 export function StudioProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<State>(load);
   const [notice, setNotice] = useState<Studio['notice']>(null);
   const [focus, setFocus] = useState<Studio['focus']>(null);
+  const [gov, setGov] = useState<GovState>(() => govMemory ?? emptyGov());
+  const govRef = useRef(gov);
+  govRef.current = gov;
+  useEffect(() => { govMemory = gov; }, [gov]);
+  const govern = useCallback<Studio['govern']>((step) => {
+    try { const next = step(govRef.current); govRef.current = next; setGov(next); return null; } catch (e) { return e instanceof Error ? e.message : 'That is not allowed.'; }
+  }, []);
   const ref = useRef(state);
   ref.current = state;
 
@@ -80,6 +96,8 @@ export function StudioProvider({ children }: { children: ReactNode }) {
     const next = { ws: sampleWorkspace(), past: [], future: [] };
     ref.current = next;
     setState(next);
+    govRef.current = emptyGov();
+    setGov(govRef.current);
     say('Prototype reset to the sample library');
   }, [say]);
 
@@ -98,16 +116,16 @@ export function StudioProvider({ children }: { children: ReactNode }) {
   }, [undo, redo]);
 
   const value = useMemo<Studio>(() => ({
-    ws: state.ws, apply, undo, redo, reset, notice, focus, requestFocus,
+    ws: state.ws, apply, undo, redo, reset, notice, focus, requestFocus, gov, govern,
     undoLabel: state.past[state.past.length - 1]?.label ?? null,
     redoLabel: state.future[0]?.label ?? null,
-  }), [state, apply, undo, redo, reset, notice, focus, requestFocus]);
+  }), [state, apply, undo, redo, reset, notice, focus, requestFocus, gov, govern]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
 /** Test helper: forget the in-memory workspace. */
-export const resetStudioMemory = () => { memory = null; };
+export const resetStudioMemory = () => { memory = null; govMemory = null; };
 
 export function useStudio(): Studio {
   const v = useContext(Ctx);

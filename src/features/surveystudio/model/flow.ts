@@ -2,9 +2,9 @@
 // The guided view is a READING of the graph (normal path first, exceptions as lanes); it stores nothing of its own,
 // so it can never disagree with the model. Validation mirrors the SS-01 rule list (Part B §10.1) for what SS-02A edits.
 import { codesUsed, ruleWinner, validSelections } from './engine';
-import { defaultOn, edgeOf, findCondition, findModule, findQuestion, inboundCount, permittedInterrupts, questionNodes, routesFrom } from './ops';
+import { activationOf, canBeIneligible, defaultOn, edgeOf, findCondition, findModule, findQuestion, inboundCount, jumpSources, permittedInterrupts, questionNodes, routesFrom } from './ops';
 import { ESCALATION_OUTCOMES, OUTCOME_LABEL } from './sample';
-import { isQuestion, mKey, type DecisionNode, type Issue, type Module, type ModuleNode, type Question, type QuestionNode, type Survey, type Target, type Workspace } from './types';
+import { isQuestion, mKey, type OutcomeCode, type DecisionNode, type Issue, type Module, type ModuleNode, type Question, type QuestionNode, type Survey, type Target, type Workspace } from './types';
 
 export interface FlowRow {
   /** An answer code, ANY / AFTER_CAPTURE, a decision result (MATCH | NO_MATCH | UNKNOWN), `RULE:<id>` or FALLBACK. */
@@ -328,6 +328,36 @@ export function validateModule(ws: Workspace, m: Module, ctx: { surveyId?: strin
   return out;
 }
 
+/**
+ * The outcomes a module can end with BECAUSE a mandatory-escalation answer was given. A survey may only route these to
+ * end the call with that same governed escalation outcome (owner decision A-4, SS-02C): survey-level routing can never
+ * turn a mandatory escalation into a continuation, a normal completion or a review halt.
+ */
+export function mandatoryOutcomes(ws: Workspace, m: Module): OutcomeCode[] {
+  const out = new Set<OutcomeCode>();
+  for (const nd of m.nodes) {
+    if (!isQuestion(nd)) continue;
+    const q = findQuestion(ws, nd.q);
+    if (!q) continue;
+    for (const o of q.options.filter((x) => x.interrupt === 'MANDATORY')) {
+      const r = nd.routing;
+      if (r.mode === 'PER_CHOICE') { const t = edgeOf(m, nd.id, o.code)?.to; if (t && 'outcome' in t) out.add(t.outcome); }
+      else if (r.mode === 'ORDERED_RULES') {
+        for (const sel of validSelections(q).filter((x) => x.includes(o.code))) { const t = ruleWinner(nd, sel).to; if (t && 'outcome' in t) out.add(t.outcome); }
+      } else for (const i of r.interrupts ?? []) if (i.option === o.code && i.policy === 'STOP_ESCALATE' && i.outcome) out.add(i.outcome);
+    }
+  }
+  return ESCALATION_OUTCOMES.filter((o) => out.has(o));
+}
+/**
+ * Every outcome of a module that is an ESCALATION (owner correction, SS-02 closure): Escalate is TERMINAL for the survey
+ * however the module reached it — by a mandatory answer, an ordinary route, a rule, an interruption or a decision. A
+ * survey may only route such an outcome to end the call with that same outcome.
+ */
+export const escalationOutcomes = (m: Module): OutcomeCode[] => ESCALATION_OUTCOMES.filter((o) => m.outcomes.includes(o));
+/** Whether a survey route honours a mandatory escalation: it must end the call with that same escalation outcome. */
+export const honoursEscalation = (o: OutcomeCode, t: unknown): boolean => !!t && typeof t === 'object' && 'surveyOutcome' in t && (t as { surveyOutcome: OutcomeCode }).surveyOutcome === o;
+
 export function validateSurvey(ws: Workspace, s: Survey): Issue[] {
   const out: Issue[] = [];
   const add = (message: string, fix: string, where: Issue['where']) =>
@@ -356,11 +386,35 @@ export function validateSurvey(ws: Workspace, s: Survey): Issue[] {
       }
       if (!b.unknownPolicy) add(`${m.name}: choose what happens when information is missing`, 'Missing data is never treated as "no". Pick stop or skip.', { ...where, part: 'entry' });
     }
-    if (inst.entry.mode === 'ON_OUTCOME') {
-      const of = inst.entry.of;
-      const at = s.sequence.findIndex((x) => x.id === of);
+    const act = activationOf(inst);
+    if (act) {
+      const at = s.sequence.findIndex((x) => x.id === act.of);
       if (at < 0 || at >= i) add(`${m.name}: it waits for a module that does not run before it`, 'Pick an earlier module, or change when this runs.', { ...where, part: 'entry' });
-      else if (!inst.entry.outcomes.length) add(`${m.name}: choose which outcome activates it`, 'Pick at least one outcome.', { ...where, part: 'entry' });
+      else if (!act.outcomes.length) add(`${m.name}: choose which outcome activates it`, 'Pick at least one outcome.', { ...where, part: 'entry' });
+    }
+    // a mandatory escalation cannot be overridden by survey-level routing (A-4): its outcome may only end the call as itself
+    const must = mandatoryOutcomes(ws, m);
+    for (const o of escalationOutcomes(m)) {
+      const t = inst.routes[o];
+      if (t === null || t === undefined || honoursEscalation(o, t)) continue;
+      if (must.includes(o)) add(`${m.name}: a mandatory escalation must end the call with "${OUTCOME_LABEL[o]}"`, `Survey routing cannot override a mandatory escalation. Route "${OUTCOME_LABEL[o]}" to end the call: ${OUTCOME_LABEL[o]}.`, { ...where, on: o, part: 'mandatory' });
+      // Escalate is terminal even when no mandatory answer is involved: an escalation is never continued, completed or re-routed
+      else add(`${m.name}: "${OUTCOME_LABEL[o]}" must end the call with "${OUTCOME_LABEL[o]}"`, `An escalation is terminal for the survey, however the module reached it. Route "${OUTCOME_LABEL[o]}" to end the call: ${OUTCOME_LABEL[o]}.`, { ...where, on: o, part: 'escalation' });
+    }
+    // a jump names this module as the next CANDIDATE; its eligibility is still checked, so what happens when it does
+    // not apply must be chosen explicitly (D-135) — the survey never invents a fallback
+    const jumps = jumpSources(s, inst.id);
+    if (canBeIneligible(inst)) {
+      const q = inst.ifSkippedInSequence;
+      if (q === null) add(`${m.name}: choose what happens if it is reached in sequence but does not apply`, 'It pointed at a module that was removed. Continue, go to a later module, or end the call.', { ...where, on: '@SKIP_SEQ' });
+      else if (q && typeof q === 'object' && 'instance' in q && s.sequence.findIndex((x) => x.id === q.instance) <= i) add(`${m.name}: "if it does not apply" leads backwards`, 'It may only go to a later module, so a module is never entered twice.', { ...where, on: '@SKIP_SEQ' });
+      const d = inst.ifIneligible;
+      if (d === null || d === undefined) { if (jumps.length) add(`${m.name}: choose what happens if it is jumped to but does not apply`, 'A jump does not bypass its condition. Continue, go to a later module, or end the call.', { ...where, on: '@SKIP' }); }
+      else if (typeof d === 'object' && 'instance' in d) {
+        const at = s.sequence.findIndex((x) => x.id === d.instance);
+        if (at < 0) add(`${m.name}: "if it does not apply" leads to a module that was removed`, 'Choose another destination.', { ...where, on: '@SKIP' });
+        else if (at <= i) add(`${m.name}: "if it does not apply" leads backwards`, 'It may only go to a later module, so a module is never entered twice.', { ...where, on: '@SKIP' });
+      }
     }
     out.push(...validateModule(ws, m, { surveyId: s.id, instanceId: inst.id }));
   });

@@ -10,11 +10,11 @@
 import { useMemo, useState } from 'react';
 import { describeAst, evaluate, fieldDef, fieldsOf, inputsOf, VERDICT, type Answers, type EvalContext, type Explain, type Profile, type Tri } from './model/engine';
 import { availableAnswers } from './model/flow';
-import { conditionConsumers, findCondition, findModule, findQuestion, saveCondition, setDecisionBinding, setEntry } from './model/ops';
-import { FIELDS, OUTCOME_LABEL } from './model/sample';
+import { activationOf, eligibilityOf, setActivation, setEligibility, setIfSkippedInSequence, conditionConsumers, findCondition, findModule, findQuestion, saveCondition, setDecisionBinding } from './model/ops';
+import { OUTCOMES, FIELDS, OUTCOME_LABEL } from './model/sample';
 import {
   isQuestion, mKey,
-  type Ast, type Binding, type CompareOp, type Condition, type Entry, type Instance, type Module, type OutcomeCode, type Question, type Survey,
+  type Ast, type Binding, type CompareOp, type Condition, type Instance, type Module, type OutcomeCode, type Question, type Survey,
   type UnknownPolicy, type Workspace,
 } from './model/types';
 import { useStudio } from './store';
@@ -53,18 +53,21 @@ export function bindingSentence(ws: Workspace, b: Binding | null | undefined, m?
 
 /** The compact sentence shown on the module card. */
 export function entrySentence(ws: Workspace, survey: Survey, inst: Instance): string {
-  const e = inst.entry;
-  if (e.mode === 'ALWAYS') return 'always';
-  if (e.mode === 'ON_OUTCOME') {
-    const src = survey.sequence.find((x) => x.id === e.of);
+  const act = activationOf(inst);
+  const elig = eligibilityOf(inst);
+  let after = '';
+  if (act) {
+    const src = survey.sequence.find((x) => x.id === act.of);
     const name = src ? findModule(ws, mKey(src.module))?.name : 'a removed module';
-    return `after ${name} ends with ${e.outcomes.map((o) => OUTCOME_LABEL[o]).join(' or ') || '…'}`;
+    after = `after ${name} ends with ${act.outcomes.map((o) => OUTCOME_LABEL[o]).join(' or ') || '…'}`;
   }
-  const s = bindingSentence(ws, e.binding);
-  return s ? `when ${short(s, 74)}` : 'when … (condition missing)';
+  if (!elig) return after || 'always';
+  const s = bindingSentence(ws, elig);
+  const when = s ? `when ${short(s, after ? 52 : 74)}` : 'when … (condition missing)';
+  return after ? `${after}, and only ${when}` : when;
 }
 
-type Mode = 'ALWAYS' | 'SAVED' | 'BUILD' | 'ON_OUTCOME';
+type Mode = 'ALWAYS' | 'SAVED' | 'BUILD';
 type GroupKind = 'ALL' | 'ANY' | 'NONE';
 /** One line of the builder. `source` is a catalog field code, or `answer:<question node id>` for an earlier answer. */
 interface Row { source: string; op: CompareOp; value: string; named: string | null }
@@ -170,7 +173,7 @@ export function RuleDrawer({ ctx, onClose }: { ctx: RuleContext; onClose: () => 
   const inst = entry ? ctx.survey.sequence[index]! : undefined;
   const m = entry ? findModule(ws, mKey(inst!.module))! : findModule(ws, ctx.moduleKey)!;
   const decision = !entry ? m.nodes.find((x) => x.id === ctx.nodeId) : undefined;
-  const existing: Binding | null = entry ? (inst!.entry.mode === 'RULE' ? inst!.entry.binding : null) : (decision && !isQuestion(decision) ? decision.binding : null);
+  const existing: Binding | null = entry ? eligibilityOf(inst!) : (decision && !isQuestion(decision) ? decision.binding : null);
   const current = existing && existing.condition.code ? findCondition(ws, existing.condition) : undefined;
   const earlier = entry ? ctx.survey.sequence.slice(0, index) : [];
   const nodeId = entry ? '' : ctx.nodeId;
@@ -182,7 +185,12 @@ export function RuleDrawer({ ctx, onClose }: { ctx: RuleContext; onClose: () => 
   const qOf = (id: string): Question | undefined => { const n = m.nodes.find((x) => x.id === id); return n && isQuestion(n) ? findQuestion(ws, n.q) : undefined; };
   const answerName = (id: string) => `${numbers?.get(id) ?? '?'} ${short(qOf(id)?.wording.text || 'Untitled question', 38)}`;
 
-  const [mode, setMode] = useState<Mode>(existing && current ? (current.shared ? 'SAVED' : 'BUILD') : entry ? (inst!.entry.mode === 'ON_OUTCOME' ? 'ON_OUTCOME' : 'ALWAYS') : 'BUILD');
+  const [mode, setMode] = useState<Mode>(existing && current ? (current.shared ? 'SAVED' : 'BUILD') : entry ? 'ALWAYS' : 'BUILD');
+  const act0 = entry ? activationOf(inst!) : null;
+  /** Activation and eligibility are two independent settings (A-2): this is whether the module waits for a named outcome. */
+  const [waits, setWaits] = useState(!!act0);
+  /** What happens when the module is reached in sequence and is not eligible: '' = the default (the next module). */
+  const [seqSkip, setSeqSkip] = useState(() => { const t = entry ? inst!.ifSkippedInSequence : undefined; return !t || t === '@CONTINUE' ? '' : 'instance' in t ? `i:${t.instance}` : `o:${t.surveyOutcome}`; });
   const [savedRef, setSavedRef] = useState(current?.shared ? `${current.code}@${current.version}` : '');
   const [params, setParams] = useState<Record<string, string>>(() => Object.fromEntries(Object.entries(existing?.params ?? {}).map(([k, v]) => [k, String(v)])));
   const [inputMap, setInputMap] = useState<Record<string, string>>(() => Object.fromEntries(Object.entries(existing?.inputs ?? {}).map(([k, v]) => [k, v.node])));
@@ -193,8 +201,8 @@ export function RuleDrawer({ ctx, onClose }: { ctx: RuleContext; onClose: () => 
   /** Set when the author chose to change a library condition: what the edited result becomes. */
   const [derive, setDerive] = useState<{ kind: 'VERSION' | 'COPY'; from: Condition } | null>(null);
   const [changing, setChanging] = useState(false);
-  const [of, setOf] = useState(entry && inst!.entry.mode === 'ON_OUTCOME' ? inst!.entry.of : earlier[earlier.length - 1]?.id ?? '');
-  const [outs, setOuts] = useState<OutcomeCode[]>(entry && inst!.entry.mode === 'ON_OUTCOME' ? inst!.entry.outcomes : []);
+  const [of, setOf] = useState(act0 ? act0.of : earlier[earlier.length - 1]?.id ?? '');
+  const [outs, setOuts] = useState<OutcomeCode[]>(act0 ? act0.outcomes : []);
   const [profile, setProfile] = useState<Profile>({ 'policy.product_family': 'ILP', 'policy.annual_premium': 15000, 'policy.sum_assured': 300000, 'policy.is_replacement': false, 'customer.age_years': 45, 'sale.channel': 'AGENCY' });
   const [answers, setAnswers] = useState<Answers>({});
 
@@ -223,16 +231,17 @@ export function RuleDrawer({ ctx, onClose }: { ctx: RuleContext; onClose: () => 
           : inputsMissing ? 'Choose which earlier answer the condition reads.'
             : entry && (mode === 'SAVED' || mode === 'BUILD') && !policy ? 'Choose what happens when information is missing.'
               : mode === 'BUILD' && (reusable || derive?.kind === 'COPY') && !name.trim() ? 'Name the condition so others can find it.'
-                : mode === 'ON_OUTCOME' && (!of || !outs.length) ? 'Choose the module and at least one outcome.' : null;
+                : entry && waits && (!of || !outs.length || !earlier.some((x) => x.id === of)) ? 'Choose the earlier module and at least one outcome that selects this one.' : null;
 
   const applyRule = () => {
     if (blocker) return;
     const done = entry ? `Changed when ${m.name} runs` : `Set the condition of ${label}`;
+    // the two settings are written independently: the activation trigger, then the eligibility condition
+    const trigger = (w: Workspace) => (ctx.kind === 'ENTRY' ? setActivation(w, ctx.survey.id, ctx.instanceId, waits ? { of, outcomes: outs } : null) : w);
     const bind = (w: Workspace, b: Binding) => (ctx.kind === 'ENTRY'
-      ? setEntry(w, ctx.survey.id, ctx.instanceId, { mode: 'RULE', binding: b } as Entry)
+      ? setIfSkippedInSequence(setEligibility(trigger(w), ctx.survey.id, ctx.instanceId, b), ctx.survey.id, ctx.instanceId, !seqSkip ? null : seqSkip.startsWith('i:') ? { instance: seqSkip.slice(2) } : { surveyOutcome: seqSkip.slice(2) as OutcomeCode })
       : setDecisionBinding(w, ctx.moduleKey, ctx.nodeId, b));
-    if (ctx.kind === 'ENTRY' && mode === 'ALWAYS') apply(done, (w) => setEntry(w, ctx.survey.id, ctx.instanceId, { mode: 'ALWAYS' }));
-    else if (ctx.kind === 'ENTRY' && mode === 'ON_OUTCOME') apply(done, (w) => setEntry(w, ctx.survey.id, ctx.instanceId, { mode: 'ON_OUTCOME', of, outcomes: outs }));
+    if (ctx.kind === 'ENTRY' && mode === 'ALWAYS') apply(done, (w) => setIfSkippedInSequence(setEligibility(trigger(w), ctx.survey.id, ctx.instanceId, null), ctx.survey.id, ctx.instanceId, null));
     else if (mode === 'SAVED' && binding) apply(done, (w) => bind(w, binding));
     else if (mode === 'BUILD' && built && binding) {
       const shared = reusable || !!derive;
@@ -247,12 +256,15 @@ export function RuleDrawer({ ctx, onClose }: { ctx: RuleContext; onClose: () => 
     onClose();
   };
 
-  const sentence = mode === 'ALWAYS' ? 'This module always runs.'
-    : mode === 'ON_OUTCOME' ? `This module runs after ${earlier.find((x) => x.id === of) ? findModule(ws, mKey(earlier.find((x) => x.id === of)!.module))?.name : '…'} ends with ${outs.map((o) => OUTCOME_LABEL[o]).join(' or ') || '…'}.`
-      : cond && binding ? `${entry ? 'This module runs when' : 'It matches when'} ${describeAst(cond.ast, cond, binding, false, sctx)}.` : entry ? 'This module runs when…' : 'It matches when…';
+  const ofName = earlier.find((x) => x.id === of) ? findModule(ws, mKey(earlier.find((x) => x.id === of)!.module))?.name : '…';
+  const afterText = `after ${ofName} ends with ${outs.map((o) => OUTCOME_LABEL[o]).join(' or ') || '…'}`;
+  const ruleText = cond && binding ? describeAst(cond.ast, cond, binding, false, sctx) : '…';
+  const sentence = !entry ? (cond && binding ? `It matches when ${ruleText}.` : 'It matches when…')
+    : waits ? (mode === 'ALWAYS' ? `This module runs ${afterText}.` : `This module is selected ${afterText}. It then runs only when ${ruleText}.`)
+      : mode === 'ALWAYS' ? 'This module always runs.' : cond && binding ? `This module runs when ${ruleText}.` : 'This module runs when…';
 
   const modes: Array<{ value: Mode; label: string }> = entry
-    ? [{ value: 'ALWAYS', label: 'Always' }, { value: 'SAVED', label: 'Library condition' }, { value: 'BUILD', label: 'Build a condition' }, { value: 'ON_OUTCOME', label: 'After an outcome' }]
+    ? [{ value: 'ALWAYS', label: 'No condition' }, { value: 'SAVED', label: 'Library condition' }, { value: 'BUILD', label: 'Build a condition' }]
     : [{ value: 'BUILD', label: 'Build a condition' }, { value: 'SAVED', label: 'Library condition' }];
 
   return (
@@ -267,8 +279,40 @@ export function RuleDrawer({ ctx, onClose }: { ctx: RuleContext; onClose: () => 
       </>}>
       <p className="ss-sentence" data-testid="ss-rule-sentence">{sentence}</p>
 
-      <Segmented<Mode> label={entry ? 'When this module runs' : 'Where the condition comes from'} value={mode}
+      {entry ? (
+        <section className="ss-entry-part" aria-label="When it is selected" data-testid="ss-activation">
+          <h3>1 · When it is selected <span>activation</span></h3>
+          <Segmented<'SEQ' | 'OUT'> label="When this module is selected" value={waits ? 'OUT' : 'SEQ'} onChange={(v) => setWaits(v === 'OUT')}
+            options={[{ value: 'SEQ', label: 'In sequence', hint: 'When the survey reaches it' }, { value: 'OUT', label: 'After an outcome', hint: 'Only after an earlier module ends a named way' }]} />
+          <p className="ss-note" data-testid="ss-activation-note"><Glyph name="info" size={14} />
+            <span><strong>Activation</strong> decides <em>when the module is selected</em>{waits ? ': only after the earlier module ends that way' : ': when the survey reaches it in order'}. Another module can also select it with an explicit jump. It is not a condition on the customer.</span></p>
+          {waits ? (
+            <div className="ss-block">
+              {earlier.length === 0 ? <p className="ss-warn-text"><Glyph name="alert" size={14} /> No module runs before this one, so there is no outcome to wait for.</p> : (
+                <>
+                  <label className="ss-field"><span>Wait for</span>
+                    <select value={of} onChange={(e) => { setOf(e.target.value); setOuts([]); }} data-testid="ss-rule-of">
+                      {earlier.map((x) => <option key={x.id} value={x.id}>{findModule(ws, mKey(x.module))?.name}</option>)}
+                    </select></label>
+                  <fieldset className="ss-checks"><legend>Select this module when it ends with</legend>
+                    {(findModule(ws, mKey(earlier.find((x) => x.id === of)?.module ?? inst!.module))?.outcomes ?? []).filter((o) => o !== 'REVIEW_REQUIRED' /* that outcome always halts the call: nothing can follow it */).map((o) => (
+                      <label key={o} className="ss-check"><input type="checkbox" checked={outs.includes(o)} onChange={(e) => setOuts(e.target.checked ? [...outs, o] : outs.filter((x) => x !== o))} />
+                        <span>{OUTCOME_LABEL[o]}</span></label>
+                    ))}
+                  </fieldset>
+                </>
+              )}
+            </div>
+          ) : null}
+          <h3>2 · Whether it may run <span>eligibility</span></h3>
+        </section>
+      ) : null}
+      <Segmented<Mode> label={entry ? 'Whether this module may run' : 'Where the condition comes from'} value={mode}
         onChange={(v) => { setMode(v); setDerive(null); setChanging(false); }} options={modes} />
+      {entry ? (
+        <p className="ss-note" data-testid="ss-rule-kind-note"><Glyph name="info" size={14} />
+          <span><strong>Eligibility</strong> decides <em>whether the selected module may run</em>{mode === 'ALWAYS' ? ': with no condition, it runs whenever it is selected' : ' for this customer'}. However it was selected — in sequence, after an outcome or by a jump — this is still checked. A jump never bypasses it.</span></p>
+      ) : null}
 
       {mode === 'SAVED' ? (
         <>
@@ -354,25 +398,15 @@ export function RuleDrawer({ ctx, onClose }: { ctx: RuleContext; onClose: () => 
         </section>
       ) : null}
 
-      {mode === 'ON_OUTCOME' && entry ? (
-        <div className="ss-block">
-          {earlier.length === 0 ? <p className="ss-warn-text"><Glyph name="alert" size={14} /> No module runs before this one, so there is no outcome to wait for.</p> : (
-            <>
-              <label className="ss-field"><span>Wait for</span>
-                <select value={of} onChange={(e) => { setOf(e.target.value); setOuts([]); }} data-testid="ss-rule-of">
-                  {earlier.map((x) => <option key={x.id} value={x.id}>{findModule(ws, mKey(x.module))?.name}</option>)}
-                </select></label>
-              <fieldset className="ss-checks"><legend>Run when it ends with</legend>
-                {(findModule(ws, mKey(earlier.find((x) => x.id === of)?.module ?? inst!.module))?.outcomes ?? []).map((o) => (
-                  <label key={o} className="ss-check"><input type="checkbox" checked={outs.includes(o)} onChange={(e) => setOuts(e.target.checked ? [...outs, o] : outs.filter((x) => x !== o))} />
-                    <span>{OUTCOME_LABEL[o]}</span></label>
-                ))}
-              </fieldset>
-            </>
-          )}
-        </div>
+      {entry && (mode === 'SAVED' || mode === 'BUILD') ? (
+        <label className="ss-field" data-testid="ss-seq-skip-field"><span>If it does not apply when reached in sequence</span>
+          <select value={seqSkip} onChange={(e) => setSeqSkip(e.target.value)} data-testid="ss-seq-skip">
+            <option value="">{index === ctx.survey.sequence.length - 1 ? 'End the call: Completed (the normal default)' : 'Continue to the next module (the normal default)'}</option>
+            {ctx.survey.sequence.slice(index + 2).map((x) => <option key={x.id} value={`i:${x.id}`}>Go to {findModule(ws, mKey(x.module))?.name} — its own condition is checked in turn</option>)}
+            {OUTCOMES.filter((x) => x !== 'COMPLETED').map((x) => <option key={x} value={`o:${x}`}>End the call: {OUTCOME_LABEL[x]}</option>)}
+          </select>
+          <small className="ss-muted">When another module jumps here, what happens is chosen on the module’s card: after a jump nothing is assumed.</small></label>
       ) : null}
-
       {entry && (mode === 'SAVED' || mode === 'BUILD') ? (
         <fieldset className={`ss-choice stack ${policy ? '' : 'needed'}`}>
           <legend>If the information is missing</legend>
@@ -472,7 +506,7 @@ function Verdict({ explain, policy, entry }: { explain: Explain; policy: Unknown
   );
 }
 
-function ExplainTree({ e }: { e: Explain }) {
+export function ExplainTree({ e }: { e: Explain }) {
   return (
     <div className="ss-explain">
       <div className="ss-explain-line"><span className={`ss-dot ${TONE[e.result]}`} aria-hidden="true" /><span>{e.label}</span><em>{VERDICT[e.result]}</em></div>

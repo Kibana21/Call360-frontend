@@ -178,8 +178,8 @@ test('SS-02B.2 graph builder: Guided/Graph parity, editing in the graph, large m
   await page.getByTestId('ss-new-DECISION').click();
   record('insert a condition on Q2 · Yes (safe insertion: only "otherwise" inherits)', guidedC, await fp(page));
   await expect(slot(page, 'd1', 'NO_MATCH')).toContainText('Completed');
-  await expect(slot(page, 'd1', 'MATCH')).toContainText('not decided'); // nothing invented by the graph
-  await expect(slot(page, 'd1', 'UNKNOWN')).toContainText('not decided');
+  await expect(slot(page, 'd1', 'MATCH')).toContainText('Choose destination'); // nothing invented by the graph
+  await expect(slot(page, 'd1', 'UNKNOWN')).toContainText('Choose destination');
   await expect(issues(page)).toContainText('3 to fix');
   await panel.getByTestId('ss-d-edit-d1').click();
   await page.getByTestId('ss-cond-value-0-0').fill('12000');
@@ -293,7 +293,7 @@ test('SS-02B.2 graph builder: Guided/Graph parity, editing in the graph, large m
   // --------------------------------------------- 10. the survey-level module graph, sharing state with the Composer
   await page.getByRole('navigation', { name: 'Survey Studio breadcrumb' }).getByRole('link', { name: 'Survey Studio' }).click();
   await page.getByRole('link', { name: /Graph check/ }).click();
-  await expect(page.getByTestId('ss-route-mi-suitability-ESCALATE')).toContainText('Choose what happens'); // the outcome added in the module graph
+  await expect(page.getByTestId('ss-route-mi-suitability-ESCALATE')).toContainText('ends the call: Escalate'); // the outcome added in the module graph; an escalation is terminal, so its route is governed (SS-02 closure)
   await view(page, 'Graph');
   await expect(page.getByTestId('ss-survey-graph')).toBeVisible();
   for (const id of ['mi-general-verification', 'mi-suitability', 'mi-closing', 'mi-customer-concerns', 'mi-clarifications']) await expect(gnode(page, id)).toHaveCount(1);
@@ -304,11 +304,14 @@ test('SS-02B.2 graph builder: Guided/Graph parity, editing in the graph, large m
   await shot(page, 'GR10a-survey-module-graph');
   // edit a module route by connecting: a jump to a later module
   const sBefore = await fp(page);
+  // SS-02 closure: an escalation is terminal — the survey graph refuses to route it onward, and the model is untouched
   await connect(page, 'mi-suitability', 'ESCALATE', 'mi-clarifications');
-  await expect(slot(page, 'mi-suitability', 'ESCALATE')).toContainText('Clarifications');
+  await expect(page.getByTestId('ss-g-message')).toContainText('is an escalation: it can only end the call with “Escalate”');
+  expect(await fp(page)).toBe(sBefore);
+  await connect(page, 'mi-general-verification', 'UNABLE_TO_VERIFY', 'mi-clarifications');
+  await expect(slot(page, 'mi-general-verification', 'UNABLE_TO_VERIFY')).toContainText('Clarifications');
   const viaGraph = await fp(page);
   // a route may not go backwards, and the governed outcome cannot be re-pointed: refused, model untouched
-  await page.getByTestId('ss-g-panel-close').click();
   await page.getByTestId('ss-g-fit').click();
   await connect(page, 'mi-customer-concerns', 'COMPLETED', 'mi-general-verification');
   await expect(page.getByTestId('ss-g-message')).toContainText('A route may only go to a later module');
@@ -318,9 +321,9 @@ test('SS-02B.2 graph builder: Guided/Graph parity, editing in the graph, large m
   await page.getByTestId('ss-undo').click();
   expect(await fp(page)).toBe(sBefore);
   await view(page, 'Blocks');
-  await page.getByTestId('ss-route-mi-suitability-ESCALATE').click();
+  await page.getByTestId('ss-route-mi-general-verification-UNABLE_TO_VERIFY').click();
   await pick(page, 'Jump to Clarifications');
-  record('survey: route "Escalate" of Suitability to the Clarifications module', await fp(page), viaGraph);
+  record('survey: route "Unable to verify" of General verification to the Clarifications module', await fp(page), viaGraph);
   await view(page, 'Graph');
   // reorder from the graph panel, see it in the Composer, undo it there
   await gnode(page, 'mi-closing').click();
@@ -335,7 +338,7 @@ test('SS-02B.2 graph builder: Guided/Graph parity, editing in the graph, large m
   await scan(page, 'survey-graph');
   await view(page, 'Blocks');
   await expect(page.locator('.ss-story .ss-card').last()).toHaveAttribute('data-testid', 'ss-card-mi-closing');
-  await expect(page.getByTestId('ss-route-mi-suitability-ESCALATE')).toContainText('jumps to Clarifications');
+  await expect(page.getByTestId('ss-route-mi-general-verification-UNABLE_TO_VERIFY')).toContainText('jumps to Clarifications');
   await page.getByTestId('ss-undo').click();
   await page.getByTestId('ss-undo').click();
   await expect(page.locator('.ss-story .ss-card').nth(2)).toHaveAttribute('data-testid', 'ss-card-mi-closing');

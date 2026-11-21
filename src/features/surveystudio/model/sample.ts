@@ -13,19 +13,30 @@ export const FIELDS: FieldDef[] = [
   { code: 'sale.channel', label: 'Selling channel', type: 'ENUM', values: ['AGENCY', 'BANCASSURANCE', 'DIRECT'] },
 ];
 
-export const OUTCOME_LABEL: Record<OutcomeCode, string> = {
-  COMPLETED: 'Completed',
-  CLARIFICATION_REQUIRED: 'Clarification required',
-  ESCALATE: 'Escalate',
-  CUSTOMER_DECLINED: 'Customer declined',
-  UNABLE_TO_VERIFY: 'Unable to verify',
-  REVIEW_REQUIRED: 'Review required',
+/**
+ * The controlled outcome catalog (owner decision D-133): stable codes with an explicit classification. PROTOTYPE,
+ * synthetic — the business-approved catalog is deferred to production governance approval.
+ *   NORMAL_COMPLETION  the module or call finished normally;
+ *   EXCEPTION          a named non-normal ending. It is NOT an escalation, whatever its wording suggests;
+ *   ESCALATION         a valid destination for a mandatory escalation. For the prototype this is ESCALATE only;
+ *   REVIEW_HALT        governed: automated progression halts and the run is pending authorised review, not completed.
+ * No class is implied by another: "Review required" and the exception outcomes are not equivalent to escalation.
+ */
+export type OutcomeClass = 'NORMAL_COMPLETION' | 'EXCEPTION' | 'ESCALATION' | 'REVIEW_HALT';
+export const OUTCOME_CATALOG: Record<OutcomeCode, { label: string; cls: OutcomeClass; routable: boolean; meaning: string }> = {
+  COMPLETED: { label: 'Completed', cls: 'NORMAL_COMPLETION', routable: true, meaning: 'Finished normally.' },
+  CLARIFICATION_REQUIRED: { label: 'Clarification required', cls: 'EXCEPTION', routable: true, meaning: 'Something needs to be explained to the customer.' },
+  ESCALATE: { label: 'Escalate', cls: 'ESCALATION', routable: true, meaning: 'Passed to a person for handling. The only valid mandatory-escalation outcome.' },
+  CUSTOMER_DECLINED: { label: 'Customer declined', cls: 'EXCEPTION', routable: true, meaning: 'The customer chose not to continue.' },
+  UNABLE_TO_VERIFY: { label: 'Unable to verify', cls: 'EXCEPTION', routable: true, meaning: 'The verification could not be completed.' },
+  REVIEW_REQUIRED: { label: 'Review required', cls: 'REVIEW_HALT', routable: false, meaning: 'Automated progression halts; the run is pending authorised review and is not completed.' },
 };
-export const ALL_OUTCOMES = Object.keys(OUTCOME_LABEL) as OutcomeCode[];
+export const ALL_OUTCOMES = Object.keys(OUTCOME_CATALOG) as OutcomeCode[];
+export const OUTCOME_LABEL = Object.fromEntries(ALL_OUTCOMES.map((o) => [o, OUTCOME_CATALOG[o].label])) as Record<OutcomeCode, string>;
 /** Outcomes an author may choose as an ordinary destination. REVIEW_REQUIRED is governed and reached only by "Stop and flag for review". */
-export const OUTCOMES = ALL_OUTCOMES.filter((o) => o !== 'REVIEW_REQUIRED');
-/** The approved escalation outcomes (synthetic list). A mandatory escalation must end with one of these — not merely any outcome other than Completed (D-128). */
-export const ESCALATION_OUTCOMES: OutcomeCode[] = ['ESCALATE'];
+export const OUTCOMES = ALL_OUTCOMES.filter((o) => OUTCOME_CATALOG[o].routable);
+/** A mandatory escalation must end with an outcome CLASSIFIED as an escalation — not merely any outcome other than Completed (D-128, D-133). */
+export const ESCALATION_OUTCOMES: OutcomeCode[] = ALL_OUTCOMES.filter((o) => OUTCOME_CATALOG[o].cls === 'ESCALATION');
 
 export const KIND_LABEL: Record<ModuleKind, string> = {
   OPENING: 'Opening', COMMON: 'General', PRODUCT: 'Product', RISK: 'Enhanced review', EXCEPTION: 'Exception', CLOSING: 'Closing',
@@ -188,7 +199,8 @@ export function sampleWorkspace(): Workspace {
     { mode: 'RULE', binding: { condition: { code: 'C-IS-REPLACEMENT', version: 1 }, params: {}, unknownPolicy: 'BLOCK' } });
 
   const escalation = mod('M-ESCALATION', 'Escalation and follow-up', 'EXCEPTION', 'Arranges a specialist call when something needs clarifying.',
-    ['COMPLETED'], [n('n1', callback)], [e('e1', 'n1', 'ANY', out('COMPLETED'))]);
+    // n2 is the SAME question definition the Clarifications module ends with: one shared question, two modules
+    ['COMPLETED'], [n('n1', callback), n('n2', proceed)], [e('e1', 'n1', 'ANY', node('n2')), e('e2', 'n2', 'ANY', out('COMPLETED'))]);
 
   const closing = mod('M-CLOSING', 'Closing', 'CLOSING', 'Thanks the customer and closes the call.',
     ['COMPLETED'], [n('n1', anythingElse), n('n2', closingAck)],

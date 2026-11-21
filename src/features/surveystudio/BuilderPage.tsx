@@ -18,6 +18,7 @@ import {
 } from './model/ops';
 import { ESCALATION_OUTCOMES, KIND_LABEL, OUTCOMES, OUTCOME_LABEL } from './model/sample';
 import { isQuestion, mKey, type AnswerType, type Interrupt, type InterruptClass, type InterruptPolicy, type Issue, type Module, type OutcomeCode, type RoutingMode, type SetRule, type Target } from './model/types';
+import { JourneyNav } from './JourneyNav';
 import { StudioBar } from './StudioRoot';
 import { useFocusTarget, useStudio } from './store';
 import { Glyph, InlineText, KIND_GLYPH, Picker, Popover, Segmented, Tag, type GlyphName, type PickItem } from './ui';
@@ -107,7 +108,7 @@ export function BuilderPage() {
   const fill = useFillHeight(view === 'graph');
   /** View and selection live in the address, so they survive a view switch; they are presentation, not part of the model. */
   const go = (next: { view?: 'guided' | 'graph'; node?: string | null }) => {
-    const p = new URLSearchParams(params);
+    const p = new URLSearchParams(window.location.search) /* the address itself: the router's state can lag a quick second change */;
     const v = next.view ?? view;
     if (v === 'graph') p.set('view', 'graph'); else p.delete('view');
     const n = next.node === undefined ? selected : next.node;
@@ -124,7 +125,7 @@ export function BuilderPage() {
       setTick((t) => t + 1);
     }
     if (view === 'guided') requestFocus(`node:${id}`);
-    else window.setTimeout(() => panel.current?.focus(), 60);
+    else window.setTimeout(() => { if (panel.current && !panel.current.contains(document.activeElement)) panel.current.focus(); }, 60) /* never steal focus from a control inside the panel */;
   };
   useEffect(() => {
     // arriving in Guided with a selection made in the graph: bring that card into view
@@ -173,7 +174,8 @@ export function BuilderPage() {
     <BuilderCtx.Provider value={ctx}>
       <StudioBar crumbs={crumbs} issues={issues} wording={wordingStatus(ws, [m])}
         badge={editable ? <Tag tone="draft">{m.derivedFor ? `Draft v${m.revision} · this survey only` : 'Draft · not in the shared library'}</Tag> : <Tag tone="shared" glyph="lock">Shared module · v{m.revision}</Tag>}
-        onIssue={(i) => { setClosed(new Set()); if (i.where.nodeId) requestFocus(`node:${i.where.nodeId}`); }} />
+        onIssue={(i) => { if (i.where.nodeId) select(i.where.nodeId); }} />
+      {survey && inst ? <JourneyNav survey={survey} at="build" compact /> : null}
       <div className={`ss-builder ${view === 'graph' ? 'graph' : ''}`}>
         <header className="ss-builder-head">
           <span className={`ss-kind kind-${m.kind.toLowerCase()}`}><Glyph name={KIND_GLYPH[m.kind]} /> {KIND_LABEL[m.kind]} module</span>
@@ -200,7 +202,7 @@ export function BuilderPage() {
           <div className="ss-graph-page" data-testid="ss-graph-page" ref={fill}>
             <Suspense fallback={<p className="ss-muted ss-g-loading">Opening the graph…</p>}>
               <ModuleGraphView m={m} moduleKey={moduleKey} editable={editable} issues={issues} collapsed={closed} setCollapsed={setClosed} label={ctx.label}
-                selected={selected} focusTick={tick} onSelect={(id) => select(id, false)} onInsert={(at) => { setInsertAt(at); window.setTimeout(() => panel.current?.focus(), 60); }} tools={tools} />
+                selected={selected} focusTick={tick} onSelect={(id) => select(id, false)} onInsert={(at) => { setInsertAt(at); window.setTimeout(() => { if (panel.current && !panel.current.contains(document.activeElement)) panel.current.focus(); }, 60) /* never steal focus from a control inside the panel */; }} tools={tools} />
             </Suspense>
             {insertAt || chosen ? (
               <aside ref={panel} className="ss-g-panel" tabIndex={-1} aria-label={insertAt ? 'Add a step on this route' : `Selected: ${chosen!.number}`} data-testid="ss-g-panel">
@@ -906,6 +908,7 @@ function UnknownPill({ item, target, undecided }: { item: FlowDecision; target: 
     { id: 'stop', label: 'Stop and flag for review', hint: halts, group: 'Do not continue', glyph: 'stop' },
     ...stepItems(m, item.node.id, label),
     ...OUTCOMES.map((o) => ({ id: `o:${o}`, label: `End module: ${OUTCOME_LABEL[o]}`, group: 'End the module', glyph: (o === 'COMPLETED' ? 'check' : 'stop') as GlyphName })),
+    ...(target || stop ? [{ id: 'clear', label: 'Leave undecided for now', group: 'Other', glyph: 'close' as const }] : []),
   ];
   return (
     <Popover label="What happens when information is missing" wide
@@ -914,7 +917,7 @@ function UnknownPill({ item, target, undecided }: { item: FlowDecision; target: 
       {(close) => <Picker items={items} placeholder="Search questions and outcomes"
         footer={<p className="ss-muted">Used when a customer detail is missing or an earlier question was not asked. It is never treated as “otherwise”.</p>}
         onPick={(id) => {
-          apply(`Set what ${item.number} does when information is missing`, (w) => setDecisionUnknown(w, moduleKey, item.node.id, id === 'stop' ? { stop: true } : { to: id.startsWith('n:') ? { node: id.slice(2) } : { outcome: id.slice(2) as OutcomeCode } }));
+          apply(`Set what ${item.number} does when information is missing`, (w) => setDecisionUnknown(w, moduleKey, item.node.id, id === 'clear' ? { clear: true } : id === 'stop' ? { stop: true } : { to: id.startsWith('n:') ? { node: id.slice(2) } : { outcome: id.slice(2) as OutcomeCode } }));
           close();
         }} />}
     </Popover>
