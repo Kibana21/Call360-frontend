@@ -344,3 +344,100 @@ test('FI-1.5 access: read-only, no permission, another market, and no way into S
   await expect(author.page).toHaveURL(/\/unauthorized$/);
   await author.context.close();
 });
+
+test('FI-1.6 browser Back and Forward with unsaved work: asked first; staying keeps everything; leaving harms nothing', async ({ browser }) => {
+  test.setTimeout(180_000);
+  // arrive the way a person does, so there is real history behind the survey: Overview → list → survey → module
+  const { context, page } = await session(browser, 'survey_author', '/');
+  await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Survey Studio' }).click();
+  await page.getByTestId(`ss-open-${CODE}`).click();
+  await expect(page).toHaveURL(new RegExp(`${SURVEY}$`));
+  await page.getByTestId('ss-open-mi-payment-check').click();
+  await expect(page).toHaveURL(new RegExp(`${MODULE}`));
+  await view(page, 'Guided');
+  const start = await serverDraft(page);
+  const fp = async () => (await page.getByTestId('ss-model-fingerprint').textContent()) ?? '';
+
+  // with nothing unsaved, Back and Forward are not interfered with
+  await page.goBack();
+  await expect(page).toHaveURL(new RegExp(`${SURVEY}$`));
+  await expect(page.getByTestId('ss-leave')).toHaveCount(0);
+  await page.goForward();
+  await expect(page).toHaveURL(new RegExp(`${MODULE}`));
+
+  // two unsaved edits, so there is undo history to preserve as well
+  await typeQuestion(page.getByTestId('ss-q-n1'), 'Do you pay your premium by GIRO every month?');
+  await typeQuestion(page.getByTestId('ss-q-n2'), 'Do you keep every cash receipt?');
+  await expect(status(page)).toHaveAttribute('data-state', 'unsaved');
+  const edited = await fp();
+
+  // Back WITHIN the survey (module → composer) is ordinary navigation: no question asked, nothing lost
+  await page.goBack();
+  await expect(page).toHaveURL(new RegExp(`${SURVEY}$`));
+  await expect(page.getByTestId('ss-leave')).toHaveCount(0);
+  await expect(status(page)).toHaveAttribute('data-state', 'unsaved');
+  expect(await fp()).toBe(edited);
+
+  // Back OUT of the survey (composer → list): held, and asked
+  await page.goBack();
+  await expect(page.getByTestId('ss-leave')).toBeVisible();
+  await expect(page.getByTestId('ss-leave')).toHaveAttribute('data-via', 'history');
+  await expect(page).toHaveURL(new RegExp(`${SURVEY}$`)); // the address is back where it was
+  await shot(page, 'FI18-back-button-unsaved-warning');
+
+  // STAY: the complete workspace is exactly as it was — model, undo history, save state
+  await page.getByTestId('ss-leave-stay').click();
+  await expect(page.getByTestId('ss-leave')).toHaveCount(0);
+  await expect(page).toHaveURL(new RegExp(`${SURVEY}$`));
+  expect(await fp(), 'the model is identical after staying').toBe(edited);
+  await expect(status(page)).toHaveAttribute('data-state', 'unsaved');
+  await expect(page.getByTestId('ss-undo')).toBeEnabled();
+  await expect(page.getByTestId('ss-undo')).toHaveAttribute('title', /Undo:/);
+  await page.goForward(); // history is intact too: Forward still leads to the module
+  await expect(page).toHaveURL(new RegExp(`${MODULE}`));
+  await view(page, 'Guided');
+  await expect(page.getByTestId('ss-q-n1').locator('.ss-q-text textarea').first()).toHaveValue('Do you pay your premium by GIRO every month?');
+  await expect(page.getByTestId('ss-q-n2').locator('.ss-q-text textarea').first()).toHaveValue('Do you keep every cash receipt?');
+  await page.getByTestId('ss-undo').click(); // undo still works after the held Back …
+  await expect(page.getByTestId('ss-q-n2').locator('.ss-q-text textarea').first()).not.toHaveValue('Do you keep every cash receipt?');
+  await page.getByTestId('ss-redo').click(); // … and redo
+  expect(await fp()).toBe(edited);
+  await shot(page, 'FI19-after-staying-work-intact');
+
+  // asked again every time, not only the first
+  await page.goBack();
+  await page.goBack();
+  await expect(page.getByTestId('ss-leave')).toBeVisible();
+  // Escape is "stay"
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('ss-leave')).toHaveCount(0);
+  await expect(page).toHaveURL(new RegExp(`${SURVEY}$`));
+
+  // LEAVE: the move happens; the saved revision is untouched
+  await page.goBack();
+  await page.getByTestId('ss-leave-go').click();
+  await expect(page).toHaveURL(/\/survey-studio$/);
+  await expect(page.getByTestId(`ss-survey-${CODE}`)).toContainText(`Revision ${start.revision}`);
+  expect(fingerprintOf(await serverDraft(page)), 'leaving sent nothing and changed nothing on the server').toEqual(fingerprintOf(start));
+  await shot(page, 'FI20-after-leaving-list');
+
+  // Forward back INTO the survey: the unsaved work is still there (memory only), and it can still be saved
+  await page.goForward();
+  await expect(page).toHaveURL(new RegExp(`${SURVEY}$`));
+  await expect(status(page)).toHaveAttribute('data-state', 'unsaved');
+  expect(await fp()).toBe(edited);
+  await page.getByTestId('ss-save').click();
+  await saved(page, start.revision + 1);
+  const end = await serverDraft(page);
+  expect(end.revision).toBe(start.revision + 1);
+  expect(wordings(end)).toContain('Do you keep every cash receipt?');
+  expect(wordings(end)).toContain('Do you pay your premium by GIRO every month?');
+
+  // once saved, Back leaves without a question
+  await page.goBack();
+  await expect(page).toHaveURL(/\/survey-studio$/);
+  await expect(page.getByTestId('ss-leave')).toHaveCount(0);
+  expect(await page.evaluate(() => window.localStorage.length + window.sessionStorage.length)).toBe(0);
+  await context.close();
+});
+

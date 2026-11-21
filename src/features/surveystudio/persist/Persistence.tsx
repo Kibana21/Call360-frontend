@@ -2,13 +2,14 @@
 // an explicit Save, and an explicit resolution when someone else saved first. There is no autosave and nothing is kept
 // in browser storage: unsaved edits live in memory (store.tsx) and the author is warned before leaving them.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ApiFailure } from '../../../api/client';
 import { useAuth } from '../../../auth/AuthContext';
 import { MappingError, assetKey, changes, fromDocuments, isEmpty, seqFor, toDocuments, type DocumentSet } from '../model/documents';
 import type { Workspace } from '../model/types';
 import { useStudio } from '../store';
 import { documentsOf, loadDraft, saveDraft, type DraftDocuments } from './api';
+import { noteHistoryPosition, passHeldMove, setHistoryGuard } from './historyGuard';
 import { compare, onTop, operationsFor, serverHolds, type Comparison, type Details } from './saving';
 
 /** What the editor knows about the server's draft: the revision it started from and the documents at that revision. */
@@ -200,39 +201,46 @@ export function PersistenceProvider({ initial, onBaseline, children }: { initial
 }
 
 /**
- * Following a link out of this survey with unsaved work asks first. The changes are not lost by leaving: they stay in
- * memory for as long as this page is open, and are still here on coming back. They are lost by closing or reloading the
- * page, which the browser itself asks about.
+ * Leaving this survey with unsaved work asks first — by a link, or by the browser's Back or Forward button. Staying
+ * changes nothing at all: the workspace, its undo history and the open screen are untouched. Leaving does not discard
+ * the changes either: they stay in memory for as long as this page is open and are still here, unsaved, on coming
+ * back; the saved revision on the server is not touched. They are lost only by closing or reloading the page, which the
+ * browser itself asks about.
  */
 function LeaveGuard({ dirty, code }: { dirty: boolean; code: string }) {
   const nav = useNavigate();
-  const [to, setTo] = useState<string | null>(null);
+  const location = useLocation();
+  const [to, setTo] = useState<{ href: string } | { delta: number } | null>(null);
   const stay = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
     if (!dirty) return;
     const inside = `/survey-studio/surveys/${code}`;
+    const within = (pathname: string) => pathname === inside || pathname.startsWith(`${inside}/`);
     const onClick = (e: MouseEvent) => {
       if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       const a = (e.target as HTMLElement | null)?.closest?.('a[href]') as HTMLAnchorElement | null;
       if (!a || a.target === '_blank' || a.origin !== window.location.origin) return;
-      if (a.pathname === inside || a.pathname.startsWith(`${inside}/`)) return;
+      if (within(a.pathname)) return;
       e.preventDefault();
       e.stopPropagation();
-      setTo(a.pathname + a.search + a.hash);
+      setTo({ href: a.pathname + a.search + a.hash });
     };
     document.addEventListener('click', onClick, true);
-    return () => document.removeEventListener('click', onClick, true);
+    setHistoryGuard({ inside: within, onBlocked: (delta) => setTo({ delta }) });
+    return () => { document.removeEventListener('click', onClick, true); setHistoryGuard(null); };
   }, [dirty, code]);
+  useEffect(() => { noteHistoryPosition(); }, [location]);
   useEffect(() => { if (to) stay.current?.focus(); }, [to]);
   if (!to) return null;
+  const leave = () => { const dest = to; setTo(null); if ('href' in dest) nav(dest.href); else passHeldMove(dest.delta); };
   return (
-    <div className="ss-modal-back" data-testid="ss-leave">
+    <div className="ss-modal-back" data-testid="ss-leave" data-via={'href' in to ? 'link' : 'history'}>
       <div className="ss-modal" role="dialog" aria-modal="true" aria-labelledby="ss-leave-title" onKeyDown={(e) => { if (e.key === 'Escape') setTo(null); }}>
         <h2 id="ss-leave-title">You have unsaved changes</h2>
-        <p>They have not been saved to Call360. If you leave now they stay in this browser tab only, and are lost if the tab is closed or reloaded.</p>
+        <p>They have not been saved to Call360. If you leave now they stay in this browser tab only, and are lost if the tab is closed or reloaded. The saved revision is not changed either way.</p>
         <div className="ss-actions">
           <button type="button" className="ss-btn primary" ref={stay} onClick={() => setTo(null)} data-testid="ss-leave-stay">Stay and keep editing</button>
-          <button type="button" className="ss-btn" onClick={() => { const dest = to; setTo(null); nav(dest); }} data-testid="ss-leave-go">Leave without saving</button>
+          <button type="button" className="ss-btn" onClick={leave} data-testid="ss-leave-go">Leave without saving</button>
         </div>
       </div>
     </div>
