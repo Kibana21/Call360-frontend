@@ -4,11 +4,13 @@
 // There is no second routing model. Positions, zoom, collapse and selection are presentation state kept by the view.
 import { Graph, layout as dagreLayout } from '@dagrejs/dagre';
 import { describeAst } from './engine';
-import { escalationOutcomes, mandatoryOutcomes, buildFlow, normalNext, ruleText, validateModule, type Flow, type FlowEntry } from './flow';
+import { afterLabel, escalationOutcomes, mandatoryOutcomes, buildFlow, normalNext, ruleText, validateModule, type Flow, type FlowEntry } from './flow';
 import {
   canBeIneligible, defaultOn, edgeOf, findCondition, findModule, findQuestion, jumpSources, setDecisionUnknown, setEdge, setFallback, setIfIneligible, setIfSkippedInSequence, setRejoin, setRoute, updateRule, type InsertAt,
 } from './ops';
 import { ESCALATION_OUTCOMES, OUTCOME_LABEL } from './sample';
+
+const STATEMENT_NAME = { OPENING: 'Opening', TRANSITION: 'Transition', DISCLOSURE: 'Disclosure', CLOSING: 'Closing' } as const;
 import { isQuestion, mKey, type AnswerType, type Issue, type Module, type ModuleKind, type OutcomeCode, type Survey, type SurveyTarget, type Target, type Workspace } from './types';
 
 export type Tone = 'normal' | 'alt' | 'unknown' | 'escalate' | 'queue';
@@ -35,6 +37,8 @@ export interface GNode {
   title: string;
   subtitle?: string;
   answerType?: AnswerType;
+  /** For a statement: the name of its role (Opening, Transition, Disclosure, Closing). */
+  statement?: string;
   slots: Slot[];
   issues: number;
   main: boolean;
@@ -109,7 +113,7 @@ export function slotsOf(ws: Workspace, m: Module, entry: FlowEntry): Slot[] {
   const name = (code: string) => q.options.find((o) => o.code === code)?.label || code;
   if (r.mode === 'ALL_TO_NEXT') {
     const on = defaultOn(q.answerType);
-    return [mk(on, q.answerType === 'FREE_TEXT' ? 'After the answer' : 'Everybody', edgeOf(m, nd.id, on)?.to ?? null, 'normal', { insert: { from: nd.id, on } })];
+    return [mk(on, afterLabel(q.answerType), edgeOf(m, nd.id, on)?.to ?? null, 'normal', { insert: { from: nd.id, on } })];
   }
   if (r.mode === 'PER_CHOICE') {
     return q.options.map((o) => mk(o.code, o.label || o.code, edgeOf(m, nd.id, o.code)?.to ?? null,
@@ -172,9 +176,9 @@ export function moduleGraph(ws: Workspace, m: Module, collapsed: ReadonlySet<str
     const slots = slotsOf(ws, m, entry);
     if (isQuestion(nd)) {
       const q = findQuestion(ws, nd.q)!;
-      const title = q.wording.text.trim() || 'Untitled question';
+      const title = q.wording.text.trim() || (q.answerType === 'STATEMENT' ? 'Untitled statement' : 'Untitled question');
       nodes.push({
-        id: nd.id, kind: 'QUESTION', number: entry.number, title, answerType: q.answerType, slots, issues: count(nd.id), main: mainIds.has(nd.id),
+        id: nd.id, kind: 'QUESTION', number: entry.number, title, answerType: q.answerType, ...(q.answerType === 'STATEMENT' ? { statement: STATEMENT_NAME[q.statement ?? 'TRANSITION'] } : {}), slots, issues: count(nd.id), main: mainIds.has(nd.id),
         followup: nd.role === 'FOLLOWUP', shared: q.published, orphan, width: NODE_W, height: 50 + lines(title, 36, 2) * 21 + slots.length * ROW_H + (slots.length ? 10 : 4),
       });
     } else {

@@ -33,6 +33,10 @@ const PATHS = {
   multi: 'M4 4h12v12H4V4Zm3 6 2 2 4-4',
   stop: 'M6 3h8l3 3v8l-3 3H6l-3-3V6l3-3Z',
   info: 'M10 9v5m0-8h.01M3 10a7 7 0 1 0 14 0 7 7 0 0 0-14 0Z',
+  number: 'M8 3 6 17M14 3l-2 14M4 7h13M3 13h13',
+  ack: 'M4 4h12v12H4V4Zm3 6 2 2 4-4M7 2v2m6-2v2',
+  say: 'M4 4h12v9H9l-4 3v-3H4V4Z',
+  variable: 'M7 4c-2 0-2 2-2 3s0 3-2 3c2 0 2 2 2 3s0 3 2 3m6-12c2 0 2 2 2 3s0 3 2 3c-2 0-2 2-2 3s0 3-2 3',
 } as const;
 export type GlyphName = keyof typeof PATHS;
 

@@ -150,7 +150,7 @@ describe.skipIf(!existsSync(FIXTURES))('the SS-01 canonical fixtures, run throug
         for (const b of run.rejected ?? []) {
           const [inst, node] = b.at.split('/');
           const m = findModule(ws, `${survey.sequence.find((x) => x.id === inst)!.module.code}@1`)!;
-          const n = m.nodes.find((x) => x.id === node) as Extract<ModuleNode, { type: 'QUESTION' }>;
+          const n = m.nodes.find((x) => x.id === node) as Extract<ModuleNode, { q: unknown }>;
           expect(validateAnswer(ws.questions.find((q) => q.code === n.q.code)!, b.answer)).toBe(b.error);
         }
       });

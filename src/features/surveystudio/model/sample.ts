@@ -11,6 +11,8 @@ export const FIELDS: FieldDef[] = [
   { code: 'policy.is_replacement', label: 'Replaces an existing policy', type: 'BOOLEAN' },
   { code: 'customer.age_years', label: 'Customer age', type: 'INTEGER', unit: 'years' },
   { code: 'sale.channel', label: 'Selling channel', type: 'ENUM', values: ['AGENCY', 'BANCASSURANCE', 'DIRECT'] },
+  { code: 'policy.plan_name', label: 'Plan name', type: 'TEXT' },
+  { code: 'policy.term_years', label: 'Policy term', type: 'INTEGER', unit: 'years' },
 ];
 
 /**

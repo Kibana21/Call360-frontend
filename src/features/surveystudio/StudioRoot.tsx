@@ -4,13 +4,14 @@ import { Fragment, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { Link, Route, Routes, useNavigate } from 'react-router-dom';
 import '../../styles/survey-studio.css';
 import { BuilderPage } from './BuilderPage';
+import { CallPlanPage } from './CallPlanPage';
 import { ComposerPage } from './ComposerPage';
 import { HomePage } from './HomePage';
 import { ReviewPage } from './ReviewPage';
 import { SimulatorPage } from './SimulatorPage';
 import { ValidationPage } from './ValidationPage';
 import { fingerprint } from './model/canonical';
-import { addDemoSurvey, demoBaseline } from './model/demo';
+import { addDemoSurvey, addReadinessDemo, demoBaseline } from './model/demo';
 import { seedPublication, snapshot } from './model/governance';
 import { addLargeModule } from './model/large';
 import type { Issue } from './model/types';
@@ -25,6 +26,7 @@ export function StudioRoot() {
           <Route index element={<HomePage />} />
           <Route path="surveys/:surveyId" element={<ComposerPage />} />
           <Route path="surveys/:surveyId/simulate" element={<SimulatorPage />} />
+          <Route path="surveys/:surveyId/plan" element={<CallPlanPage />} />
           <Route path="surveys/:surveyId/validate" element={<ValidationPage />} />
           <Route path="surveys/:surveyId/review" element={<ReviewPage />} />
           <Route path="surveys/:surveyId/modules/:instanceId" element={<BuilderPage />} />
@@ -140,6 +142,8 @@ export function StudioBar({ crumbs, badge, issues, onIssue, wording }: {
                   close();
                   nav(`/survey-studio/surveys/${id}/simulate`);
                 }}>Add a demonstration survey and simulate it</button>
+              <button type="button" className="ss-btn" data-testid="ss-add-readiness"
+                onClick={() => { const id = apply('Added the opening-and-closing demonstration survey', addReadinessDemo); close(); if (id) nav(`/survey-studio/surveys/${id}/plan`); }}>Add a survey with statements and a call plan</button>
               <button type="button" className="ss-btn" data-testid="ss-add-large"
                 onClick={() => { const key = apply('Added the 40-question sample module', addLargeModule); close(); if (key) nav(`/survey-studio/modules/${encodeURIComponent(key)}`); }}>Add a 40-question sample module</button>
               <button type="button" className="ss-btn" onClick={() => { reset(); close(); }} data-testid="ss-reset">Reset to the sample library</button>

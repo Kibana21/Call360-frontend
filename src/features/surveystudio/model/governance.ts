@@ -185,12 +185,29 @@ export interface Readiness {
   wording: { total: number; toApprove: Array<{ code: string; version: number; text: string; usedIn: string[]; why: string }> };
 }
 
+/** The three gates a survey must contain to be structurally eligible for a live call (owner condition D-67). */
+export const LIVE_GATES = ['IDENTITY_CHECK', 'CONSENT_TO_PROCEED', 'RECORDING_CONSENT'] as const;
+const GATE_NAME: Record<(typeof LIVE_GATES)[number], string> = { IDENTITY_CHECK: 'identity check', CONSENT_TO_PROCEED: 'consent to proceed', RECORDING_CONSENT: 'recording consent' };
+export function liveGates(ws: Workspace, survey: Survey): { present: Array<(typeof LIVE_GATES)[number]>; missing: Array<(typeof LIVE_GATES)[number]> } {
+  const have = new Set<string>();
+  for (const inst of survey.sequence) {
+    const m = findModule(ws, mKey(inst.module));
+    for (const n of m?.nodes ?? []) {
+      if (!isQuestion(n)) continue;
+      const q = findQuestion(ws, n.q);
+      if (q?.role && q.mandatory) have.add(q.role);
+    }
+  }
+  return { present: LIVE_GATES.filter((g) => have.has(g)), missing: LIVE_GATES.filter((g) => !have.has(g)) };
+}
+
 const areaOf = (i: Issue): Area => {
   const m = i.message;
   if (i.where.part === 'empty' || i.where.part === 'cycle' || i.where.part === 'orphan' || /has no questions yet|has no first question|Nothing leads to|contains a loop/.test(m)) return 'STRUCTURE';
   if (i.where.part === 'mandatory' || /must escalate|must stop and escalate|is not allowed to do this|mandatory escalation/.test(m)) return 'ESCALATION';
   if (i.where.part === 'entry' || i.where.on?.startsWith('@SKIP') || /condition|earlier answer|reads the answer|is bound to|information is missing|waits for a module|activates it/.test(m)) return 'CONDITIONS';
-  if (/has no question text|at least two answer options|option without a label|selection limits|answers, but only/.test(m)) return 'QUESTIONS';
+  if (i.where.part === 'wording' || i.where.part === 'delivery') return 'WORDING';
+  if (i.where.part === 'number' || /has no question text|has no statement text|have been mixed up|at least two answer options|option without a label|selection limits|answers, but only/.test(m)) return 'QUESTIONS';
   return 'ROUTING';
 };
 const WHY: Record<Area, string> = {
@@ -241,6 +258,9 @@ export function assess(ws: Workspace, survey: Survey, sg: SurveyGov = EMPTY): Re
 
   if (!survey.purpose.trim()) findings.push({ id: 'G|PURPOSE', severity: 'WARNING', area: 'GOVERNANCE', title: 'The survey has no stated purpose', why: 'A reviewer needs to know what the survey is for to judge whether it is complete.', fix: 'Acknowledge, or recreate the survey with a purpose.' });
   findings.push({ id: 'G|NO-ANSWER', severity: 'WARNING', area: 'GOVERNANCE', title: 'What happens when a customer does not answer is not decided yet', why: 'Silence, refusal, a dropped call, and how often a question may be repeated are open business and compliance decisions (contract §5.5). No survey can define them yet, and nothing is assumed.', fix: 'Acknowledge that this is outstanding. It must be decided before any survey is used on real calls.' });
+  // live eligibility (owner condition D-67): a structural check only. It never makes a survey eligible for live calls.
+  const gates = liveGates(ws, survey);
+  if (gates.missing.length) findings.push({ id: `G|LIVE|${gates.missing.join(',')}`, severity: 'INFO', area: 'GOVERNANCE', title: 'Not structurally eligible for live calls', why: `A survey used on a live call must contain a mandatory ${gates.missing.map((g) => GATE_NAME[g]).join(', a mandatory ')}. This one does not. That does not stop it being designed, simulated or reviewed here.`, fix: 'Give a yes/no question the missing role and mark it mandatory, when the survey is meant for live calls.' });
   const halts = survey.sequence.filter((i) => eligibilityOf(i)?.unknownPolicy === 'SKIP_WITH_REASON');
   if (halts.length) findings.push({ id: `G|SKIP-UNKNOWN|${halts.map((x) => x.id).join(',')}`, severity: 'WARNING', area: 'GOVERNANCE', title: `${halts.length} module${halts.length === 1 ? ' is' : 's are'} skipped when information is missing`, why: `${halts.map((x) => names.get(x.id)).join(', ')}: when the record lacks what the condition needs, the module is skipped and the reason recorded, instead of stopping for review. That is a deliberate choice a reviewer should see.`, fix: 'Acknowledge, or set the module to stop for review instead.', module: names.get(halts[0]!.id), where: { surveyId: survey.id, instanceId: halts[0]!.id, part: 'entry' } });
 

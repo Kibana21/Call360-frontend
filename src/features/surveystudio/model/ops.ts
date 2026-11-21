@@ -5,10 +5,11 @@
 // answer), no invented exceptional routes, and "a placement never edits a shared definition".
 import { ALL_OUTCOMES, ESCALATION_OUTCOMES } from './sample';
 import {
-  isQuestion, mKey, qKey,
+  isQuestion, singleRoute, mKey, qKey,
   type Activation, type AnswerType, type Condition, type Edge, type Entry, type Instance, type Interrupt, type InterruptClass, type InterruptPolicy, type Module, type ModuleKind, type ModuleNode,
   type Binding, type DecisionNode, type Option, type OutcomeCode, type Question, type QuestionNode, type RoutingMode, type SetRule, type Survey, type SurveyTarget,
   type Target, type TextRule, type Workspace,
+  type DeliveryMode, type NumberRule, type QuestionRole, type StatementRole,
 } from './types';
 
 const clone = <T,>(v: T): T => structuredClone(v);
@@ -67,7 +68,7 @@ function draftQuestion(ws: Workspace, m: Module, nodeId: string): Question {
 }
 
 /** The trigger a question uses when everybody continues to one destination. */
-export const defaultOn = (t: AnswerType) => (t === 'FREE_TEXT' ? 'AFTER_CAPTURE' : 'ANY');
+export const defaultOn = (t: AnswerType) => (singleRoute(t) ? 'AFTER_CAPTURE' : 'ANY');
 export const edgeOf = (m: Module, from: string, on: string) => m.edges.find((x) => x.from === from && x.on === on);
 const nextEdgeId = (m: Module) => `e${Math.max(0, ...m.edges.map((x) => Number(x.id.slice(1)) || 0)) + 1}`;
 const nextId = (m: Module, prefix: 'n' | 'd') => `${prefix}${Math.max(0, ...m.nodes.filter((x) => x.id.startsWith(prefix)).map((x) => Number(x.id.slice(1)) || 0)) + 1}`;
@@ -283,12 +284,17 @@ export function renameModule(ws0: Workspace, moduleKey: string, name: string): W
 export type QuestionSpec = { type: AnswerType } | { reuse: { code: string; version: number } };
 export type InsertAt = { entry: true } | { from: string; on: string };
 
+/** A statement definition is always placed as a STATEMENT node, and nothing else is. */
+export const nodeTypeOf = (q: Question): QuestionNode['type'] => (q.answerType === 'STATEMENT' ? 'STATEMENT' : 'QUESTION');
+
 function newQuestion(ws: Workspace, type: AnswerType): Question {
   const q: Question = {
-    code: `Q-NEW-${ws.seq}`, version: 1, answerType: type, intent: '',
+    code: `${type === 'STATEMENT' ? 'S' : 'Q'}-NEW-${ws.seq}`, version: 1, answerType: type, intent: '',
     options: type === 'YES_NO' ? [{ code: 'YES', label: 'Yes' }, { code: 'NO', label: 'No' }] : [],
     wording: { version: 1, text: '', approval: 'SYNTHETIC_UNAPPROVED' }, published: false,
     ...(type === 'FREE_TEXT' ? { textRule: { required: true, min: 1, max: 500 } } : {}),
+    ...(type === 'NUMERIC' ? { numberRule: { integer: true } } : {}),
+    ...(type === 'STATEMENT' ? { statement: 'TRANSITION' as const } : {}),
   };
   ws.questions.push(q);
   ws.seq += 1;
@@ -304,7 +310,7 @@ export function insertQuestion(ws0: Workspace, moduleKey: string, at: InsertAt, 
   const m = mod(ws, moduleKey);
   const q = 'reuse' in spec ? findQuestion(ws, spec.reuse)! : newQuestion(ws, spec.type);
   const id = nextNodeId(m);
-  const node: QuestionNode = { id, type: 'QUESTION', q: { code: q.code, version: q.version }, routing: { mode: 'ALL_TO_NEXT' } };
+  const node: QuestionNode = { id, type: nodeTypeOf(q), q: { code: q.code, version: q.version }, routing: { mode: 'ALL_TO_NEXT' } };
   m.nodes.push(node);
   let inherited: Target | null;
   if ('entry' in at) {
@@ -320,13 +326,29 @@ export function insertQuestion(ws0: Workspace, moduleKey: string, at: InsertAt, 
   return [ws, id];
 }
 
-export function updateQuestion(ws0: Workspace, moduleKey: string, nodeId: string, patch: { text?: string; intent?: string; selection?: { min: number; max: number } | null; textRule?: TextRule }): Workspace {
+export function updateQuestion(ws0: Workspace, moduleKey: string, nodeId: string, patch: {
+  text?: string; intent?: string; selection?: { min: number; max: number } | null; textRule?: TextRule;
+  numberRule?: NumberRule; delivery?: DeliveryMode; mandatory?: boolean; role?: QuestionRole | null; statement?: StatementRole;
+}): Workspace {
   const ws = clone(ws0);
   const q = draftQuestion(ws, mod(ws, moduleKey), nodeId);
   if (patch.text !== undefined) q.wording.text = patch.text;
   if (patch.intent !== undefined) q.intent = patch.intent;
   if (patch.selection === null) delete q.selection; else if (patch.selection) q.selection = patch.selection;
   if (patch.textRule) q.textRule = patch.textRule;
+  const isStatementDef = q.answerType === 'STATEMENT';
+  if (patch.numberRule) { if (q.answerType !== 'NUMERIC') throw new Error('Only a number question has a number rule'); q.numberRule = patch.numberRule; }
+  // CONTROLLED_TTS is the absent default, so choosing it leaves the canonical model exactly as it was
+  if (patch.delivery !== undefined) { if (patch.delivery === 'CONTROLLED_TTS') delete q.wording.delivery; else q.wording.delivery = patch.delivery; }
+  if (patch.mandatory !== undefined) {
+    if (isStatementDef) throw new Error('A statement is delivered, not answered: it cannot be a mandatory question');
+    if (patch.mandatory) q.mandatory = true; else delete q.mandatory;
+  }
+  if (patch.role !== undefined) {
+    if (isStatementDef) throw new Error('A statement has a statement role, not a question role');
+    if (patch.role) { if (q.answerType !== 'YES_NO') throw new Error('An identity or consent check is a yes/no question'); q.role = patch.role; } else delete q.role;
+  }
+  if (patch.statement !== undefined) { if (!isStatementDef) throw new Error('Only a statement has a statement role'); q.statement = patch.statement; }
   return ws;
 }
 
@@ -486,6 +508,7 @@ export function setMode(ws0: Workspace, moduleKey: string, nodeId: string, mode:
   const node = qNode(m, nodeId);
   const q = findQuestion(ws, node.q)!;
   if (node.routing.mode === mode) return ws0;
+  if (singleRoute(q.answerType) && mode !== 'ALL_TO_NEXT') throw new Error('This item has one way on: nothing about it can choose a route');
   const r = node.routing;
   const common: Target | null =
     (r.mode === 'SEQUENTIAL_FOLLOWUPS' ? r.rejoin ?? null : r.mode === 'ORDERED_RULES' ? r.fallback ?? null : null)
@@ -586,7 +609,7 @@ export function addFollowupQuestion(ws0: Workspace, moduleKey: string, nodeId: s
   else {
     const q = 'reuse' in spec ? findQuestion(ws, spec.reuse)! : newQuestion(ws, spec.type);
     target = nextNodeId(m);
-    m.nodes.push({ id: target, type: 'QUESTION', q: { code: q.code, version: q.version }, routing: { mode: 'ALL_TO_NEXT' }, role: 'FOLLOWUP' });
+    m.nodes.push({ id: target, type: nodeTypeOf(q), q: { code: q.code, version: q.version }, routing: { mode: 'ALL_TO_NEXT' }, role: 'FOLLOWUP' });
     setEdgeIn(m, target, defaultOn(q.answerType), { ret: true });
   }
   if (as === 'INTERRUPT') {

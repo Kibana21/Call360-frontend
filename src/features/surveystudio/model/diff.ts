@@ -7,6 +7,7 @@ import { buildFlow } from './flow';
 import { bindingText, lockOf, surveyOf, type Snapshot } from './governance';
 import { activationOf, eligibilityOf, findModule, findQuestion, routesFrom } from './ops';
 import { OUTCOME_LABEL } from './sample';
+import { DELIVERY_LABEL, deliveryOf } from './wording';
 import { isQuestion, mKey, type Instance, type Module, type ModuleNode, type OutcomeCode, type Question, type Survey, type SurveyTarget, type Workspace } from './types';
 
 export type ChangeArea = 'MODULES' | 'QUESTIONS' | 'ROUTING' | 'CONDITIONS' | 'DEPENDENCIES';
@@ -66,6 +67,9 @@ function routesText(ws: Workspace, m: Module, n: ModuleNode, numbers: Map<string
 const optionsText = (q: Question) => q.options.map((o) => `${o.label || o.code}${o.exclusive ? ' (exclusive)' : ''}${o.isOther ? ' (other, with text)' : ''}${o.interrupt === 'MANDATORY' ? ' (mandatory escalation)' : ''}`).join(' · ');
 
 /** What differs between revision `a` (earlier) and revision `b` (later), in a reviewer's words. */
+const deliveryFacts = (q: Question) => [deliveryOf(q), q.mandatory ?? false, q.role ?? null, q.statement ?? null];
+const deliveryText = (q: Question): string => [DELIVERY_LABEL[deliveryOf(q)], q.answerType === 'STATEMENT' ? `${(q.statement ?? 'TRANSITION').toLowerCase()} statement` : q.mandatory ? 'mandatory' : 'not mandatory', q.role ? q.role.toLowerCase().replace(/_/g, ' ') : null].filter(Boolean).join(' · ');
+
 export function compare(a: Snapshot, b: Snapshot): Comparison {
   const sa = surveyOf(a), sb = surveyOf(b);
   const changes: Change[] = [];
@@ -103,9 +107,10 @@ export function compare(a: Snapshot, b: Snapshot): Comparison {
     const na = buildFlow(a.ws, ma).numbers, nb = buildFlow(b.ws, mb).numbers;
     if (ma.entry !== mb.entry) add({ area: 'ROUTING', kind: 'MODIFIED', title: `${name} now starts with a different question`, before: ma.entry ? `${na.get(ma.entry) ?? ''} ${ma.nodes.find((n) => n.id === ma.entry) ? '' : '(removed)'}`.trim() : 'nothing', after: mb.entry && mb.nodes.find((n) => n.id === mb.entry) ? (isQuestion(mb.nodes.find((n) => n.id === mb.entry)!) ? `“${short(findQuestion(b.ws, (mb.nodes.find((n) => n.id === mb.entry) as { q: { code: string; version: number } }).q)?.wording.text.trim() || 'Untitled question')}”` : 'a condition') : 'nothing', module: name, where });
     const nodesA = new Map(ma.nodes.map((n) => [n.id, n])), nodesB = new Map(mb.nodes.map((n) => [n.id, n]));
-    const qText = (ws: Workspace, n: ModuleNode) => (isQuestion(n) ? `“${short(findQuestion(ws, n.q)?.wording.text.trim() || 'Untitled question')}”` : 'a condition');
-    for (const [nid, n] of nodesB) if (!nodesA.has(nid)) add({ area: isQuestion(n) ? 'QUESTIONS' : 'CONDITIONS', kind: 'ADDED', title: `${name}: ${isQuestion(n) ? 'a question' : 'a condition'} was added`, after: isQuestion(n) ? `${nb.get(nid) ?? ''} ${qText(b.ws, n)}` : `${nb.get(nid) ?? ''} checks ${bindingText(b.ws, n.binding)}`, module: name, wording: isQuestion(n), where: { instanceId: id, nodeId: nid } });
-    for (const [nid, n] of nodesA) if (!nodesB.has(nid)) add({ area: isQuestion(n) ? 'QUESTIONS' : 'CONDITIONS', kind: 'REMOVED', title: `${name}: ${isQuestion(n) ? 'a question' : 'a condition'} was removed`, before: isQuestion(n) ? `${na.get(nid) ?? ''} ${qText(a.ws, n)}` : `${na.get(nid) ?? ''} checked ${bindingText(a.ws, n.binding)}`, module: name });
+    const qText = (ws: Workspace, n: ModuleNode) => (isQuestion(n) ? `“${short(findQuestion(ws, n.q)?.wording.text.trim() || (n.type === 'STATEMENT' ? 'Untitled statement' : 'Untitled question'))}”` : 'a condition');
+    const itemWord = (n: ModuleNode) => (!isQuestion(n) ? 'a condition' : n.type === 'STATEMENT' ? 'a statement' : 'a question');
+    for (const [nid, n] of nodesB) if (!nodesA.has(nid)) add({ area: isQuestion(n) ? 'QUESTIONS' : 'CONDITIONS', kind: 'ADDED', title: `${name}: ${itemWord(n)} was added`, after: isQuestion(n) ? `${nb.get(nid) ?? ''} ${qText(b.ws, n)}` : `${nb.get(nid) ?? ''} checks ${bindingText(b.ws, n.binding)}`, module: name, wording: isQuestion(n), where: { instanceId: id, nodeId: nid } });
+    for (const [nid, n] of nodesA) if (!nodesB.has(nid)) add({ area: isQuestion(n) ? 'QUESTIONS' : 'CONDITIONS', kind: 'REMOVED', title: `${name}: ${itemWord(n)} was removed`, before: isQuestion(n) ? `${na.get(nid) ?? ''} ${qText(a.ws, n)}` : `${na.get(nid) ?? ''} checked ${bindingText(a.ws, n.binding)}`, module: name });
     for (const [nid, x] of nodesA) {
       const y = nodesB.get(nid);
       if (!y) continue;
@@ -117,8 +122,10 @@ export function compare(a: Snapshot, b: Snapshot): Comparison {
         const ref = `${name}: ${qText(b.ws, y)}`;
         if (qa.code !== qb.code) { add({ area: 'QUESTIONS', kind: 'MODIFIED', title: `${name}: a different question is now asked at this point`, before: qText(a.ws, x), after: qText(b.ws, y), module: name, wording: true, where: w }); touched = true; }
         else {
-          if (qa.wording.text.trim() !== qb.wording.text.trim()) { add({ area: 'QUESTIONS', kind: 'MODIFIED', title: `${name}: the wording of a question changed`, before: qa.wording.text.trim(), after: qb.wording.text.trim(), module: name, wording: true, where: w }); touched = true; }
+          if (qa.wording.text.trim() !== qb.wording.text.trim()) { add({ area: 'QUESTIONS', kind: 'MODIFIED', title: `${name}: the wording of ${itemWord(y)} changed`, before: qa.wording.text.trim(), after: qb.wording.text.trim(), module: name, wording: true, where: w }); touched = true; }
           if (!same(qa.options, qb.options)) { add({ area: 'QUESTIONS', kind: 'MODIFIED', title: `${ref} — its answer options changed`, before: optionsText(qa), after: optionsText(qb), module: name, wording: !same(qa.options.map((o) => o.label), qb.options.map((o) => o.label)), where: w }); touched = true; }
+          if (!same(deliveryFacts(qa), deliveryFacts(qb))) { add({ area: 'QUESTIONS', kind: 'MODIFIED', title: `${ref} — how it is delivered, or its role, changed`, before: deliveryText(qa), after: deliveryText(qb), module: name, wording: deliveryOf(qa) !== deliveryOf(qb), where: w }); touched = true; }
+          if (!same(qa.numberRule ?? null, qb.numberRule ?? null)) { add({ area: 'QUESTIONS', kind: 'MODIFIED', title: `${ref} — the number it accepts changed`, before: JSON.stringify(qa.numberRule ?? {}), after: JSON.stringify(qb.numberRule ?? {}), module: name, where: w }); touched = true; }
           if (!same([qa.answerType, qa.selection, qa.textRule], [qb.answerType, qb.selection, qb.textRule])) { add({ area: 'QUESTIONS', kind: 'MODIFIED', title: `${ref} — how it may be answered changed`, before: `${qa.answerType}${qa.selection ? ` · ${qa.selection.min}–${qa.selection.max} answers` : ''}`, after: `${qb.answerType}${qb.selection ? ` · ${qb.selection.min}–${qb.selection.max} answers` : ''}`, module: name, where: w }); touched = true; }
         }
       } else if (!isQuestion(x) && !isQuestion(y) && !same(x.binding, y.binding)) {

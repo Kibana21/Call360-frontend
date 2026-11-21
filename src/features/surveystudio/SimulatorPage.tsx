@@ -12,6 +12,8 @@ import { findModule, findSurvey } from './model/ops';
 import { FIELDS, OUTCOME_CATALOG, OUTCOME_LABEL } from './model/sample';
 import { firstDivergence, simulateInputs, type ModuleStatus, type Read, type SimAnswer, type SimEvent, type SimResult, type TerminalState } from './model/sim';
 import { isQuestion, mKey, type Survey, type Workspace } from './model/types';
+import { variablesOf } from './model/wording';
+import { STATEMENT_LABEL } from './labels';
 import { JourneyNav } from './JourneyNav';
 import { StudioBar } from './StudioRoot';
 import { useStudio } from './store';
@@ -31,7 +33,7 @@ const TERMINAL: Record<TerminalState, { eyebrow: string; tone: string; kind: str
   MISSING_INFORMATION_HALT: { eyebrow: 'Halted · pending review', tone: 'halt', kind: 'A missing-information halt: whether a module applies could not be decided, so it never started. This is not a module outcome, and not a completed run.' },
   DRAFT_INVALID: { eyebrow: 'The draft cannot run', tone: 'blocked', kind: 'Not a result of a call: the draft itself is incomplete or invalid here.' },
 };
-const READ_TEXT: Record<Read['state'], string> = { KNOWN: 'known', MISSING: 'missing', ANSWERED: 'answered', ANSWERED_EMPTY: 'answered · nothing selected', UNANSWERED: 'asked · left unanswered', SKIPPED: 'not asked on this path' };
+const READ_TEXT: Record<Read['state'], string> = { KNOWN: 'known', MISSING: 'missing', ANSWERED: 'answered', ANSWERED_EMPTY: 'answered · nothing selected', UNANSWERED: 'asked · left unanswered', SKIPPED: 'not asked on this path', DELIVERED: 'delivered' };
 const fmtFact = (code: string, v: unknown) => {
   const f = fieldDef(code);
   if (v === null || v === undefined || v === '') return null;
@@ -94,6 +96,7 @@ export function SimulatorPage() {
             <p className="ss-sim-note" data-testid="ss-sim-notice"><Glyph name="info" size={14} /> A demonstration in your browser with invented customers. It is not the Call360 runtime: nothing here was executed, approved, saved or sent.</p>
           </div>
           <div className="ss-sim-head-tools">
+            <Link className="ss-tool" to={`/survey-studio/surveys/${survey.id}/plan?profile=${profile.id}`} data-testid="ss-sim-plan" title="What can be settled before the call for this customer"><Glyph name="list" size={14} /> Call plan preview</Link>
             {issues.length ? <Link className="ss-tool warn" to={`/survey-studio/surveys/${survey.id}`} data-testid="ss-sim-draft-issues" title="The simulator stops where the draft is incomplete; it never guesses a route."><Glyph name="alert" size={14} /> {issues.length} to fix in this draft</Link> : null}
             <label className="ss-sim-compare"><span>Compare with</span>
               <select value={other?.id ?? ''} onChange={(e) => set({ compare: e.target.value || null })} data-testid="ss-sim-compare">
@@ -214,7 +217,7 @@ function Stage({ ws, survey, result, canBack, playing, onAnswer, onStep, onBack,
     );
   }
   const q = p.question;
-  const answer: SimAnswer = q.answerType === 'FREE_TEXT' ? { text } : q.answerType === 'MULTI_SELECT' ? { choices } : { ...(choice ? { choice } : {}) };
+  const answer: SimAnswer = q.answerType === 'NUMERIC' ? (text.trim() === '' || Number.isNaN(Number(text)) ? {} : { number: Number(text) }) : q.answerType === 'ACKNOWLEDGEMENT' ? { acknowledged: true } : q.answerType === 'FREE_TEXT' ? { text } : q.answerType === 'MULTI_SELECT' ? { choices } : { ...(choice ? { choice } : {}) };
   const hasOther = q.options.some((o) => o.isOther && (q.answerType === 'MULTI_SELECT' ? choices.includes(o.code) : choice === o.code));
   if (hasOther || otherText) answer.other_text = otherText;
   const sel = q.selection;
@@ -222,9 +225,15 @@ function Stage({ ws, survey, result, canBack, playing, onAnswer, onStep, onBack,
     <section className="ss-sim-stage" aria-labelledby="ss-sim-stage-h" data-testid="ss-sim-stage">
       <p className="ss-sim-eyebrow"><span className="ss-q-num">{p.number}</span> {p.module}{p.followup ? ' · follow-up question' : ''}</p>
       <p className="ss-sim-hears">The customer hears</p>
-      <h2 id="ss-sim-stage-h" data-testid="ss-sim-question">{q.wording.text || 'Untitled question'}</h2>
+      <h2 id="ss-sim-stage-h" data-testid="ss-sim-question">{p.text}</h2>
+      {variablesOf(q.wording.text).length ? <p className="ss-sim-fine" data-testid="ss-sim-wording-source">Approved wording: <span className="ss-wording-raw">{q.wording.text}</span> · values taken from this customer’s record.</p> : null}
       <form className="ss-sim-answer" onSubmit={(e) => { e.preventDefault(); onAnswer(answer); }}>
-        {q.answerType === 'FREE_TEXT' ? (
+        {q.answerType === 'ACKNOWLEDGEMENT' ? (
+          <p className="ss-sim-fine" data-testid="ss-sim-ack-note">The customer acknowledges. What a call does when a customer does <strong>not</strong> acknowledge is not decided yet, so it cannot be simulated.</p>
+        ) : q.answerType === 'NUMERIC' ? (
+          <label className="ss-field"><span>The customer says a number{q.numberRule?.unit ? ` (${q.numberRule.unit})` : ''}</span>
+            <input inputMode="decimal" value={text} onChange={(e) => setText(e.target.value)} data-testid="ss-sim-number" /></label>
+        ) : q.answerType === 'FREE_TEXT' ? (
           <label className="ss-field"><span>The customer says{q.textRule?.required === false ? ' (optional)' : ''}</span>
             <textarea rows={3} value={text} onChange={(e) => setText(e.target.value)} data-testid="ss-sim-text" /></label>
         ) : (
@@ -247,7 +256,7 @@ function Stage({ ws, survey, result, canBack, playing, onAnswer, onStep, onBack,
         )}
         {lastReject ? <p className="ss-issue" role="alert" data-testid="ss-sim-reject"><Glyph name="alert" size={14} /> Not accepted: {lastReject.message} The question is asked again.</p> : null}
         <div className="ss-sim-submit">
-          <button type="submit" className="ss-btn primary" data-testid="ss-sim-answer">Give this answer</button>
+          <button type="submit" className="ss-btn primary" data-testid="ss-sim-answer">{q.answerType === 'ACKNOWLEDGEMENT' ? 'The customer acknowledges' : 'Give this answer'}</button>
           <span className="ss-muted">or press <strong>Step</strong> to answer as this customer would.</span>
         </div>
       </form>
@@ -312,9 +321,9 @@ function WhatNext({ ws, survey, result }: { ws: Workspace; survey: Survey; resul
 }
 
 // ---- the timeline ----------------------------------------------------------------------------------------------------
-const ICON: Record<SimEvent['kind'], GlyphName> = { ENTRY: 'flow', ASK: 'text', ANSWER: 'check', REJECT: 'alert', ROUTE: 'right', DECISION: 'branch', QUEUE: 'list', MODULE_END: 'merge', SURVEY_ROUTE: 'next', DISPOSITION: 'next', END: 'stop' };
+const ICON: Record<SimEvent['kind'], GlyphName> = { ENTRY: 'flow', ASK: 'text', SAY: 'text', ANSWER: 'check', REJECT: 'alert', ROUTE: 'right', DECISION: 'branch', QUEUE: 'list', MODULE_END: 'merge', SURVEY_ROUTE: 'next', DISPOSITION: 'next', END: 'stop' };
 const headline = (e: SimEvent): string =>
-  (e.kind === 'ASK' ? `${e.number} asked: ${e.text}` : e.kind === 'ANSWER' ? `Customer: ${e.given}` : e.kind === 'REJECT' ? `Not accepted (${e.given}): ${e.message}` : e.headline);
+  (e.kind === 'ASK' ? `${e.number} asked: ${e.text}` : e.kind === 'SAY' ? `${e.number} ${STATEMENT_LABEL[e.role].toLowerCase()} delivered: ${e.text}` : e.kind === 'ANSWER' ? `Customer: ${e.given}` : e.kind === 'REJECT' ? `Not accepted (${e.given}): ${e.message}` : e.headline);
 const tone = (e: SimEvent): string =>
   (e.kind === 'ENTRY' ? (e.status === 'ACTIVATED' ? 'ok' : e.status === 'HALTED_MISSING_INFORMATION' ? 'halt' : e.status === 'SKIPPED_UNKNOWN' ? 'unknown' : 'skip')
     : e.kind === 'DECISION' ? (e.result === 'UNKNOWN' ? 'unknown' : 'plain') : e.kind === 'REJECT' ? 'unknown' : e.kind === 'QUEUE' && e.interrupt?.outcome ? 'halt'

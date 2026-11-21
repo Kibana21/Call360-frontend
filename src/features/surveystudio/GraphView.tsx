@@ -19,8 +19,8 @@ import { isQuestion, type Issue, type Module, type OutcomeCode, type Survey, typ
 import { useStudio } from './store';
 import { Glyph, KIND_GLYPH, Picker, Popover, type GlyphName, type PickItem } from './ui';
 
-const TYPE_GLYPH: Record<string, GlyphName> = { YES_NO: 'yesno', SINGLE_SELECT: 'single', MULTI_SELECT: 'multi', FREE_TEXT: 'text' };
-const TYPE_TEXT: Record<string, string> = { YES_NO: 'Yes / No', SINGLE_SELECT: 'Single choice', MULTI_SELECT: 'Multiple choice', FREE_TEXT: 'Free text' };
+const TYPE_GLYPH: Record<string, GlyphName> = { YES_NO: 'yesno', SINGLE_SELECT: 'single', MULTI_SELECT: 'multi', FREE_TEXT: 'text', NUMERIC: 'number', ACKNOWLEDGEMENT: 'ack', STATEMENT: 'say' };
+const TYPE_TEXT: Record<string, string> = { YES_NO: 'Yes / No', SINGLE_SELECT: 'Single choice', MULTI_SELECT: 'Multiple choice', FREE_TEXT: 'Free text', NUMERIC: 'Number', ACKNOWLEDGEMENT: 'Acknowledgement', STATEMENT: 'Statement' };
 const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
 
 interface GraphCtx {
@@ -64,11 +64,11 @@ function StepNode({ data, selected }: NodeProps<Node<StepData>>) {
   const g = data.g;
   const decision = g.kind === 'DECISION';
   return (
-    <div className={`ss-g-node ${decision ? 'decision' : 'question'} ${g.followup ? 'followup' : ''} ${g.issues ? 'has-issue' : ''} ${selected ? 'selected' : ''} ${g.orphan ? 'orphan' : ''}`} data-testid={`ss-g-node-${g.id}`}>
+    <div className={`ss-g-node ${decision ? 'decision' : g.answerType === 'STATEMENT' ? 'question statement' : 'question'} ${g.followup ? 'followup' : ''} ${g.issues ? 'has-issue' : ''} ${selected ? 'selected' : ''} ${g.orphan ? 'orphan' : ''}`} data-testid={`ss-g-node-${g.id}`}>
       <TargetHandle connectable={!g.followup} />
       <div className="ss-g-head">
         <span className="ss-q-num">{g.number}</span>
-        <span className="ss-g-type"><Glyph name={decision ? 'branch' : TYPE_GLYPH[g.answerType ?? 'YES_NO']!} size={13} /> {decision ? 'Condition' : g.followup ? 'Follow-up' : TYPE_TEXT[g.answerType ?? 'YES_NO']}</span>
+        <span className="ss-g-type"><Glyph name={decision ? 'branch' : TYPE_GLYPH[g.answerType ?? 'YES_NO']!} size={13} /> {decision ? 'Condition' : g.followup ? 'Follow-up' : g.statement ? `${g.statement} statement` : TYPE_TEXT[g.answerType ?? 'YES_NO']}</span>
         {g.shared ? <Glyph name="lock" size={12} /> : null}
         {g.issues ? <span className="ss-g-issue" data-testid={`ss-g-issue-${g.id}`}><Glyph name="alert" size={12} /> {g.issues}</span> : null}
       </div>

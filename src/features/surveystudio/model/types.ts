@@ -3,7 +3,32 @@
 // fixtures beside it): Definitions and Versions are shared and never changed by a placement; Instances (module
 // instances, question nodes) own routing and bindings. PROTOTYPE ONLY: nothing here is saved to the server.
 
-export type AnswerType = 'YES_NO' | 'SINGLE_SELECT' | 'MULTI_SELECT' | 'FREE_TEXT';
+/**
+ * What kind of item a definition is (UC-01). NUMERIC and ACKNOWLEDGEMENT are answered questions; STATEMENT is not a
+ * question at all: it is approved wording that is DELIVERED and takes no answer. All three, like FREE_TEXT, have exactly
+ * one way on ("everybody continues") and cannot branch.
+ */
+export type AnswerType = 'YES_NO' | 'SINGLE_SELECT' | 'MULTI_SELECT' | 'FREE_TEXT' | 'NUMERIC' | 'ACKNOWLEDGEMENT' | 'STATEMENT';
+/** Items with a single continuation: nothing about the answer can choose a route. */
+export const singleRoute = (t: AnswerType) => t === 'FREE_TEXT' || t === 'NUMERIC' || t === 'ACKNOWLEDGEMENT' || t === 'STATEMENT';
+
+/** What a statement is for. A declared role only: it changes no routing (UC-01). */
+export type StatementRole = 'OPENING' | 'TRANSITION' | 'DISCLOSURE' | 'CLOSING';
+/**
+ * The lifecycle role of a QUESTION (the roles of the existing conversation lifecycle). Declared only: the gate
+ * behaviour behind identity and consent — what happens when the customer says no, refuses or does not answer — is NOT
+ * implemented here, because those rules are development assumptions awaiting a business decision. Absent = an ordinary
+ * verification question.
+ */
+export type QuestionRole = 'IDENTITY_CHECK' | 'CONSENT_TO_PROCEED' | 'RECORDING_CONSENT' | 'CLOUD_PROCESSING_CONSENT';
+/**
+ * How approved wording may be delivered. CONTROLLED_TTS = exactly this text, synthesised; EXACT_AUDIO = an approved
+ * recording; CONVERSATIONAL = the assistant phrases it. The last is selectable so its consequence can be seen, and is
+ * blocked by validation: what an assistant may say in its own words has not been decided (G-6 AD-9).
+ */
+export type DeliveryMode = 'CONTROLLED_TTS' | 'EXACT_AUDIO' | 'CONVERSATIONAL';
+/** NUMERIC answer rule. `unit` is a label shown to the author and reviewer; it is not converted. */
+export interface NumberRule { integer: boolean; min?: number; max?: number; unit?: string }
 export type ModuleKind = 'OPENING' | 'COMMON' | 'PRODUCT' | 'RISK' | 'EXCEPTION' | 'CLOSING';
 /**
  * REVIEW_REQUIRED is governed, not an ordinary author-routable outcome (owner decision D-127): automated progression
@@ -47,7 +72,21 @@ export interface Question {
    */
   selection?: { min: number; max: number };
   textRule?: TextRule; // FREE_TEXT
-  wording: { version: number; text: string; approval: 'SYNTHETIC_UNAPPROVED' };
+  numberRule?: NumberRule; // NUMERIC
+  /** STATEMENT only: what the statement is for. */
+  statement?: StatementRole;
+  /** Questions only: a declared lifecycle role. */
+  role?: QuestionRole;
+  /**
+   * Questions only: the question must be asked and answered for the call to count as complete. A DECLARED attribute
+   * carried to evaluation and review; what a call does when it is not answered is undecided (no-answer contract).
+   */
+  mandatory?: boolean;
+  /**
+   * The pinned Wording Version. `text` may contain controlled variables written {{field_code}}; each must name a field
+   * of the governed catalog and is rendered deterministically (model/wording.ts). `delivery` absent = CONTROLLED_TTS.
+   */
+  wording: { version: number; text: string; approval: 'SYNTHETIC_UNAPPROVED'; delivery?: DeliveryMode };
   /** true = approved shared library version (immutable here); false = draft created in this session. */
   published: boolean;
 }
@@ -80,9 +119,13 @@ export interface Routing {
   fallback?: Target | null;
 }
 
+/**
+ * An item node: a question, or (UC-01) a statement. Both place one definition from the one item master (`q`) and own
+ * its routing; a STATEMENT node always places a definition whose answerType is STATEMENT, and the reverse.
+ */
 export interface QuestionNode {
   id: string;
-  type: 'QUESTION';
+  type: 'QUESTION' | 'STATEMENT';
   q: { code: string; version: number };
   routing: Routing;
   role?: 'FOLLOWUP';
@@ -94,7 +137,9 @@ export interface QuestionNode {
  */
 export interface DecisionNode { id: string; type: 'DECISION'; binding: Binding | null }
 export type ModuleNode = QuestionNode | DecisionNode;
-export const isQuestion = (n: ModuleNode): n is QuestionNode => n.type === 'QUESTION';
+/** True for every item node — a question or a statement — i.e. everything that is not a decision. */
+export const isQuestion = (n: ModuleNode): n is QuestionNode => n.type !== 'DECISION';
+export const isStatement = (n: ModuleNode): boolean => n.type === 'STATEMENT';
 
 /** `on`: YES | NO | an option code | ANY (the explicit "everybody continues" default) | AFTER_CAPTURE; for a decision MATCH | NO_MATCH | UNKNOWN. */
 export interface Edge { id: string; from: string; on: string; to: Target }
@@ -117,7 +162,7 @@ export interface Module {
 }
 
 // ---- conditions -------------------------------------------------------------------------------------------------
-export type FieldType = 'MONEY' | 'INTEGER' | 'ENUM' | 'BOOLEAN';
+export type FieldType = 'MONEY' | 'INTEGER' | 'ENUM' | 'BOOLEAN' | 'TEXT';
 export interface FieldDef { code: string; label: string; type: FieldType; unit?: string; values?: string[] }
 
 /**
@@ -232,6 +277,8 @@ export interface Workspace {
 export interface Issue {
   id: string;
   severity: 'ERROR' | 'WARNING';
+  /** A stable code for rules that the golden fixtures verify (UC-02). The message is for people and may be reworded. */
+  code?: string;
   message: string;
   fix: string;
   where: { surveyId?: string; instanceId?: string; moduleKey?: string; nodeId?: string; on?: string; part?: string };

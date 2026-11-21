@@ -12,7 +12,7 @@ import { StudioBar } from './StudioRoot';
 import { useStudio } from './store';
 import { Glyph, KIND_GLYPH, Popover, Tag } from './ui';
 
-const TYPE_LABEL = { YES_NO: 'Yes / No', SINGLE_SELECT: 'Single choice', MULTI_SELECT: 'Multiple choice', FREE_TEXT: 'Free text' } as const;
+const TYPE_LABEL = { YES_NO: 'Yes / No', SINGLE_SELECT: 'Single choice', MULTI_SELECT: 'Multiple choice', FREE_TEXT: 'Free text', NUMERIC: 'Number', ACKNOWLEDGEMENT: 'Acknowledgement', STATEMENT: 'Statement' } as const;
 type Tab = 'modules' | 'questions' | 'conditions';
 
 export function HomePage() {

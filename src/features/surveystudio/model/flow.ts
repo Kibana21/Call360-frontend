@@ -4,7 +4,8 @@
 import { codesUsed, ruleWinner, validSelections } from './engine';
 import { activationOf, canBeIneligible, defaultOn, edgeOf, findCondition, findModule, findQuestion, inboundCount, jumpSources, permittedInterrupts, questionNodes, routesFrom } from './ops';
 import { ESCALATION_OUTCOMES, OUTCOME_LABEL } from './sample';
-import { isQuestion, mKey, type OutcomeCode, type DecisionNode, type Issue, type Module, type ModuleNode, type Question, type QuestionNode, type Survey, type Target, type Workspace } from './types';
+import { deliveryOf, variableProblems, variablesOf } from './wording';
+import { isQuestion, mKey, singleRoute, type AnswerType, type OutcomeCode, type DecisionNode, type Issue, type Module, type ModuleNode, type Question, type QuestionNode, type Survey, type Target, type Workspace } from './types';
 
 export interface FlowRow {
   /** An answer code, ANY / AFTER_CAPTURE, a decision result (MATCH | NO_MATCH | UNKNOWN), `RULE:<id>` or FALLBACK. */
@@ -15,6 +16,8 @@ export interface FlowRow {
   lane: FlowEntry[];
 }
 interface FlowBase { number: string; rows: FlowRow[]; followups: FlowItem[]; inboundCount: number }
+/** What the single route of an item is called: nothing about the item can choose another. */
+export const afterLabel = (t: AnswerType): string => (t === 'STATEMENT' ? 'After the statement' : t === 'ACKNOWLEDGEMENT' ? 'After the acknowledgement' : t === 'FREE_TEXT' || t === 'NUMERIC' ? 'After the answer' : 'Everybody');
 export interface FlowItem extends FlowBase { kind: 'QUESTION'; node: QuestionNode; question: Question }
 export interface FlowDecision extends FlowBase { kind: 'DECISION'; node: DecisionNode }
 export type FlowEntry = FlowItem | FlowDecision;
@@ -70,14 +73,19 @@ export function buildFlow(ws: Workspace, m: Module): Flow {
   const letters = new Map<string, number>();
   const anchor = new Map<string, string>();
   let mainCount = 0;
+  let statements = 0;
   const number = (nodes: ModuleNode[], prefix: string | null, owner: string | null): void => {
     let last = owner;
     for (const nd of nodes) {
       if (!isQuestion(nd)) { decisions += 1; numbers.set(nd.id, `C${decisions}`); anchor.set(nd.id, last ?? `C${decisions}`); continue; }
       let num: string;
+      // a statement is labelled S1, S2 … so it never takes a question number (UC-02). These are DISPLAY labels only:
+      // the canonical identity of a step is its node id, and an execution key is `<instance>/<node id>`.
+      if (nd.type === 'STATEMENT' && prefix === null) { statements += 1; numbers.set(nd.id, `S${statements}`); continue; }
       if (prefix === null) { mainCount += 1; num = `Q${mainCount}`; }
-      else { const k = letters.get(prefix) ?? 0; letters.set(prefix, k + 1); num = `${prefix}${String.fromCharCode(97 + (k % 26))}`; }
+      else { const k = letters.get(prefix) ?? 0; letters.set(prefix, k + 1); num = `${nd.type === 'STATEMENT' ? prefix.replace(/^Q/, 'S') : prefix}${String.fromCharCode(97 + (k % 26))}`; }
       numbers.set(nd.id, num);
+      if (nd.type === 'STATEMENT') continue; // branches are numbered after the QUESTION they leave, never after a statement
       last = num;
     }
   };
@@ -90,7 +98,7 @@ export function buildFlow(ws: Workspace, m: Module): Flow {
     } else {
       const q = qOf(nd);
       const r = nd.routing;
-      rowDefs = r.mode === 'ALL_TO_NEXT' ? [{ on: defaultOn(q.answerType), label: q.answerType === 'FREE_TEXT' ? 'After the answer' : 'Everybody', target: edgeOf(m, nd.id, defaultOn(q.answerType))?.to ?? null }]
+      rowDefs = r.mode === 'ALL_TO_NEXT' ? [{ on: defaultOn(q.answerType), label: afterLabel(q.answerType), target: edgeOf(m, nd.id, defaultOn(q.answerType))?.to ?? null }]
         : r.mode === 'PER_CHOICE' ? q.options.map((o) => ({ on: o.code, label: o.label, target: edgeOf(m, nd.id, o.code)?.to ?? null }))
           : r.mode === 'ORDERED_RULES' ? [...(r.rules ?? []).map((rule, i) => ({ on: `RULE:${rule.id}`, label: `Rule ${i + 1}`, target: rule.to })), { on: 'FALLBACK', label: 'Otherwise', target: r.fallback ?? null }]
             : [];
@@ -201,8 +209,8 @@ function hasCycle(m: Module): boolean {
 export function validateModule(ws: Workspace, m: Module, ctx: { surveyId?: string; instanceId?: string } = {}): Issue[] {
   const moduleKey = mKey(m);
   const out: Issue[] = [];
-  const add = (severity: Issue['severity'], message: string, fix: string, where: Issue['where']) =>
-    out.push({ id: `${moduleKey}|${where.nodeId ?? ''}|${where.on ?? ''}|${where.part ?? ''}|${message}`, severity, message, fix, where: { ...ctx, moduleKey, ...where } });
+  const add = (severity: Issue['severity'], message: string, fix: string, where: Issue['where'], code?: string) =>
+    out.push({ id: `${moduleKey}|${where.nodeId ?? ''}|${where.on ?? ''}|${where.part ?? ''}|${message}`, severity, ...(code ? { code } : {}), message, fix, where: { ...ctx, moduleKey, ...where } });
   if (!m.nodes.length) {
     add('ERROR', `${m.name} has no questions yet`, 'Add the first question.', { part: 'empty' });
     return out;
@@ -253,7 +261,35 @@ export function validateModule(ws: Workspace, m: Module, ctx: { surveyId?: strin
     const q = findQuestion(ws, nd.q);
     if (!q) continue;
     const where = { nodeId: nd.id };
-    if (!q.wording.text.trim()) add('ERROR', `${label(nd)} has no question text`, 'Type what the customer is asked.', { ...where, part: 'text' });
+    const stmt = q.answerType === 'STATEMENT';
+    if (!q.wording.text.trim()) add('ERROR', stmt ? `${label(nd)} has no statement text` : `${label(nd)} has no question text`, stmt ? 'Type what the customer is told.' : 'Type what the customer is asked.', { ...where, part: 'text' });
+    if ((nd.type === 'STATEMENT') !== stmt) add('ERROR', `${label(nd)}: a statement and a question have been mixed up`, 'Remove this step and add it again.', { ...where, part: 'text' }, 'NODE_ITEM_KIND_MISMATCH');
+    if (stmt && (q.mandatory || q.role)) add('ERROR', `${label(nd)}: a statement cannot be a mandatory question or carry a question role`, 'A statement is delivered, not answered.', { ...where, part: 'wording' }, 'STATEMENT_NOT_A_QUESTION');
+    // a statement, a number and an acknowledgement have exactly one way on: nothing about them may choose a route
+    if (singleRoute(q.answerType) && nd.role !== 'FOLLOWUP') {
+      const outs = m.edges.filter((x) => x.from === nd.id);
+      if (nd.routing.mode !== 'ALL_TO_NEXT' || outs.length > 1 || outs.some((x) => x.on !== 'AFTER_CAPTURE')) {
+        add('ERROR', `${label(nd)}: ${stmt ? 'a statement' : 'this question'} has one way on and cannot branch`, 'Remove the extra routes.', { ...where, part: 'routing' }, 'SINGLE_ROUTE_ITEM_BRANCHES');
+      }
+    }
+    // ---- wording and delivery (UC-01) ----
+    for (const v of variableProblems(q.wording.text)) {
+      add('ERROR', v.problem === 'MALFORMED' ? `${label(nd)}: the wording has an unfinished variable` : v.problem === 'TYPE_NOT_ALLOWED' ? `${label(nd)}: {{${v.variable}}} is a yes/no fact and cannot be spoken as wording` : `${label(nd)}: {{${v.variable}}} is not a customer or policy field`,
+        v.problem === 'MALFORMED' ? 'A variable is written {{field}}. Use "Insert a variable".' : 'Use "Insert a variable" to choose a field from the catalog.', { ...where, part: 'wording' },
+        v.problem === 'MALFORMED' ? 'VARIABLE_MALFORMED' : v.problem === 'TYPE_NOT_ALLOWED' ? 'VARIABLE_TYPE_NOT_ALLOWED' : 'UNKNOWN_VARIABLE');
+    }
+    const delivery = deliveryOf(q);
+    if (delivery === 'CONVERSATIONAL') {
+      add('ERROR', `${label(nd)}: delivery "in the assistant’s own words" is blocked`, 'What an assistant may say in its own words has not been decided. Choose exact text.', { ...where, part: 'delivery' }, 'DELIVERY_CONVERSATIONAL_BLOCKED');
+    } else if (delivery === 'EXACT_AUDIO') {
+      if (variablesOf(q.wording.text).length) add('ERROR', `${label(nd)}: an approved recording cannot contain a variable`, 'A recording is the same for every customer. Remove the variable, or deliver the exact text instead.', { ...where, part: 'delivery' }, 'RECORDING_WITH_VARIABLE');
+      // there is no usable, approved recording asset: delivery is impossible, so this BLOCKS (UC-02) — it is not a warning to acknowledge
+      else add('ERROR', `${label(nd)}: an approved recording is required, and none is attached`, 'A recording cannot be attached in this prototype. Deliver the exact text instead.', { ...where, part: 'delivery' }, 'RECORDING_ASSET_MISSING');
+    }
+    if (q.answerType === 'NUMERIC') {
+      const rule = q.numberRule ?? { integer: false };
+      if (rule.min !== undefined && rule.max !== undefined && rule.min > rule.max) add('ERROR', `${label(nd)}: the lowest number is above the highest`, 'Correct the limits.', { ...where, part: 'number' }, 'NUMBER_RULE_INVALID');
+    }
     if (q.answerType === 'SINGLE_SELECT' || q.answerType === 'MULTI_SELECT') {
       if (q.options.length < 2) add('ERROR', `${label(nd)} needs at least two answer options`, 'Add options.', { ...where, part: 'options' });
       if (q.options.some((o) => !o.label.trim())) add('ERROR', `${label(nd)} has an option without a label`, 'Name every option.', { ...where, part: 'options' });
@@ -323,7 +359,7 @@ export function validateModule(ws: Workspace, m: Module, ctx: { surveyId?: strin
       if (!r.rejoin) add('ERROR', `${label(nd)} has no question after its follow-ups`, 'Choose where the customer continues after the follow-ups.', { ...where, part: 'rejoin' });
     }
   }
-  for (const it of flow.orphans) add('ERROR', `Nothing leads to ${it.kind === 'QUESTION' ? `"${it.question.wording.text.trim() || 'Untitled question'}"` : `the decision ${it.number}`}`, 'Route something to it, or delete it.', { nodeId: it.node.id, part: 'orphan' });
+  for (const it of flow.orphans) add('ERROR', `Nothing leads to ${it.kind === 'QUESTION' ? `"${it.question.wording.text.trim() || (it.question.answerType === 'STATEMENT' ? 'Untitled statement' : 'Untitled question')}"` : `the decision ${it.number}`}`, 'Route something to it, or delete it.', { nodeId: it.node.id, part: 'orphan' });
   if (hasCycle(m)) add('ERROR', `${m.name} contains a loop`, 'A question leads back to an earlier one. Change that route.', { part: 'cycle' });
   return out;
 }

@@ -17,8 +17,11 @@ import {
   type InsertAt, type QuestionSpec,
 } from './model/ops';
 import { ESCALATION_OUTCOMES, KIND_LABEL, OUTCOMES, OUTCOME_LABEL } from './model/sample';
-import { isQuestion, mKey, type AnswerType, type Interrupt, type InterruptClass, type InterruptPolicy, type Issue, type Module, type OutcomeCode, type RoutingMode, type SetRule, type Target } from './model/types';
+import { isQuestion, mKey, singleRoute, type DeliveryMode, type NumberRule, type QuestionRole, type StatementRole, type AnswerType, type Interrupt, type InterruptClass, type InterruptPolicy, type Issue, type Module, type OutcomeCode, type RoutingMode, type SetRule, type Target } from './model/types';
 import { JourneyNav } from './JourneyNav';
+import { ROLE_LABEL, STATEMENT_HINT, STATEMENT_LABEL } from './labels';
+import { PROFILES } from './model/demo';
+import { DELIVERY_HINT, DELIVERY_LABEL, WORDING_FIELDS, deliveryOf, fieldOf, renderWording, variablesOf } from './model/wording';
 import { StudioBar } from './StudioRoot';
 import { useFocusTarget, useStudio } from './store';
 import { Glyph, InlineText, KIND_GLYPH, Picker, Popover, Segmented, Tag, type GlyphName, type PickItem } from './ui';
@@ -28,8 +31,12 @@ const TYPES: Array<{ type: AnswerType; label: string; hint: string; glyph: Glyph
   { type: 'SINGLE_SELECT', label: 'Single choice', hint: 'Pick one option', glyph: 'single' },
   { type: 'MULTI_SELECT', label: 'Multiple choice', hint: 'Pick several options', glyph: 'multi' },
   { type: 'FREE_TEXT', label: 'Free text', hint: "The customer's own words", glyph: 'text' },
+  { type: 'NUMERIC', label: 'Number', hint: 'A number the customer says', glyph: 'number' },
+  { type: 'ACKNOWLEDGEMENT', label: 'Acknowledgement', hint: 'The customer acknowledges something', glyph: 'ack' },
 ];
-const TYPE_OF = Object.fromEntries(TYPES.map((t) => [t.type, t])) as Record<AnswerType, (typeof TYPES)[number]>;
+/** Not a question: approved wording the customer is told. Offered beside the question types, never among them. */
+const STATEMENT_T: (typeof TYPES)[number] = { type: 'STATEMENT', label: 'Statement', hint: 'Something the customer is told. It takes no answer', glyph: 'say' };
+const TYPE_OF = Object.fromEntries([...TYPES, STATEMENT_T].map((t) => [t.type, t])) as Record<AnswerType, (typeof TYPES)[number]>;
 
 interface Ctx {
   m: Module; moduleKey: string; editable: boolean; issues: Issue[];
@@ -284,11 +291,157 @@ export function StepCard({ item }: { item: FlowEntry }) {
   return item.kind === 'QUESTION' ? <QuestionCard item={item} /> : <DecisionCard item={item} />;
 }
 
+// ---- wording and delivery (UC-01) -----------------------------------------------------------------------------------
+const numberRuleText = (r?: NumberRule): string => {
+  const rule = r ?? { integer: false };
+  const range = rule.min !== undefined && rule.max !== undefined ? `between ${rule.min} and ${rule.max}` : rule.min !== undefined ? `${rule.min} or more` : rule.max !== undefined ? `${rule.max} or less` : 'any value';
+  return `${rule.integer ? 'A whole number' : 'A number'}, ${range}${rule.unit ? ` (${rule.unit})` : ''}.`;
+};
+
+function NumberRuleEditor({ item, canEdit }: { item: FlowItem; canEdit: boolean }) {
+  const { apply } = useStudio();
+  const { moduleKey } = useB();
+  const rule = item.question.numberRule ?? { integer: false };
+  if (!canEdit) return <span>{numberRuleText(rule)}</span>;
+  const set = (patch: Partial<NumberRule>) => {
+    const next: NumberRule = { ...rule, ...patch };
+    for (const k of ['min', 'max'] as const) if (next[k] === undefined || Number.isNaN(next[k])) delete next[k];
+    if (!next.unit) delete next.unit;
+    apply('Changed the number rule', (w) => updateQuestion(w, moduleKey, item.node.id, { numberRule: next }));
+  };
+  const num = (v: string) => (v.trim() === '' ? undefined : Number(v));
+  return (
+    <span className="ss-number-rule">
+      <label className="ss-check"><input type="checkbox" checked={rule.integer} onChange={(e) => set({ integer: e.target.checked })} data-testid={`ss-number-whole-${item.node.id}`} /> Whole numbers only</label>
+      <label>Lowest <input type="number" defaultValue={rule.min ?? ''} key={`min-${rule.min}`} onBlur={(e) => set({ min: num(e.target.value) })} data-testid={`ss-number-min-${item.node.id}`} /></label>
+      <label>Highest <input type="number" defaultValue={rule.max ?? ''} key={`max-${rule.max}`} onBlur={(e) => set({ max: num(e.target.value) })} data-testid={`ss-number-max-${item.node.id}`} /></label>
+      <label>Unit <input type="text" defaultValue={rule.unit ?? ''} key={`unit-${rule.unit}`} maxLength={20} onBlur={(e) => set({ unit: e.target.value.trim() })} data-testid={`ss-number-unit-${item.node.id}`} /></label>
+    </span>
+  );
+}
+
+const DELIVERY_MODES: DeliveryMode[] = ['CONTROLLED_TTS', 'EXACT_AUDIO', 'CONVERSATIONAL'];
+const STATEMENT_ROLES: StatementRole[] = ['OPENING', 'TRANSITION', 'DISCLOSURE', 'CLOSING'];
+const QUESTION_ROLES: QuestionRole[] = ['IDENTITY_CHECK', 'CONSENT_TO_PROCEED', 'RECORDING_CONSENT', 'CLOUD_PROCESSING_CONSENT'];
+
+/**
+ * Wording and delivery, on the card itself and closed until asked for (owner direction: inline editing and progressive
+ * disclosure — no separate wording screen). Closed, it is one line saying how the wording is delivered and whether it
+ * uses customer data. Open, it holds delivery mode, controlled variables with a preview for one synthetic customer,
+ * and the item's declared role.
+ */
+function WordingSection({ item, canEdit, issues }: { item: FlowItem; canEdit: boolean; issues: Issue[] }) {
+  const { apply } = useStudio();
+  const { moduleKey } = useB();
+  const { node, question: q } = item;
+  const [open, setOpen] = useState(false);
+  const [who, setWho] = useState(PROFILES[0]!.id);
+  useEffect(() => { if (issues.length) setOpen(true); }, [issues.length]); // a problem here is never hidden behind the fold
+  const isStmt = q.answerType === 'STATEMENT';
+  const delivery = deliveryOf(q);
+  const vars = variablesOf(q.wording.text);
+  const profile = PROFILES.find((p) => p.id === who) ?? PROFILES[0]!;
+  const rendered = renderWording(q.wording.text, profile.facts);
+  const id = `ss-wording-${node.id}`;
+  const line = [DELIVERY_LABEL[delivery], vars.length ? `${vars.length} variable${vars.length === 1 ? '' : 's'}` : null, 'not approved'].filter(Boolean).join(' · ');
+  return (
+    <section className={`ss-wording ${open ? 'open' : ''} ${issues.length ? 'has-issue' : ''}`} data-testid={id}>
+      <button type="button" className="ss-wording-toggle" aria-expanded={open} aria-controls={`${id}-panel`} onClick={() => setOpen(!open)} data-testid={`${id}-toggle`}>
+        <Glyph name={open ? 'up' : 'down'} size={13} /> <strong>Wording and delivery</strong> <span className="ss-wording-line" data-testid={`${id}-summary`}>{line}</span>
+        {issues.length ? <span className="ss-wording-flag"><Glyph name="alert" size={13} /> {issues.length} to fix</span> : null}
+      </button>
+      {open ? (
+        <div className="ss-wording-panel" id={`${id}-panel`}>
+          {issues.map((i) => <p key={i.id} className="ss-issue" role="alert"><Glyph name="alert" size={14} /> {i.message}. {i.fix}</p>)}
+
+          <fieldset className="ss-wording-group">
+            <legend>How it is delivered</legend>
+            {DELIVERY_MODES.map((mode) => (
+              <label key={mode} className={`ss-wording-option ${delivery === mode ? 'on' : ''} ${mode === 'CONVERSATIONAL' ? 'blocked' : ''}`}>
+                <input type="radio" name={`${id}-delivery`} checked={delivery === mode} disabled={!canEdit} data-testid={`${id}-delivery-${mode}`}
+                  onChange={() => apply('Changed how the wording is delivered', (w) => updateQuestion(w, moduleKey, node.id, { delivery: mode }))} />
+                <span><strong>{DELIVERY_LABEL[mode]}</strong><small>{DELIVERY_HINT[mode]}</small></span>
+              </label>
+            ))}
+          </fieldset>
+
+          <div className="ss-wording-group">
+            <h4>Customer details in the wording</h4>
+            <p className="ss-muted">A variable is replaced by the customer’s own detail, always in the same way. If the detail is missing, the wording is not delivered — nothing is guessed.</p>
+            {vars.length ? (
+              <ul className="ss-var-list" data-testid={`${id}-vars`}>
+                {vars.map((v) => <li key={v}><code>{`{{${v}}}`}</code> {fieldOf(v) ? fieldOf(v)!.label : <span className="ss-issue-inline">not a known field</span>}</li>)}
+              </ul>
+            ) : <p className="ss-quiet">This wording uses no customer details.</p>}
+            {canEdit ? (
+              <Popover label="Insert a variable" wide
+                trigger={(p) => <button type="button" className="ss-btn" {...p} data-testid={`${id}-insert`}><Glyph name="variable" size={14} /> Insert a variable</button>}>
+                {(close) => (
+                  <Picker placeholder="Search customer and policy fields"
+                    items={WORDING_FIELDS.map((f) => ({ id: f.code, label: f.label, hint: f.type === 'MONEY' ? `Amount in ${f.unit ?? 'currency'}` : f.type === 'INTEGER' ? `Number${f.unit ? ` of ${f.unit}` : ''}` : f.type === 'ENUM' ? 'One of a fixed list' : 'Text', glyph: 'variable' as const }))}
+                    onPick={(code) => { apply('Inserted a variable into the wording', (w) => updateQuestion(w, moduleKey, node.id, { text: `${q.wording.text}${q.wording.text && !/\s$/.test(q.wording.text) ? ' ' : ''}{{${code}}}` })); close(); }}
+                    footer={<p className="ss-muted">The variable is added at the end of the text. Move it by editing the text. Yes/no facts cannot be spoken and are not offered.</p>} />
+                )}
+              </Popover>
+            ) : null}
+            <div className="ss-wording-preview" data-testid={`${id}-preview`} data-state={rendered.text === null ? 'error' : 'ok'}>
+              <label>What <select value={who} onChange={(e) => setWho(e.target.value)} data-testid={`${id}-who`} aria-label="Synthetic customer for the preview">
+                {PROFILES.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select> would hear</label>
+              {rendered.text !== null
+                ? <p className="ss-wording-heard">{rendered.text || <em>(no text yet)</em>}</p>
+                : <p className="ss-issue" role="alert"><Glyph name="alert" size={14} /> Cannot be delivered to this customer: {rendered.errors.join(' ')}</p>}
+              <p className="ss-muted">Synthetic customer. Not a real person or policy.</p>
+            </div>
+          </div>
+
+          <div className="ss-wording-group">
+            <h4>{isStmt ? 'What this statement is for' : 'Role of this question'}</h4>
+            {isStmt ? (
+              <div className="ss-wording-roles" role="radiogroup" aria-label="Statement role">
+                {STATEMENT_ROLES.map((role) => (
+                  <label key={role} className={`ss-wording-option ${(q.statement ?? 'TRANSITION') === role ? 'on' : ''}`}>
+                    <input type="radio" name={`${id}-statement`} checked={(q.statement ?? 'TRANSITION') === role} disabled={!canEdit} data-testid={`${id}-statement-${role}`}
+                      onChange={() => apply('Changed what the statement is for', (w) => updateQuestion(w, moduleKey, node.id, { statement: role }))} />
+                    <span><strong>{STATEMENT_LABEL[role]}</strong><small>{STATEMENT_HINT[role]}</small></span>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <>
+                <label className="ss-check"><input type="checkbox" checked={!!q.mandatory} disabled={!canEdit} data-testid={`${id}-mandatory`}
+                  onChange={(e) => apply(e.target.checked ? 'Marked the question mandatory' : 'Marked the question not mandatory', (w) => updateQuestion(w, moduleKey, node.id, { mandatory: e.target.checked }))} /> Mandatory question</label>
+                {q.answerType === 'YES_NO' ? (
+                  <label className="ss-field inline"><span>Lifecycle role</span>
+                    <select value={q.role ?? ''} disabled={!canEdit} data-testid={`${id}-role`}
+                      onChange={(e) => apply('Changed the role of the question', (w) => updateQuestion(w, moduleKey, node.id, { role: (e.target.value || null) as QuestionRole | null }))}>
+                      <option value="">Ordinary verification question</option>
+                      {QUESTION_ROLES.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
+                    </select></label>
+                ) : null}
+                <p className="ss-muted">These are recorded with the question. What a call does when a mandatory question, an identity check or a consent is not answered or is refused is <strong>not decided yet</strong>, so nothing here changes the routing.</p>
+              </>
+            )}
+          </div>
+
+          <div className="ss-wording-group ss-blocked" data-testid={`${id}-blocked`}>
+            <h4><Glyph name="lock" size={13} /> Not available yet</h4>
+            <ul>
+              <li><strong>Repeat and clarification wording.</strong> Blocked: how a question is repeated, with which wording and how many times has not been decided.</li>
+              <li><strong>Expected answer and control mapping.</strong> Defined as a contract; configured when Survey Studio is connected to the evaluation engine.</li>
+            </ul>
+          </div>
+          {!canEdit ? <p className="ss-muted">{q.published ? 'This is a shared, approved definition. Create a new version or a copy to change its wording and delivery.' : 'Open this module for editing to change it.'}</p> : null}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 // ---- inserting ----------------------------------------------------------------------------------------------------
 function TypeButtons({ onPick, types }: { onPick: (spec: QuestionSpec) => void; types?: AnswerType[] }) {
   return (
     <div className="ss-type-buttons">
-      {TYPES.filter((t) => !types || types.includes(t.type)).map((t) => (
+      {(types ? TYPES.filter((t) => types.includes(t.type)) : [...TYPES, STATEMENT_T]).map((t) => (
         <button key={t.type} type="button" className="ss-type-btn" onClick={() => onPick({ type: t.type })} data-testid={`ss-new-${t.type}`}>
           <Glyph name={t.glyph} size={18} /><span><strong>{t.label}</strong><small>{t.hint}</small></span>
         </button>
@@ -374,9 +527,9 @@ function DestinationPill({ nodeId, on, target, onSet, allowCreate = true, testId
           footer={allowCreate && !escalationOnly ? (
             <div className="ss-create-here">
               <span>Or create a new question here:</span>
-              {TYPES.map((t) => (
+              {[...TYPES, STATEMENT_T].map((t) => (
                 <button key={t.type} type="button" className="ss-chip-btn" data-testid={`${testId}-new-${t.type}`}
-                  onClick={() => { const id = apply('Added a question', (w) => insertQuestion(w, moduleKey, { from: nodeId, on }, { type: t.type })); if (id) { requestFocus(`node:${id}`); created?.(id); } close(); }}>
+                  onClick={() => { const id = apply(t.type === 'STATEMENT' ? 'Added a statement' : 'Added a question', (w) => insertQuestion(w, moduleKey, { from: nodeId, on }, { type: t.type })); if (id) { requestFocus(`node:${id}`); created?.(id); } close(); }}>
                   <Glyph name={t.glyph} size={14} /> {t.label}
                 </button>
               ))}
@@ -406,7 +559,8 @@ function undecidedNames(item: FlowItem, issues: Issue[]): string[] {
 
 function summary(item: FlowItem, label: (t: Target | null | undefined) => string): string {
   const q = item.question, r = item.node.routing;
-  const head = q.answerType === 'FREE_TEXT' ? 'Free text' : `${q.options.length} option${q.options.length === 1 ? '' : 's'}`;
+  const head = singleRoute(q.answerType) ? (q.answerType === 'STATEMENT' ? `${STATEMENT_LABEL[q.statement ?? 'TRANSITION']} statement` : TYPE_OF[q.answerType].label) : `${q.options.length} option${q.options.length === 1 ? '' : 's'}`;
+  if (r.mode === 'ALL_TO_NEXT' && singleRoute(q.answerType)) return `${head} · then → ${label(item.rows[0]?.target ?? null)}`;
   if (r.mode === 'ALL_TO_NEXT') return `${head} · everybody → ${label(item.rows[0]?.target ?? null)}`;
   if (r.mode === 'SEQUENTIAL_FOLLOWUPS') return `${head} · ${r.followups?.length ?? 0} with a follow-up · then → ${label(r.rejoin)}`;
   if (r.mode === 'ORDERED_RULES') return `${head} · ${r.rules?.length ?? 0} rule${r.rules?.length === 1 ? '' : 's'}, the first match decides · otherwise → ${label(r.fallback)}`;
@@ -441,12 +595,16 @@ function QuestionCard({ item }: { item: FlowItem }) {
       { value: 'PER_CHOICE', label: 'Different next questions', hint: 'Each answer can lead somewhere different' }];
   const sources = inbound(m, node.id);
   const rule = q.textRule ?? { required: true, min: 1, max: 500 };
+  const isStmt = q.answerType === 'STATEMENT';
+  const one = singleRoute(q.answerType);
 
   return (
-    <article ref={ref} className={`ss-q ${flash ? 'flash' : ''} ${mine.length ? 'has-issue' : ''} ${isFollowup ? 'followup' : ''}`} data-testid={`ss-q-${node.id}`} data-node={node.id} aria-label={`${item.number}: ${q.wording.text || 'Untitled question'}`}>
+    <article ref={ref} className={`ss-q ${flash ? 'flash' : ''} ${mine.length ? 'has-issue' : ''} ${isFollowup ? 'followup' : ''}`} data-testid={`ss-q-${node.id}`} data-node={node.id} aria-label={`${item.number}: ${q.wording.text || (isStmt ? 'Untitled statement' : 'Untitled question')}`} data-item={q.answerType}>
       <header className="ss-q-head">
         <span className="ss-q-num">{item.number}</span>
-        <span className="ss-q-type"><Glyph name={t.glyph} /> {t.label}</span>
+        <span className="ss-q-type"><Glyph name={t.glyph} /> {isStmt ? `${STATEMENT_LABEL[q.statement ?? 'TRANSITION']} statement` : t.label}</span>
+        {q.mandatory ? <Tag>Mandatory</Tag> : null}
+        {q.role ? <Tag>{ROLE_LABEL[q.role]}</Tag> : null}
         {q.published ? (
           editable ? (
             <Popover label="Change this shared question" wide
@@ -498,11 +656,13 @@ function QuestionCard({ item }: { item: FlowItem }) {
 
       <div className="ss-q-text">
         {canEditQ ? (
-          <InlineText value={q.wording.text} label={`Question text for ${item.number}`} placeholder="Type the question the customer is asked" autoFocus={flash && !q.wording.text}
-            onCommit={(v) => apply('Edited the question text', (w) => updateQuestion(w, moduleKey, node.id, { text: v }))} />
+          <InlineText value={q.wording.text} label={isStmt ? `Statement text for ${item.number}` : `Question text for ${item.number}`} placeholder={isStmt ? 'Type what the customer is told' : 'Type the question the customer is asked'} autoFocus={flash && !q.wording.text}
+            onCommit={(v) => apply(isStmt ? 'Edited the statement text' : 'Edited the question text', (w) => updateQuestion(w, moduleKey, node.id, { text: v }))} />
         ) : <p className="ss-q-fixed">{q.wording.text}</p>}
         {issueFor(undefined, 'text') ? <p className="ss-issue" role="alert"><Glyph name="alert" size={14} /> {issueFor(undefined, 'text')!.message}. {issueFor(undefined, 'text')!.fix}</p> : null}
       </div>
+
+      {!folded ? <WordingSection item={item} canEdit={canEditQ} issues={mine.filter((i) => i.where.part === 'wording' || i.where.part === 'delivery')} /> : null}
 
       {details && !folded ? (
         <dl className="ss-details" data-testid={`ss-details-panel-${node.id}`}>
@@ -510,6 +670,7 @@ function QuestionCard({ item }: { item: FlowItem }) {
           <div><dt>Wording</dt><dd>Version {q.wording.version} · <strong>not approved</strong> (synthetic). Wording approval is separate from routing: a complete route does not make this wording approved.</dd></div>
           {q.answerType === 'MULTI_SELECT' && q.selection ? <div><dt>Selection</dt><dd>The customer chooses between {q.selection.min} and {q.selection.max} answers.</dd></div> : null}
           {q.answerType === 'FREE_TEXT' ? <div><dt>Answer rule</dt><dd><TextRuleEditor item={item} canEdit={canEditQ} /></dd></div> : null}
+          {q.answerType === 'NUMERIC' ? <div><dt>Answer rule</dt><dd><NumberRuleEditor item={item} canEdit={canEditQ} /></dd></div> : null}
         </dl>
       ) : null}
 
@@ -528,14 +689,18 @@ function QuestionCard({ item }: { item: FlowItem }) {
       ) : (
         <div className="ss-q-body">
           {q.answerType === 'FREE_TEXT' ? <p className="ss-quiet">{rule.required ? 'An answer is required' : 'The answer is optional'}, {rule.min}–{rule.max} characters.</p> : null}
+          {q.answerType === 'NUMERIC' ? <p className="ss-quiet" data-testid={`ss-number-rule-${node.id}`}>{numberRuleText(q.numberRule)}</p> : null}
+          {issueFor(undefined, 'number') ? <p className="ss-issue" role="alert"><Glyph name="alert" size={14} /> {issueFor(undefined, 'number')!.message}. {issueFor(undefined, 'number')!.fix}</p> : null}
+          {q.answerType === 'ACKNOWLEDGEMENT' ? <p className="ss-quiet">The customer acknowledges. Nothing else is recorded as an answer.</p> : null}
+          {isStmt ? <p className="ss-quiet">Delivered to the customer. It takes no answer and cannot branch.</p> : null}
 
-          {q.answerType !== 'FREE_TEXT' && !isFollowup && editable ? (
+          {!one && !isFollowup && editable ? (
             <Segmented<RoutingMode> label={`How ${item.number} routes`} value={r.mode} options={modes}
               onChange={(mode) => { setOpenRule(null); apply(mode === 'ALL_TO_NEXT' ? 'Set everybody to continue' : mode === 'PER_CHOICE' ? 'Set a route for each answer' : mode === 'ORDERED_RULES' ? 'Set first-matching-rule routing' : 'Set follow-ups for each answer', (w) => setMode(w, moduleKey, node.id, mode)); }} />
           ) : null}
 
           {/* a Yes/No question that simply continues needs no option rows: "Yes / No" is already in its header */}
-          {q.answerType !== 'FREE_TEXT' && (isChoice || r.mode !== 'ALL_TO_NEXT') ? <OptionRows item={item} canEdit={canEditQ} isChoice={isChoice} issueFor={issueFor} openRule={openRule} setOpenRule={setOpenRule} /> : null}
+          {!one && (isChoice || r.mode !== 'ALL_TO_NEXT') ? <OptionRows item={item} canEdit={canEditQ} isChoice={isChoice} issueFor={issueFor} openRule={openRule} setOpenRule={setOpenRule} /> : null}
           {issueFor(undefined, 'options') ? <p className="ss-issue" role="alert"><Glyph name="alert" size={14} /> {issueFor(undefined, 'options')!.message}.</p> : null}
           {q.answerType === 'MULTI_SELECT' && q.options.length ? <SelectionLimits item={item} canEdit={canEditQ} issue={issueFor(undefined, 'selection')} /> : null}
 

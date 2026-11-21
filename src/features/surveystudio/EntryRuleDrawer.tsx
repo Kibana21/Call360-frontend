@@ -181,8 +181,14 @@ export function RuleDrawer({ ctx, onClose }: { ctx: RuleContext; onClose: () => 
   const label = entry ? m.name : ctx.number;
 
   // earlier answers a decision may read: every route passes through them (always), or only some routes (sometimes)
-  const avail = useMemo(() => (nodeId ? availableAnswers(m, nodeId) : { always: [], sometimes: [] }), [m, nodeId]);
   const qOf = (id: string): Question | undefined => { const n = m.nodes.find((x) => x.id === id); return n && isQuestion(n) ? findQuestion(ws, n.q) : undefined; };
+  // a statement has no answer; a number or an acknowledgement cannot yet be compared in a condition (UC-01: not offered)
+  const avail = useMemo(() => {
+    const a = nodeId ? availableAnswers(m, nodeId) : { always: [], sometimes: [] };
+    const readable = (id: string) => { const t = qOf(id)?.answerType; return t !== 'STATEMENT' && t !== 'NUMERIC' && t !== 'ACKNOWLEDGEMENT'; };
+    return { always: a.always.filter(readable), sometimes: a.sometimes.filter(readable) };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [m, nodeId, ws]);
   const answerName = (id: string) => `${numbers?.get(id) ?? '?'} ${short(qOf(id)?.wording.text || 'Untitled question', 38)}`;
 
   const [mode, setMode] = useState<Mode>(existing && current ? (current.shared ? 'SAVED' : 'BUILD') : entry ? 'ALWAYS' : 'BUILD');

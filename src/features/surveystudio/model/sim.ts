@@ -9,13 +9,14 @@ import { describeAst, effectiveSelection, evaluate, fieldDef, fieldsOf, inputsOf
 import { buildFlow, ruleText } from './flow';
 import { activationOf, eligibilityOf, findCondition, findModule, findQuestion } from './ops';
 import { OUTCOME_CATALOG, OUTCOME_LABEL } from './sample';
+import { deliveryOf, renderWording, type Rendered } from './wording';
 import {
-  isQuestion, mKey,
-  type Binding, type Instance, type Module, type OutcomeCode, type Question, type QuestionNode, type Survey, type SurveyTarget, type Target, type Workspace,
+  isQuestion, mKey, singleRoute,
+  type DeliveryMode, type StatementRole, type Binding, type Instance, type Module, type OutcomeCode, type Question, type QuestionNode, type Survey, type SurveyTarget, type Target, type Workspace,
 } from './types';
 
 /** One answer, in the shape of the SS-01 answer contract: a choice, a set of choices, or text (plus the text of "Other"). */
-export interface SimAnswer { choice?: string; choices?: string[]; text?: string; other_text?: string }
+export interface SimAnswer { choice?: string; choices?: string[]; text?: string; other_text?: string; /** NUMERIC */ number?: number; /** ACKNOWLEDGEMENT */ acknowledged?: boolean }
 
 export type ModuleStatus = 'ACTIVATED' | 'RUNNING' | 'SKIPPED_FALSE' | 'SKIPPED_UNKNOWN' | 'SKIPPED_PRIOR_OUTCOME' | 'SKIPPED_BY_ROUTE' | 'HALTED_MISSING_INFORMATION' | 'NOT_REACHED';
 /**
@@ -31,13 +32,15 @@ export type TerminalState = 'COMPLETED' | 'ENDED_WITH_OUTCOME' | 'MANDATORY_ESCA
 /** How the survey arrived at a module: the next in sequence, a jump from an outcome route, or a jump from a skip disposition. */
 export type Arrival = 'SEQUENCE' | 'JUMP';
 /** How a value the engine read stood at that moment — the three states the evidence must keep apart, and "known". */
-export type ReadState = 'KNOWN' | 'MISSING' | 'ANSWERED' | 'ANSWERED_EMPTY' | 'UNANSWERED' | 'SKIPPED';
+export type ReadState = 'KNOWN' | 'MISSING' | 'ANSWERED' | 'ANSWERED_EMPTY' | 'UNANSWERED' | 'SKIPPED' | 'DELIVERED';
 export interface Read { what: string; state: ReadState; value: string }
 
 interface Base { at: number; instance: string; module: string }
 export type SimEvent =
   | (Base & { kind: 'ENTRY'; status: ModuleStatus; mode: string; arrival: Arrival; headline: string; why: string; result?: Tri; rule?: string; explain?: Explain; reads?: Read[] })
   | (Base & { kind: 'ASK'; key: string; node: string; number: string; text: string; followup: boolean })
+  /** A statement was delivered (UC-01): approved wording with no answer. `text` is the exact rendered sentence. */
+  | (Base & { kind: 'SAY'; key: string; node: string; number: string; text: string; role: StatementRole; delivery: DeliveryMode; values: Rendered['values'] })
   | (Base & { kind: 'REJECT'; key: string; code: string; message: string; given: string })
   | (Base & { kind: 'ANSWER'; key: string; node: string; number: string; text: string; given: string; state: ReadState; answer: SimAnswer })
   | (Base & { kind: 'ROUTE'; key: string; number: string; via: string; edge?: string; to: Target; headline: string; why: string; notChosen: string[]; alsoRules?: string[] })
@@ -50,11 +53,15 @@ export type SimEvent =
 
 export interface Pending {
   key: string; instance: string; node: string; number: string; module: string; question: Question; followup: boolean;
+  /** The exact sentence the customer hears: the approved wording with this customer's values put in. */
+  text: string;
   /** The follow-up queue this question belongs to, when it is one: what is done, what is next. */
   queue?: Array<{ node: string; label: string; state: 'DONE' | 'NOW' | 'NEXT' }>;
 }
 export interface ModuleLine { instance: string; name: string; status: ModuleStatus; outcome?: OutcomeCode; why: string }
 export interface Evidence { question_instance: string; question: string; wording_version: number; answer: SimAnswer }
+/** What was delivered for one item on this run: the wording version, the exact sentence and the values put into it. */
+export interface Delivery { item_instance: string; item: string; wording_version: number; delivery: DeliveryMode; text: string; values: Rendered['values']; statement: boolean }
 export interface AnswerLine { key: string; instance: string; number: string; text: string; state: ReadState | 'NOT_REACHED'; given: string }
 export interface SimResult {
   events: SimEvent[];
@@ -63,6 +70,8 @@ export interface SimResult {
   end: Extract<SimEvent, { kind: 'END' }> | null;
   /** In the terms of the SS-01 reference interpreter, for fixture verification. */
   asked: string[]; edges: string[]; evidence: Evidence[]; trace: string[];
+  /** Every item delivered on this run, statements included, in order (UC-01). `asked` remains questions only. */
+  deliveries: Delivery[];
   /** The terminal state of the run, or null while a question is pending. */
   terminal: { state: TerminalState; surveyOutcome?: OutcomeCode; reason?: string; at?: string } | null;
   /** Every question of every module that ran: answered, answered with an empty selection, unanswered, or skipped on this path. */
@@ -77,9 +86,24 @@ const MESSAGE: Record<string, string> = {
   EXCLUSIVE_OPTION_CONFLICT: 'One of the chosen answers cannot be combined with others.',
   OTHER_TEXT_REQUIRED: 'Please specify: text is required when "Other" is chosen.', OTHER_TEXT_TOO_SHORT: 'Please specify: the text is too short.',
   OTHER_TEXT_TOO_LONG: 'Please specify: the text is too long.', OTHER_TEXT_NOT_ALLOWED: 'Text was given, but "Other" was not chosen.',
+  NUMBER_REQUIRED: 'A number is required.', NUMBER_NOT_WHOLE: 'A whole number is required.', NUMBER_TOO_LOW: 'The number is too low.', NUMBER_TOO_HIGH: 'The number is too high.',
+  ACKNOWLEDGEMENT_REQUIRED: 'The customer has not acknowledged this.',
+  NON_ANSWER_POLICY_UNRESOLVED: 'The customer did not acknowledge. What a call does then has not been decided, so the call cannot continue past this point.',
 };
 /** Returns the stable rejection code for an answer, or null when it is accepted. Order of checks follows the reference. */
 export function validateAnswer(q: Question, a: SimAnswer): string | null {
+  if (q.answerType === 'STATEMENT') return null; // nothing is answered
+  if (q.answerType === 'NUMERIC') {
+    const rule = q.numberRule ?? { integer: false };
+    if (a.number === undefined || a.number === null || !Number.isFinite(a.number)) return 'NUMBER_REQUIRED';
+    if (rule.integer && !Number.isInteger(a.number)) return 'NUMBER_NOT_WHOLE';
+    if (rule.min !== undefined && a.number < rule.min) return 'NUMBER_TOO_LOW';
+    if (rule.max !== undefined && a.number > rule.max) return 'NUMBER_TOO_HIGH';
+    return null;
+  }
+  // "The customer does not acknowledge" is a non-answer: what a call does then is undecided, so it is not accepted here.
+  // an explicit "not acknowledged" is BLOCKED as unresolved policy — it is never read as an answer, a refusal or a default
+  if (q.answerType === 'ACKNOWLEDGEMENT') return a.acknowledged === true ? null : a.acknowledged === false ? 'NON_ANSWER_POLICY_UNRESOLVED' : 'ACKNOWLEDGEMENT_REQUIRED';
   if (q.answerType === 'FREE_TEXT') {
     const text = (a.text ?? '').trim();
     const rule = q.textRule ?? { required: true, min: 0, max: 2000 };
@@ -115,13 +139,16 @@ const clip = (s: string, n = 60) => (s.length > n ? `${s.slice(0, n - 1)}…` : 
 const optLabel = (q: Question, code: string) => q.options.find((o) => o.code === code)?.label ?? code;
 /** An answer as the customer would have said it. */
 export function answerText(q: Question, a: SimAnswer): string {
+  if (q.answerType === 'STATEMENT') return 'delivered';
+  if (q.answerType === 'ACKNOWLEDGEMENT') return a.acknowledged ? 'Acknowledged' : '(not acknowledged)';
+  if (q.answerType === 'NUMERIC') return a.number === undefined || !Number.isFinite(a.number) ? '(no number given)' : `${a.number}${q.numberRule?.unit ? ` ${q.numberRule.unit}` : ''}`;
   if (q.answerType === 'FREE_TEXT') return (a.text ?? '').trim() ? `“${clip((a.text ?? '').trim(), 80)}”` : '(no answer given)';
   const codes = q.answerType === 'MULTI_SELECT' ? a.choices ?? [] : a.choice !== undefined ? [a.choice] : [];
   if (!codes.length) return q.answerType === 'MULTI_SELECT' ? '(nothing selected)' : '(no answer)';
   return codes.map((c) => optLabel(q, c)).join(', ') + ((a.other_text ?? '').trim() ? ` — “${clip(a.other_text!.trim(), 60)}”` : '');
 }
 const answerState = (q: Question, a: SimAnswer): ReadState =>
-  (q.answerType === 'FREE_TEXT' ? ((a.text ?? '').trim() ? 'ANSWERED' : 'UNANSWERED') : q.answerType === 'MULTI_SELECT' && !(a.choices ?? []).length ? 'ANSWERED_EMPTY' : 'ANSWERED');
+  (q.answerType === 'STATEMENT' ? 'DELIVERED' : q.answerType === 'FREE_TEXT' ? ((a.text ?? '').trim() ? 'ANSWERED' : 'UNANSWERED') : q.answerType === 'MULTI_SELECT' && !(a.choices ?? []).length ? 'ANSWERED_EMPTY' : 'ANSWERED');
 const fmtValue = (v: unknown, code?: string): string => {
   const f = code ? fieldDef(code) : undefined;
   if (v === null || v === undefined || v === '') return 'missing';
@@ -145,6 +172,8 @@ class Stop extends Error {
 export function simulate(ws: Workspace, survey: Survey, profile: Profile, next: (key: string, attempt: number) => SimAnswer | undefined): SimResult {
   const events: SimEvent[] = [];
   const asked: string[] = [], edges: string[] = [], evidence: Evidence[] = [], trace: string[] = [];
+  const deliveries: Delivery[] = [];
+  const visited = new Set<string>(); // every item instance delivered, statements included
   const answers = new Map<string, SimAnswer>(); // by question instance key
   const outcomes = new Map<string, OutcomeCode>();
   const status = new Map<string, ModuleLine>();
@@ -185,7 +214,7 @@ export function simulate(ws: Workspace, survey: Survey, profile: Profile, next: 
         continue;
       }
       const state = answerState(q, a);
-      nodeAnswers[node] = q.answerType === 'MULTI_SELECT' ? a.choices ?? [] : q.answerType === 'FREE_TEXT' ? a.text ?? null : a.choice ?? null;
+      nodeAnswers[node] = q.answerType === 'MULTI_SELECT' ? a.choices ?? [] : q.answerType === 'FREE_TEXT' ? a.text ?? null : q.answerType === 'NUMERIC' ? (a.number === undefined ? null : String(a.number)) : a.choice ?? null;
       reads.push({ what, state, value: answerText(q, a) });
     }
     const ctx = {
@@ -214,20 +243,37 @@ export function simulate(ws: Workspace, survey: Survey, profile: Profile, next: 
       const node = m.nodes.find((x) => x.id === nodeId);
       if (!node || !isQuestion(node)) throw new Stop('BLOCKED', 'NODE_MISSING', `${inst.id}/${nodeId}`, 'A route leads to a step that no longer exists.');
       const key = `${inst.id}/${nodeId}`;
-      if (asked.includes(key)) throw new Stop('BLOCKED', 'REPEATED_EXECUTION', key, `${num(nodeId)} would be asked twice: the routes form a loop.`);
-      if (asked.length > 200) throw new Stop('BLOCKED', 'TRAVERSAL_LIMIT', key, 'The journey is too long: the routes probably form a loop.');
+      if (visited.has(key)) throw new Stop('BLOCKED', 'REPEATED_EXECUTION', key, `${num(nodeId)} would be asked twice: the routes form a loop.`);
+      if (visited.size > 200) throw new Stop('BLOCKED', 'TRAVERSAL_LIMIT', key, 'The journey is too long: the routes probably form a loop.');
       const q = findQuestion(ws, node.q)!;
-      const text = q.wording.text.trim() || 'Untitled question';
+      const statement = q.answerType === 'STATEMENT';
+      // approved wording is rendered for THIS customer before anything is delivered; a missing value stops the call here
+      const rendered = renderWording(q.wording.text.trim(), profile);
+      if (rendered.text === null) {
+        throw new Stop('MISSING_INFORMATION', 'WORDING_VALUE_MISSING', key, `${num(nodeId)} cannot be delivered: ${rendered.errors.join(' ')} Approved wording is never completed by guessing.`);
+      }
+      const text = rendered.text || (statement ? 'Untitled statement' : 'Untitled question');
+      const delivered = (): void => {
+        visited.add(key);
+        deliveries.push({ item_instance: key, item: `${q.code}@${node.q.version}`, wording_version: q.wording.version, delivery: deliveryOf(q), text, values: rendered.values, statement });
+      };
+      if (statement) {
+        delivered();
+        push({ kind: 'SAY', ...base, key, node: nodeId, number: num(nodeId), text, role: q.statement ?? 'TRANSITION', delivery: deliveryOf(q), values: rendered.values });
+        answers.set(key, {});
+        return { node, q, a: {} };
+      }
       push({ kind: 'ASK', ...base, key, node: nodeId, number: num(nodeId), text, followup });
       for (let attempt = 0; ; attempt++) {
         const a = next(key, attempt);
         if (a === undefined) {
-          pending = { key, instance: inst.id, node: nodeId, number: num(nodeId), module: m.name, question: q, followup, ...(queue ? { queue } : {}) };
+          pending = { key, instance: inst.id, node: nodeId, number: num(nodeId), module: m.name, question: q, followup, text, ...(queue ? { queue } : {}) };
           throw new Stop('PENDING', 'AWAITING_ANSWER', key);
         }
         const code = validateAnswer(q, a);
         if (code) { push({ kind: 'REJECT', ...base, key, code, message: rejectionMessage(code), given: answerText(q, a) }); if (attempt > 20) throw new Stop('BLOCKED', 'ANSWER_REJECTED', key, 'The answer keeps being rejected.'); continue; }
         asked.push(key);
+        delivered();
         answers.set(key, a);
         evidence.push({ question_instance: key, question: `${q.code}@${node.q.version}`, wording_version: q.wording.version, answer: a });
         push({ kind: 'ANSWER', ...base, key, node: nodeId, number: num(nodeId), text, given: answerText(q, a), state: answerState(q, a), answer: a });
@@ -320,7 +366,7 @@ export function simulate(ws: Workspace, survey: Survey, profile: Profile, next: 
         for (let i = 0; i < order.length && !early; i++) {
           const view = order.map((id, k) => ({ node: id, label: label(id), state: (k < i ? 'DONE' : k === i ? 'NOW' : 'NEXT') as 'DONE' | 'NOW' | 'NEXT' }));
           const f = ask(order[i]!, true, view);
-          const got = follow(order[i]!, f.q.answerType === 'FREE_TEXT' ? 'AFTER_CAPTURE' : f.q.answerType === 'MULTI_SELECT' ? 'ANY' : f.a.choice!);
+          const got = follow(order[i]!, singleRoute(f.q.answerType) ? 'AFTER_CAPTURE' : f.q.answerType === 'MULTI_SELECT' ? 'ANY' : f.a.choice!);
           if ('outcome' in got.to) {
             early = got.to.outcome;
             push({ kind: 'ROUTE', ...base, key: `${inst.id}/${order[i]}`, number: num(order[i]!), via: 'FOLLOWUP', edge: got.edge, to: got.to, headline: `${num(order[i]!)} ends the module: ${OUTCOME_LABEL[early]}`, why: 'This follow-up answer is routed to a module outcome, so the rest of the queue is not asked.', notChosen: [] });
@@ -351,9 +397,9 @@ export function simulate(ws: Workspace, survey: Survey, profile: Profile, next: 
         cur = w.to;
         continue;
       }
-      const code = q.answerType === 'FREE_TEXT' ? 'AFTER_CAPTURE' : q.answerType === 'MULTI_SELECT' ? 'ANY' : a.choice!;
+      const code = singleRoute(q.answerType) ? 'AFTER_CAPTURE' : q.answerType === 'MULTI_SELECT' ? 'ANY' : a.choice!;
       const got = follow(n.id, code);
-      const said = q.answerType === 'FREE_TEXT' ? 'the answer' : q.answerType === 'MULTI_SELECT' ? 'any selection' : `“${optLabel(q, a.choice!)}”`;
+      const said = q.answerType === 'STATEMENT' ? 'the statement' : q.answerType === 'ACKNOWLEDGEMENT' ? 'the acknowledgement' : singleRoute(q.answerType) ? 'the answer' : q.answerType === 'MULTI_SELECT' ? 'any selection' : `“${optLabel(q, a.choice!)}”`;
       const others = r.mode !== 'ALL_TO_NEXT' && (q.answerType === 'YES_NO' || q.answerType === 'SINGLE_SELECT')
         ? q.options.filter((o) => o.code !== a.choice).map((o) => { const e = m.edges.find((x) => x.from === n.id && x.on === o.code) ?? m.edges.find((x) => x.from === n.id && x.on === 'ANY'); return `“${o.label}” would have led to ${targetText(m, numbers, e?.to ?? null)}.`; })
         : [];
@@ -363,7 +409,7 @@ export function simulate(ws: Workspace, survey: Survey, profile: Profile, next: 
         kind: 'ROUTE', ...base, key, number: num(n.id), via: code, edge: got.edge, to: got.to,
         headline: `${num(n.id)} · ${said} → ${targetText(m, numbers, got.to)}`,
         why: must ? 'This answer is a mandatory escalation: its route can only lead to an approved escalation outcome.'
-          : r.mode === 'ALL_TO_NEXT' ? 'Every answer to this question continues to the same place.'
+          : q.answerType === 'STATEMENT' ? 'A statement takes no answer: the call continues to one place.' : r.mode === 'ALL_TO_NEXT' ? 'Every answer to this question continues to the same place.'
             : got.specific && code !== 'ANY' && code !== 'AFTER_CAPTURE' ? `There is a route set for ${said}.` : `No route is specific to ${said}, so the route that covers every other answer applies.`,
         notChosen: others,
       });
@@ -510,7 +556,7 @@ export function simulate(ws: Workspace, survey: Survey, profile: Profile, next: 
         push({ kind: 'END', ...base, status: 'REVIEW_REQUIRED', surveyOutcome: 'REVIEW_REQUIRED', reason: e.reason, where: e.where, headline: 'Halted — review required', why: `${e.human} Automated progression stops here. The run is pending an authorised review; it is not completed.` });
       } else if (e.status === 'MISSING_INFORMATION') {
         terminal = { state: 'MISSING_INFORMATION_HALT', reason: e.reason, at: e.where };
-        push({ kind: 'END', ...base, status: 'MISSING_INFORMATION_HALT', reason: e.reason, where: e.where, headline: 'Halted — information is missing', why: `${e.human} The module never started, so it has no outcome. Automated progression stops here and the run is pending an authorised review; it is not completed.` });
+        push({ kind: 'END', ...base, status: 'MISSING_INFORMATION_HALT', reason: e.reason, where: e.where, headline: 'Halted — information is missing', why: e.reason === 'WORDING_VALUE_MISSING' ? `${e.human} Automated progression stops here and the run is pending an authorised review; it is not completed.` : `${e.human} The module never started, so it has no outcome. Automated progression stops here and the run is pending an authorised review; it is not completed.` });
       } else {
         terminal = { state: 'DRAFT_INVALID', reason: e.reason, at: e.where };
         push({ kind: 'END', ...base, status: 'DRAFT_INVALID', reason: e.reason, where: e.where, headline: 'This draft cannot run past here', why: `${e.human} The draft is incomplete or invalid at this point. Nothing was decided and nothing is guessed: fix it in the builder and run again.` });
@@ -532,11 +578,11 @@ export function simulate(ws: Workspace, survey: Survey, profile: Profile, next: 
       const key = `${inst.id}/${n.id}`;
       const a = answers.get(key);
       const running = st.status === 'RUNNING';
-      answerLines.push({ key, instance: inst.id, number: numbers.get(n.id) ?? n.id, text: q.wording.text.trim() || 'Untitled question', state: a ? answerState(q, a) : running ? 'NOT_REACHED' : 'SKIPPED', given: a ? answerText(q, a) : running ? 'not reached yet' : 'not asked on this path' });
+      answerLines.push({ key, instance: inst.id, number: numbers.get(n.id) ?? n.id, text: q.wording.text.trim() || (q.answerType === 'STATEMENT' ? 'Untitled statement' : 'Untitled question'), state: a ? answerState(q, a) : running ? 'NOT_REACHED' : 'SKIPPED', given: a ? answerText(q, a) : running ? 'not reached yet' : 'not asked on this path' });
     }
   }
   const end = (events[events.length - 1]?.kind === 'END' ? events[events.length - 1] : null) as SimResult['end'];
-  return { events, modules, pending, end, asked, edges, evidence, trace, terminal, answerLines };
+  return { events, modules, pending, end, asked, edges, evidence, trace, deliveries, terminal, answerLines };
 }
 
 /** A run driven by an ordered list of inputs (what the Simulator screen keeps): each ask consumes the next one. */
@@ -547,7 +593,7 @@ export function simulateInputs(ws: Workspace, survey: Survey, profile: Profile, 
 
 /** The signature of an event for comparing two journeys: what happened, not when. */
 export const eventSignature = (e: SimEvent): string =>
-  (e.kind === 'ENTRY' ? `ENTRY|${e.instance}|${e.status}` : e.kind === 'ASK' ? `ASK|${e.key}` : e.kind === 'ANSWER' ? `ANSWER|${e.key}|${JSON.stringify(e.answer)}`
+  (e.kind === 'ENTRY' ? `ENTRY|${e.instance}|${e.status}` : e.kind === 'ASK' ? `ASK|${e.key}` : e.kind === 'SAY' ? `SAY|${e.key}|${e.text}` : e.kind === 'ANSWER' ? `ANSWER|${e.key}|${JSON.stringify(e.answer)}`
     : e.kind === 'REJECT' ? `REJECT|${e.key}|${e.code}` : e.kind === 'ROUTE' ? `ROUTE|${e.key}|${e.via}|${JSON.stringify(e.to)}` : e.kind === 'DECISION' ? `DECISION|${e.key}|${e.result}`
       : e.kind === 'QUEUE' ? `QUEUE|${e.key}|${e.queued.map((x) => x.node).join(',')}|${e.interrupt?.option ?? ''}` : e.kind === 'MODULE_END' ? `MODULE_END|${e.instance}|${e.outcome}`
         : e.kind === 'SURVEY_ROUTE' ? `SURVEY_ROUTE|${e.instance}|${e.headline}` : e.kind === 'DISPOSITION' ? `DISPOSITION|${e.instance}|${e.headline}` : `END|${e.status}|${e.surveyOutcome ?? e.reason}`);

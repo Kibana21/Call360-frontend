@@ -2,9 +2,9 @@
 // Everything here is invented for demonstration: no real customer, policy or call. Each profile is a set of pinned
 // facts plus the answers that customer gives, so a whole journey can be played back and two customers compared.
 import type { Profile } from './engine';
-import { createSurvey, eligibilityOf, findModule, findQuestion, removeInstance, setEligibility, setEntry, setIfIneligible, setRoute } from './ops';
+import { addInstance, createBlankModule, createSurvey, eligibilityOf, findModule, findQuestion, insertQuestion, removeInstance, setEdge, setEligibility, setEntry, setIfIneligible, setMode, setRoute, updateQuestion, type InsertAt } from './ops';
 import { simulate, type SimAnswer, type SimResult } from './sim';
-import { isQuestion, mKey, type Entry, type OutcomeCode, type Question, type Survey, type Workspace } from './types';
+import { isQuestion, mKey, type AnswerType, type Entry, type OutcomeCode, type Question, type Survey, type Workspace } from './types';
 
 export interface SimProfile {
   id: string;
@@ -16,13 +16,13 @@ export interface SimProfile {
   answers: Record<string, SimAnswer>;
 }
 
-const BASE: Profile = { 'policy.product_family': 'PROTECTION', 'policy.annual_premium': 3000, 'policy.sum_assured': 150000, 'policy.is_replacement': false, 'customer.age_years': 40, 'sale.channel': 'AGENCY' };
+const BASE: Profile = { 'policy.product_family': 'PROTECTION', 'policy.annual_premium': 3000, 'policy.sum_assured': 150000, 'policy.is_replacement': false, 'customer.age_years': 40, 'sale.channel': 'AGENCY', 'policy.plan_name': 'SecureLife Protect', 'policy.term_years': 20 };
 const NONE = { 'Q-CLARIFY-AREAS': { choices: ['NONE'] } };
 const UNEASY = { 'Q-PREMIUM-COMFORTABLE': { choice: 'NO' } };
 
 export const PROFILES: SimProfile[] = [
   { id: 'NORMAL', name: 'Normal policyholder', summary: 'Protection plan, modest premium, nothing unusual.', facts: BASE, answers: NONE },
-  { id: 'ILP', name: 'ILP policyholder', summary: 'Bought an investment-linked plan.', facts: { ...BASE, 'policy.product_family': 'ILP', 'policy.annual_premium': 6000, 'policy.sum_assured': 200000 }, answers: NONE },
+  { id: 'ILP', name: 'ILP policyholder', summary: 'Bought an investment-linked plan.', facts: { ...BASE, 'policy.product_family': 'ILP', 'policy.annual_premium': 6000, 'policy.sum_assured': 200000, 'policy.plan_name': 'GrowthLink Invest' }, answers: NONE },
   { id: 'HIGH_PREMIUM', name: 'High-premium customer', summary: 'Annual premium of 25,000 SGD.', facts: { ...BASE, 'policy.annual_premium': 25000, 'policy.sum_assured': 200000 }, answers: NONE },
   {
     id: 'HIGH_SUM', name: 'High-sum-assured customer', summary: 'Sum assured of 900,000 SGD with a 15,000 SGD premium; wants several things explained again.',
@@ -47,6 +47,10 @@ export const PROFILES: SimProfile[] = [
 /** The answer an unremarkable customer gives: yes; the normal choice; the answer that selects nothing further; a short remark. */
 export function ordinaryAnswer(q: Question, normal?: string): SimAnswer {
   if (q.answerType === 'YES_NO') return { choice: 'YES' };
+  if (q.answerType === 'STATEMENT') return {};
+  if (q.answerType === 'ACKNOWLEDGEMENT') return { acknowledged: true };
+  // a neutral demonstration value, kept inside the question's own limits
+  if (q.answerType === 'NUMERIC') return { number: Math.min(Math.max(20, q.numberRule?.min ?? 20), q.numberRule?.max ?? 20) };
   if (q.answerType === 'FREE_TEXT') return (q.textRule?.required ?? true) ? { text: 'Nothing further, thank you.' } : { text: '' };
   const plain = q.options.filter((o) => !o.isOther && o.interrupt !== 'MANDATORY');
   if (q.answerType === 'SINGLE_SELECT') return { choice: (plain.find((o) => o.code === normal) ?? plain[0] ?? q.options[0])?.code };
@@ -116,4 +120,46 @@ export function demoBaseline(ws0: Workspace, id: string): Workspace {
   if (rp) ws = setEligibility(ws, id, of('M-REPLACEMENT').id, { ...rp, unknownPolicy: 'BLOCK' });
   for (const o of Object.keys(of('M-SUITABILITY').routes) as OutcomeCode[]) if (o !== 'COMPLETED' && o !== 'REVIEW_REQUIRED') ws = setRoute(ws, id, of('M-SUITABILITY').id, o, { surveyOutcome: o });
   return ws;
+}
+
+/**
+ * A second ready-made survey (UC-01) that shows what a call needs beyond questions: opening, disclosure, transition and
+ * closing STATEMENTS; a NUMBER question; an ACKNOWLEDGEMENT; wording with controlled variables; declared identity and
+ * consent roles. Built entirely with the builder's own operations, so it is the same model an author would produce.
+ * Wording is synthetic and is not approved AIA or MAS language.
+ */
+export function addReadinessDemo(ws0: Workspace): [Workspace, string] {
+  let ws = ws0;
+  const draft = (name: string, kind: 'OPENING' | 'CLOSING', intent: string): string => { const [w, r] = createBlankModule(ws, { name, kind, intent }); ws = w; return r.moduleKey; };
+  const add = (mk: string, at: InsertAt, type: AnswerType, text: string, intent: string, patch: Parameters<typeof updateQuestion>[3] = {}): string => {
+    const [w, id] = insertQuestion(ws, mk, at, { type });
+    ws = updateQuestion(w, mk, id, { text, intent, ...patch });
+    return id;
+  };
+  const after = (id: string): InsertAt => ({ from: id, on: 'AFTER_CAPTURE' });
+
+  const welcome = draft('Welcome and checks', 'OPENING', 'Open the call, confirm who is speaking and state the policy');
+  const s1 = add(welcome, { entry: true }, 'STATEMENT', 'Good day. This is a service call about your {{policy.plan_name}} plan.', 'Opens the call', { statement: 'OPENING' });
+  const q2 = add(welcome, after(s1), 'YES_NO', 'Can you confirm that you are the policyholder?', 'Customer confirms they are the policyholder', { mandatory: true, role: 'IDENTITY_CHECK' });
+  ws = setMode(ws, welcome, q2, 'PER_CHOICE');
+  ws = setEdge(ws, welcome, q2, 'NO', { outcome: 'UNABLE_TO_VERIFY' });
+  const q3 = add(welcome, { from: q2, on: 'YES' }, 'YES_NO', 'This call is recorded. Do you agree to the recording?', 'Customer agrees to the recording', { mandatory: true, role: 'RECORDING_CONSENT' });
+  ws = setMode(ws, welcome, q3, 'PER_CHOICE');
+  ws = setEdge(ws, welcome, q3, 'NO', { outcome: 'CUSTOMER_DECLINED' });
+  const s4 = add(welcome, { from: q3, on: 'YES' }, 'STATEMENT', 'Our records show an annual premium of {{policy.annual_premium}}, payable for {{policy.term_years}} years.', 'States the premium and term on record', { statement: 'DISCLOSURE' });
+  const q5 = add(welcome, after(s4), 'NUMERIC', 'For how many years did your representative say you would pay premiums?', 'Premium term the customer was told', { mandatory: true, numberRule: { integer: true, min: 1, max: 99, unit: 'years' } });
+  const q6 = add(welcome, after(q5), 'ACKNOWLEDGEMENT', 'Please confirm that you have heard the premium and the term on record.', 'Customer acknowledges the premium and term');
+  add(welcome, after(q6), 'STATEMENT', 'Thank you. I will now ask how the plan was explained to you.', 'Moves on to the verification questions', { statement: 'TRANSITION' });
+
+  const wrap = draft('Wrap-up', 'CLOSING', 'Close the call');
+  add(wrap, { entry: true }, 'STATEMENT', 'Thank you for your time. This call is now complete.', 'Closes the call', { statement: 'CLOSING' });
+
+  const [w1, id] = createSurvey(ws, { name: 'Courtesy callback with opening and closing (demonstration)', purpose: 'Shows statements, a number question, an acknowledgement and wording that uses customer details', modules: ['M-PURCHASE-REASON', 'M-HIGH-VALUE', 'M-REPLACEMENT'] });
+  ws = addInstance(w1, id, 0, welcome)[0];
+  ws = addInstance(ws, id, 4, wrap)[0];
+  const seq = () => ws.surveys.find((x) => x.id === id)!.sequence;
+  const repl = seq().find((x) => x.module.code === 'M-REPLACEMENT')!;
+  if (repl.entry.mode === 'RULE') ws = setEntry(ws, id, repl.id, { mode: 'RULE', binding: { ...repl.entry.binding, unknownPolicy: 'SKIP_WITH_REASON' } } as Entry);
+  for (const inst of seq()) for (const o of Object.keys(inst.routes) as OutcomeCode[]) if (o !== 'COMPLETED' && o !== 'REVIEW_REQUIRED' && inst.routes[o] === null) ws = setRoute(ws, id, inst.id, o, { surveyOutcome: o });
+  return [ws, id];
 }
