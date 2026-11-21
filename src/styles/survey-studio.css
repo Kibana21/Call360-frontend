@@ -925,6 +925,7 @@ a.ss-journey-step:hover{background:var(--ss-surface-2);color:var(--ss-ink)}
 .ss-plan-conds li.met{color:var(--ss-ok)}.ss-plan-conds li.met span{color:var(--ss-ink)}
 .ss-plan-conds li.notmet em,.ss-plan-conds li.notmet .ss-glyph{color:var(--ss-bad)}
 .ss-plan-conds li.na em,.ss-plan-conds li.na .ss-glyph{color:var(--ss-ink-3)}
+.ss-plan-gate-note{display:flex;gap:6px;align-items:flex-start;padding:8px 10px;border-radius:var(--ss-r2);background:var(--ss-warn-bg);border:1px solid var(--ss-warn-line);color:var(--ss-ink-2)!important;font-size:12px!important}
 .ss-plan-counts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:0}
 .ss-plan-counts div{padding:8px 12px;border:1px solid var(--ss-line);border-radius:var(--ss-r2);background:var(--ss-surface)}
 .ss-plan-counts div.warn{border-color:var(--ss-warn-line);background:var(--ss-warn-bg)}

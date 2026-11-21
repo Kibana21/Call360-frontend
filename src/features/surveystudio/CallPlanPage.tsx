@@ -105,11 +105,12 @@ export function CallPlanPage() {
             <ul className="ss-plan-conds" data-testid="ss-plan-conditions">
               {live.conditions.map((c) => (
                 <li key={c.id} className={COND[c.state].tone} data-testid={`ss-plan-cond-${c.id}`} data-state={c.state}>
-                  <Glyph name={COND[c.state].glyph} size={13} /><span>{c.label}</span><em>{COND[c.state].label}</em>
+                  <Glyph name={COND[c.state].glyph} size={13} /><span>{c.label}</span><em>{c.group === 'GATES' ? (c.state === 'MET' ? 'Present' : 'Not present') : COND[c.state].label}</em>
                   {open.has('conds') ? <small>{c.detail}</small> : null}
                 </li>
               ))}
             </ul>
+            <p className="ss-plan-gate-note" data-testid="ss-plan-gate-note"><Glyph name="info" size={13} /> “Present” means only that the gate question is in the survey. It does not mean that what the call does after a “no”, a refusal or silence is approved — that is a separate condition, and it is not met.</p>
             <button type="button" className="ss-link quiet" aria-expanded={open.has('conds')} onClick={() => toggle('conds')} data-testid="ss-plan-conds-toggle">{open.has('conds') ? 'Hide the reasons' : 'Show the reason for each'}</button>
           </section>
         </div>

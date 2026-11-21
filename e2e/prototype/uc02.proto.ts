@@ -39,7 +39,7 @@ test('UC-02: a computable plan is never a live-call approval; the plan is compac
   await expect(b).toContainText('No — not eligible for a real call');
   // every readiness condition is explicit, with its own state
   const state = (id: string) => page.getByTestId(`ss-plan-cond-${id}`);
-  await expect(page.getByTestId('ss-plan-conditions').getByRole('listitem')).toHaveCount(10);
+  await expect(page.getByTestId('ss-plan-conditions').getByRole('listitem')).toHaveCount(11);
   await expect(state('PLAN_COMPUTABLE')).toHaveAttribute('data-state', 'MET');
   await expect(state('PUBLISHED_VERSION')).toHaveAttribute('data-state', 'NOT_MET');
   await expect(state('WORDING_APPROVED')).toHaveAttribute('data-state', 'NOT_MET');
@@ -47,6 +47,11 @@ test('UC-02: a computable plan is never a live-call approval; the plan is compac
   await expect(state('GATE_IDENTITY_CHECK')).toHaveAttribute('data-state', 'MET');
   await expect(state('GATE_CONSENT_TO_PROCEED')).toHaveAttribute('data-state', 'NOT_MET');
   await expect(state('GATE_RECORDING_CONSENT')).toHaveAttribute('data-state', 'MET');
+  // a gate that is PRESENT is not a gate whose enforcement is APPROVED: the screen says so, and it is its own condition
+  await expect(state('GATE_IDENTITY_CHECK')).toContainText('Present');
+  await expect(state('GATE_CONSENT_TO_PROCEED')).toContainText('Not present');
+  await expect(state('GATE_BEHAVIOUR')).toHaveAttribute('data-state', 'NOT_MET');
+  await expect(page.getByTestId('ss-plan-gate-note')).toContainText('It does not mean that what the call does after a “no”, a refusal or silence is approved');
   await expect(state('ASSIGNMENT')).toHaveAttribute('data-state', 'NOT_AVAILABLE');
   await expect(state('CHANNEL')).toHaveAttribute('data-state', 'NOT_AVAILABLE');
   await expect(state('NO_ANSWER_POLICY')).toHaveAttribute('data-state', 'NOT_MET');
@@ -72,7 +77,8 @@ test('UC-02: a computable plan is never a live-call approval; the plan is compac
   // the reasons are one step away
   await page.getByTestId('ss-plan-conds-toggle').click();
   await expect(state('PUBLISHED_VERSION')).toContainText('A draft is never used on a call');
-  await expect(state('GATE_IDENTITY_CHECK')).toContainText('What a call does when the customer says no, refuses or does not answer is not decided');
+  await expect(state('GATE_IDENTITY_CHECK')).toContainText('This does not establish that its enforcement');
+  await expect(state('GATE_BEHAVIOUR')).toContainText('nothing here assumes one');
   await expect(state('ASSIGNMENT')).toContainText('chosen by hand');
   await shot(page, 'UC22-live-eligibility-conditions-with-reasons', true);
   await page.getByTestId('ss-plan-conds-toggle').click();

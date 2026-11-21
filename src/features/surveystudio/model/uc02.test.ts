@@ -28,7 +28,7 @@ describe('A — can a plan be computed — and B — may it be used on a real ca
     expect(live(ws).conditions.map((c) => [c.id, c.group, c.state])).toEqual([
       ['PLAN_COMPUTABLE', 'PLAN', 'MET'], ['PUBLISHED_VERSION', 'PUBLICATION', 'NOT_MET'], ['WORDING_APPROVED', 'WORDING', 'NOT_MET'], ['DELIVERY_CONTROLLED', 'WORDING', 'MET'],
       ['GATE_IDENTITY_CHECK', 'GATES', 'MET'], ['GATE_CONSENT_TO_PROCEED', 'GATES', 'NOT_MET'], ['GATE_RECORDING_CONSENT', 'GATES', 'MET'],
-      ['ASSIGNMENT', 'ASSIGNMENT', 'NOT_AVAILABLE'], ['CHANNEL', 'CHANNEL', 'NOT_AVAILABLE'], ['NO_ANSWER_POLICY', 'POLICY', 'NOT_MET'],
+      ['GATE_BEHAVIOUR', 'POLICY', 'NOT_MET'], ['ASSIGNMENT', 'ASSIGNMENT', 'NOT_AVAILABLE'], ['CHANNEL', 'CHANNEL', 'NOT_AVAILABLE'], ['NO_ANSWER_POLICY', 'POLICY', 'NOT_MET'],
     ]);
   });
   it('a plan that cannot be computed makes that one condition fail; the others are judged on their own', () => {
@@ -41,9 +41,14 @@ describe('A — can a plan be computed — and B — may it be used on a real ca
     expect(l.met + l.notMet + l.notAvailable).toBe(l.conditions.length);
     expect(l.conditions.filter((c) => c.state === 'NOT_AVAILABLE').map((c) => c.id)).toEqual(['ASSIGNMENT', 'CHANNEL']);
   });
-  it('a gate is a structural fact only: its detail says the behaviour on a "no" is not decided', () => {
-    const g = live(ws).conditions.find((c) => c.id === 'GATE_IDENTITY_CHECK')!;
-    expect(g.detail).toMatch(/not decided/);
+  it('a gate being present never establishes that its enforcement is approved: that is its own condition, and it is not met', () => {
+    const l = live(ws);
+    const g = l.conditions.find((c) => c.id === 'GATE_IDENTITY_CHECK')!;
+    expect(g.state).toBe('MET');
+    expect(g.detail).toMatch(/does not establish that its enforcement/);
+    expect(l.conditions.find((c) => c.id === 'GATE_BEHAVIOUR')).toMatchObject({ state: 'NOT_MET', group: 'POLICY' });
+    // even with all three gates present, the behaviour condition stands apart and keeps the survey ineligible
+    expect(l.eligible).toBe(false);
   });
 });
 

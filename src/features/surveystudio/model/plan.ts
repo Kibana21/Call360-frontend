@@ -237,7 +237,8 @@ export function liveEligibility(ws: Workspace, survey: Survey, sg: SurveyGov | u
   const recordings = items.filter((q) => deliveryOf(q) === 'EXACT_AUDIO').length;
   const gate = (id: 'IDENTITY_CHECK' | 'CONSENT_TO_PROCEED' | 'RECORDING_CONSENT', label: string): ReadinessCondition => ({
     id: `GATE_${id}`, group: 'GATES', label, state: gates.present.includes(id) ? 'MET' : 'NOT_MET',
-    detail: gates.present.includes(id) ? 'A mandatory question with this role is in the survey. What a call does when the customer says no, refuses or does not answer is not decided.' : 'No mandatory question with this role is in the survey.',
+    // PRESENCE ONLY. That the question exists says nothing about whether what the call does next is approved: see GATE_BEHAVIOUR.
+    detail: gates.present.includes(id) ? 'Present: a mandatory question with this role is in the survey. This does not establish that its enforcement — what the call does on “no”, refusal or silence — is approved.' : 'Not present: no mandatory question with this role is in the survey.',
   });
   const publishedSame = st.stage === 'PUBLISHED' && !st.draftDiffers;
   const conditions: ReadinessCondition[] = [
@@ -248,6 +249,7 @@ export function liveEligibility(ws: Workspace, survey: Survey, sg: SurveyGov | u
     gate('IDENTITY_CHECK', 'A mandatory identity check is in the survey'),
     gate('CONSENT_TO_PROCEED', 'A mandatory consent to proceed is in the survey'),
     gate('RECORDING_CONSENT', 'A mandatory recording consent is in the survey'),
+    { id: 'GATE_BEHAVIOUR', group: 'POLICY', label: 'What each gate does when the customer says no, refuses or does not answer is approved', state: 'NOT_MET', detail: 'Not decided. A gate being present shows only that the question is asked. Whether the call ends, continues or escalates afterwards is a business and compliance ruling that has not been made, and nothing here assumes one.' },
     { id: 'ASSIGNMENT', group: 'ASSIGNMENT', label: 'An approved assignment selects this version for this case', state: 'NOT_AVAILABLE', detail: 'The survey was chosen by hand for this preview. Assignment rules are not part of Survey Studio yet, and no case exists here.' },
     { id: 'CHANNEL', group: 'CHANNEL', label: 'The requirements of the call channel are met', state: 'NOT_AVAILABLE', detail: 'Channel requirements — for example consent before audio is sent to a cloud voice provider — are not defined for Survey Studio yet.' },
     { id: 'NO_ANSWER_POLICY', group: 'POLICY', label: 'What a call does when a customer does not answer is decided', state: 'NOT_MET', detail: 'Silence, refusal, a dropped call and repeats are open business and compliance decisions. Without them a call has no defined behaviour.' },
