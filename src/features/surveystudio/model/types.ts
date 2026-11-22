@@ -96,7 +96,12 @@ export interface Question {
   wording: { version: number; text: string; approval: 'SYNTHETIC_UNAPPROVED'; delivery?: DeliveryMode; /** FI-1: per-answer spoken text, kept exactly as stored. */ optionTexts?: Record<string, string> };
   /** true = approved shared library version (immutable here); false = draft created in this session. */
   published: boolean;
+  /** LIB-1: the published version this local copy was made from. Provenance only: nothing reads it to decide anything. */
+  derivedFrom?: Provenance;
 }
+
+/** LIB-1: where a local copy came from — the code, version and (when known) server fingerprint of the published source. */
+export interface Provenance { code: string; version: number; sha256?: string }
 
 export type Target = { node: string } | { outcome: OutcomeCode } | { ret: true };
 
@@ -166,6 +171,8 @@ export interface Module {
   defaultEntry?: Entry;
   /** Set on a draft revision derived for one survey (copy-on-write). */
   derivedFor?: string;
+  /** LIB-1: the published module revision this local copy was made from. */
+  derivedFrom?: Provenance;
 }
 
 // ---- conditions -------------------------------------------------------------------------------------------------
@@ -206,6 +213,8 @@ export interface Condition {
   inputs?: Record<string, InputDecl>;
   /** true = in the reusable library (immutable: a change makes a new version); false = belongs to one placement. */
   shared: boolean;
+  /** LIB-1: the published condition this local copy was made from. */
+  derivedFrom?: Provenance;
 }
 
 /**

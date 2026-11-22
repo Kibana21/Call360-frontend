@@ -2,6 +2,7 @@
 // Five states, each said in words and never by colour alone: saved, unsaved, saving, failed, conflict.
 import { useEffect, useRef } from 'react';
 import { Glyph } from '../ui';
+import { LibraryButton, NewerRevisions } from './Library';
 import { usePersistence, type Persistence } from './Persistence';
 
 const when = (iso: string) => new Date(iso).toLocaleString('en-SG', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
@@ -13,6 +14,7 @@ export function SaveControl() {
   const blocked = !p.canEdit || !!p.mappingError;
   return (
     <>
+      {p.canEdit ? <LibraryButton /> : null}
       <span className={`ss-save-state ${p.status}`} role="status" aria-live="polite" data-testid="ss-save-status" data-state={p.status}
         title={`Revision ${p.revision}, saved ${when(p.savedAt)}${p.savedBy ? ` by ${p.savedBy}` : ''}`}>
         <Glyph name={p.status === 'saved' ? 'check' : p.status === 'failed' || p.status === 'conflict' ? 'alert' : 'info'} size={14} />
@@ -38,9 +40,10 @@ export function SaveMessages() {
     <>
       {p.error && p.status === 'failed' ? (
         <p className="ss-note warn" role="alert" data-testid="ss-save-error"><Glyph name="alert" size={14} />
-          <span><strong>Not saved.</strong> {p.error.message}{p.error.where ? ` The server refused ${p.error.where}.` : ''}{p.error.code ? <> <span className="ss-code">{p.error.code}</span></> : null} Nothing was changed on the server, and nothing here was lost. {p.error.network ? 'Try again checks first whether the earlier save had arrived, so it is never applied twice.' : 'Correct it and save again.'}</span></p>
+          <span><strong>Not saved.</strong> {p.error.message}{p.error.where ? ` The server refused ${p.error.where}.` : ''}{p.error.code ? <> <span className="ss-code">{p.error.code}</span></> : null} {p.error.unconfirmed ? 'Nothing here was lost.' : <>Nothing was changed on the server, and nothing here was lost. {p.error.network ? 'Try again checks first whether the earlier save had arrived, so it is never applied twice.' : 'Correct it and save again.'}</>}</span></p>
       ) : null}
       {p.mappingError ? <p className="ss-note warn" role="alert" data-testid="ss-mapping-error"><Glyph name="alert" size={14} /><span><strong>This cannot be saved as it stands.</strong> {p.mappingError}</span></p> : null}
+      <NewerRevisions />
       {p.conflict?.open ? <ConflictPanel p={p} /> : null}
     </>
   );

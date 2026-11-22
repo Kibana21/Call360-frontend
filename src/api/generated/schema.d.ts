@@ -2791,6 +2791,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/survey-components": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Survey Component List
+         * @description LIB-1 — the reusable library: versions of one kind that a PUBLISHED survey version pins, in the reader's markets.
+         *     A draft, a rejected or a never-published candidate's assets are not here, whoever asks.
+         */
+        get: operations["survey_component_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-components/{kind}/{code}/{version}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Survey Component Get
+         * @description LIB-1 — one published component, complete: its document, every published document it depends on, its published
+         *     revisions, where it is used and what it was derived from. A component that is not published in the reader's
+         *     markets does not exist for them.
+         */
+        get: operations["survey_component_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/survey-conditions/evaluate": {
         parameters: {
             query?: never;
@@ -2868,6 +2911,27 @@ export interface paths {
          *     editable. A draft with any blocker is refused with ``VALIDATION_BLOCKED``.
          */
         post: operations["survey_candidate_submit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-definitions/{survey_id}/codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Codes Issue
+         * @description LIB-1 — new permanent, globally unique asset codes for this survey, issued by the server. With the library on,
+         *     a new module, question, condition or option set can only be saved under a code issued here.
+         */
+        post: operations["survey_codes_issue"];
         delete?: never;
         options?: never;
         head?: never;
@@ -12054,6 +12118,196 @@ export interface components {
             /** Response Obligations */
             response_obligations: string[];
         };
+        /** SurveyCodeRequest */
+        SurveyCodeRequest: {
+            /**
+             * Count
+             * @default 1
+             */
+            count: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "MODULE" | "ITEM" | "STATEMENT" | "CONDITION" | "OPTION_SET";
+        };
+        /** SurveyCodesIn */
+        SurveyCodesIn: {
+            /** Requests */
+            requests: components["schemas"]["SurveyCodeRequest"][];
+        };
+        /** SurveyCodesOut */
+        SurveyCodesOut: {
+            /** Codes */
+            codes: components["schemas"]["SurveyIssuedCode"][];
+        };
+        /** SurveyComponentDetail */
+        SurveyComponentDetail: {
+            /** Category */
+            category: string;
+            /** Code */
+            code: string;
+            /** Dependencies */
+            dependencies: components["schemas"]["SurveyComponentDocument"][];
+            /** Derived From */
+            derived_from: {
+                [key: string]: unknown;
+            } | null;
+            /** Description */
+            description: string;
+            /** Document */
+            document: {
+                [key: string]: unknown;
+            };
+            /** Facts */
+            facts: {
+                [key: string]: unknown;
+            };
+            /** Is Latest */
+            is_latest: boolean;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "MODULE" | "ITEM" | "CONDITION" | "OPTION_SET";
+            /** Latest Published Version */
+            latest_published_version: number;
+            /** Missing Dependencies */
+            missing_dependencies: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Note
+             * @default Synthetic content, unapproved for operational use. No survey here is eligible for a live call.
+             */
+            note: string;
+            /** Published In */
+            published_in: components["schemas"]["SurveyComponentSource"][];
+            /** Requires */
+            requires: {
+                [key: string]: unknown;
+            };
+            /** Revisions */
+            revisions: components["schemas"]["SurveyComponentRevision"][];
+            /** Sha256 */
+            sha256: string;
+            /** Title */
+            title: string;
+            used_by: components["schemas"]["SurveyComponentUsage"];
+            /** Version */
+            version: number;
+            /**
+             * Wording Version
+             * @description ITEM only: the wording version it is published with.
+             */
+            wording_version: number | null;
+        };
+        /** SurveyComponentDocument */
+        SurveyComponentDocument: {
+            /** Code */
+            code: string;
+            /** Document */
+            document: {
+                [key: string]: unknown;
+            };
+            /** Kind */
+            kind: string;
+            /** Sha256 */
+            sha256: string;
+            /** Version */
+            version: number;
+        };
+        /** SurveyComponentList */
+        SurveyComponentList: {
+            /** Items */
+            items: components["schemas"]["SurveyComponentOut"][];
+            /** Kind */
+            kind: string;
+            /**
+             * Note
+             * @default Synthetic content, unapproved for operational use. No survey here is eligible for a live call.
+             */
+            note: string;
+        };
+        /** SurveyComponentOut */
+        SurveyComponentOut: {
+            /** Category */
+            category: string;
+            /** Code */
+            code: string;
+            /** Description */
+            description: string;
+            /** Facts */
+            facts: {
+                [key: string]: unknown;
+            };
+            /** Is Latest */
+            is_latest: boolean;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "MODULE" | "ITEM" | "CONDITION" | "OPTION_SET";
+            /** Latest Published Version */
+            latest_published_version: number;
+            /** Published In */
+            published_in: components["schemas"]["SurveyComponentSource"][];
+            /** Sha256 */
+            sha256: string;
+            /** Title */
+            title: string;
+            used_by: components["schemas"]["SurveyComponentUsage"];
+            /** Version */
+            version: number;
+            /**
+             * Wording Version
+             * @description ITEM only: the wording version it is published with.
+             */
+            wording_version: number | null;
+        };
+        /** SurveyComponentRevision */
+        SurveyComponentRevision: {
+            /** Published In */
+            published_in: components["schemas"]["SurveyComponentSource"][];
+            /** Sha256 */
+            sha256: string;
+            /** Version */
+            version: number;
+        };
+        /** SurveyComponentSource */
+        SurveyComponentSource: {
+            /** Survey Code */
+            survey_code: string;
+            /**
+             * Survey Id
+             * Format: uuid
+             */
+            survey_id: string;
+            /** Survey Name */
+            survey_name: string;
+            /**
+             * Version Id
+             * Format: uuid
+             */
+            version_id: string;
+            /** Version Label */
+            version_label: string;
+            /** Version Status */
+            version_status: string;
+        };
+        /** SurveyComponentUsage */
+        SurveyComponentUsage: {
+            /**
+             * Surveys
+             * @description Surveys with a published version that pins this exact version.
+             */
+            surveys: number;
+            /**
+             * Versions
+             * @description Published versions that pin this exact version.
+             */
+            versions: number;
+        };
         /** SurveyConditionEvaluateIn */
         SurveyConditionEvaluateIn: {
             /** Answers */
@@ -12346,6 +12600,13 @@ export interface components {
             status: string;
             /** Version No */
             version_no: number;
+        };
+        /** SurveyIssuedCode */
+        SurveyIssuedCode: {
+            /** Code */
+            code: string;
+            /** Kind */
+            kind: string;
         };
         /** SurveyLibraryItem */
         SurveyLibraryItem: {
@@ -25640,6 +25901,163 @@ export interface operations {
             };
         };
     };
+    survey_component_list: {
+        parameters: {
+            query: {
+                kind: "MODULE" | "ITEM" | "CONDITION" | "OPTION_SET";
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyComponentList"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_component_get: {
+        parameters: {
+            query?: {
+                wording_version?: number | null;
+            };
+            header?: never;
+            path: {
+                kind: "MODULE" | "ITEM" | "CONDITION" | "OPTION_SET";
+                code: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyComponentDetail"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     survey_condition_evaluate: {
         parameters: {
             query?: never;
@@ -25968,6 +26386,86 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SurveyCandidateOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_codes_issue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                survey_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyCodesIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyCodesOut"];
                 };
             };
             /** @description Unauthorized */

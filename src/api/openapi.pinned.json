@@ -23890,6 +23890,448 @@
         "title": "SurveyCatalogs",
         "type": "object"
       },
+      "SurveyCodeRequest": {
+        "properties": {
+          "count": {
+            "default": 1,
+            "maximum": 60.0,
+            "minimum": 1.0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "kind": {
+            "enum": [
+              "MODULE",
+              "ITEM",
+              "STATEMENT",
+              "CONDITION",
+              "OPTION_SET"
+            ],
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "SurveyCodeRequest",
+        "type": "object"
+      },
+      "SurveyCodesIn": {
+        "properties": {
+          "requests": {
+            "items": {
+              "$ref": "#/components/schemas/SurveyCodeRequest"
+            },
+            "maxItems": 5,
+            "minItems": 1,
+            "title": "Requests",
+            "type": "array"
+          }
+        },
+        "required": [
+          "requests"
+        ],
+        "title": "SurveyCodesIn",
+        "type": "object"
+      },
+      "SurveyCodesOut": {
+        "properties": {
+          "codes": {
+            "items": {
+              "$ref": "#/components/schemas/SurveyIssuedCode"
+            },
+            "title": "Codes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "codes"
+        ],
+        "title": "SurveyCodesOut",
+        "type": "object"
+      },
+      "SurveyComponentDetail": {
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "dependencies": {
+            "items": {
+              "$ref": "#/components/schemas/SurveyComponentDocument"
+            },
+            "title": "Dependencies",
+            "type": "array"
+          },
+          "derived_from": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Derived From"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "document": {
+            "additionalProperties": true,
+            "title": "Document",
+            "type": "object"
+          },
+          "facts": {
+            "additionalProperties": true,
+            "title": "Facts",
+            "type": "object"
+          },
+          "is_latest": {
+            "title": "Is Latest",
+            "type": "boolean"
+          },
+          "kind": {
+            "enum": [
+              "MODULE",
+              "ITEM",
+              "CONDITION",
+              "OPTION_SET"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "latest_published_version": {
+            "title": "Latest Published Version",
+            "type": "integer"
+          },
+          "missing_dependencies": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Missing Dependencies",
+            "type": "array"
+          },
+          "note": {
+            "default": "Synthetic content, unapproved for operational use. No survey here is eligible for a live call.",
+            "title": "Note",
+            "type": "string"
+          },
+          "published_in": {
+            "items": {
+              "$ref": "#/components/schemas/SurveyComponentSource"
+            },
+            "title": "Published In",
+            "type": "array"
+          },
+          "requires": {
+            "additionalProperties": true,
+            "title": "Requires",
+            "type": "object"
+          },
+          "revisions": {
+            "items": {
+              "$ref": "#/components/schemas/SurveyComponentRevision"
+            },
+            "title": "Revisions",
+            "type": "array"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "used_by": {
+            "$ref": "#/components/schemas/SurveyComponentUsage"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "wording_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "ITEM only: the wording version it is published with.",
+            "title": "Wording Version"
+          }
+        },
+        "required": [
+          "kind",
+          "code",
+          "version",
+          "sha256",
+          "wording_version",
+          "title",
+          "description",
+          "category",
+          "facts",
+          "published_in",
+          "used_by",
+          "latest_published_version",
+          "is_latest",
+          "document",
+          "dependencies",
+          "missing_dependencies",
+          "revisions",
+          "requires",
+          "derived_from"
+        ],
+        "title": "SurveyComponentDetail",
+        "type": "object"
+      },
+      "SurveyComponentDocument": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "document": {
+            "additionalProperties": true,
+            "title": "Document",
+            "type": "object"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "kind",
+          "code",
+          "version",
+          "sha256",
+          "document"
+        ],
+        "title": "SurveyComponentDocument",
+        "type": "object"
+      },
+      "SurveyComponentList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SurveyComponentOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "note": {
+            "default": "Synthetic content, unapproved for operational use. No survey here is eligible for a live call.",
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "items"
+        ],
+        "title": "SurveyComponentList",
+        "type": "object"
+      },
+      "SurveyComponentOut": {
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "facts": {
+            "additionalProperties": true,
+            "title": "Facts",
+            "type": "object"
+          },
+          "is_latest": {
+            "title": "Is Latest",
+            "type": "boolean"
+          },
+          "kind": {
+            "enum": [
+              "MODULE",
+              "ITEM",
+              "CONDITION",
+              "OPTION_SET"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "latest_published_version": {
+            "title": "Latest Published Version",
+            "type": "integer"
+          },
+          "published_in": {
+            "items": {
+              "$ref": "#/components/schemas/SurveyComponentSource"
+            },
+            "title": "Published In",
+            "type": "array"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "used_by": {
+            "$ref": "#/components/schemas/SurveyComponentUsage"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "wording_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "ITEM only: the wording version it is published with.",
+            "title": "Wording Version"
+          }
+        },
+        "required": [
+          "kind",
+          "code",
+          "version",
+          "sha256",
+          "wording_version",
+          "title",
+          "description",
+          "category",
+          "facts",
+          "published_in",
+          "used_by",
+          "latest_published_version",
+          "is_latest"
+        ],
+        "title": "SurveyComponentOut",
+        "type": "object"
+      },
+      "SurveyComponentRevision": {
+        "properties": {
+          "published_in": {
+            "items": {
+              "$ref": "#/components/schemas/SurveyComponentSource"
+            },
+            "title": "Published In",
+            "type": "array"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "sha256",
+          "published_in"
+        ],
+        "title": "SurveyComponentRevision",
+        "type": "object"
+      },
+      "SurveyComponentSource": {
+        "properties": {
+          "survey_code": {
+            "title": "Survey Code",
+            "type": "string"
+          },
+          "survey_id": {
+            "format": "uuid",
+            "title": "Survey Id",
+            "type": "string"
+          },
+          "survey_name": {
+            "title": "Survey Name",
+            "type": "string"
+          },
+          "version_id": {
+            "format": "uuid",
+            "title": "Version Id",
+            "type": "string"
+          },
+          "version_label": {
+            "title": "Version Label",
+            "type": "string"
+          },
+          "version_status": {
+            "title": "Version Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "survey_id",
+          "survey_code",
+          "survey_name",
+          "version_id",
+          "version_label",
+          "version_status"
+        ],
+        "title": "SurveyComponentSource",
+        "type": "object"
+      },
+      "SurveyComponentUsage": {
+        "properties": {
+          "surveys": {
+            "description": "Surveys with a published version that pins this exact version.",
+            "title": "Surveys",
+            "type": "integer"
+          },
+          "versions": {
+            "description": "Published versions that pin this exact version.",
+            "title": "Versions",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "surveys",
+          "versions"
+        ],
+        "title": "SurveyComponentUsage",
+        "type": "object"
+      },
       "SurveyConditionEvaluateIn": {
         "properties": {
           "answers": {
@@ -24537,6 +24979,24 @@
           "published_at"
         ],
         "title": "SurveyHistoryVersion",
+        "type": "object"
+      },
+      "SurveyIssuedCode": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "code"
+        ],
+        "title": "SurveyIssuedCode",
         "type": "object"
       },
       "SurveyLibraryItem": {
@@ -43825,6 +44285,248 @@
         ]
       }
     },
+    "/api/v1/survey-components": {
+      "get": {
+        "description": "LIB-1 — the reusable library: versions of one kind that a PUBLISHED survey version pins, in the reader's markets.\nA draft, a rejected or a never-published candidate's assets are not here, whoever asks.",
+        "operationId": "survey_component_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "enum": [
+                "MODULE",
+                "ITEM",
+                "CONDITION",
+                "OPTION_SET"
+              ],
+              "title": "Kind",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Q",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurveyComponentList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Survey Component List",
+        "tags": [
+          "survey-library"
+        ]
+      }
+    },
+    "/api/v1/survey-components/{kind}/{code}/{version}": {
+      "get": {
+        "description": "LIB-1 — one published component, complete: its document, every published document it depends on, its published\nrevisions, where it is used and what it was derived from. A component that is not published in the reader's\nmarkets does not exist for them.",
+        "operationId": "survey_component_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "enum": [
+                "MODULE",
+                "ITEM",
+                "CONDITION",
+                "OPTION_SET"
+              ],
+              "title": "Kind",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "title": "Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "title": "Version",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "wording_version",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Wording Version"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurveyComponentDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Survey Component Get",
+        "tags": [
+          "survey-library"
+        ]
+      }
+    },
     "/api/v1/survey-conditions/evaluate": {
       "post": {
         "description": "Evaluate one condition against supplied facts and answers: TRUE, FALSE or UNKNOWN with the explanation.\nRead-only: nothing is stored, and missing information is UNKNOWN, never FALSE.",
@@ -44283,6 +44985,110 @@
         "summary": "Survey Candidate Submit",
         "tags": [
           "survey-definitions"
+        ]
+      }
+    },
+    "/api/v1/survey-definitions/{survey_id}/codes": {
+      "post": {
+        "description": "LIB-1 — new permanent, globally unique asset codes for this survey, issued by the server. With the library on,\na new module, question, condition or option set can only be saved under a code issued here.",
+        "operationId": "survey_codes_issue",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "survey_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Survey Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SurveyCodesIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurveyCodesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Survey Codes Issue",
+        "tags": [
+          "survey-library"
         ]
       }
     },

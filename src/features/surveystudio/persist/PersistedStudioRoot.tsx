@@ -16,7 +16,8 @@ import { MappingError } from '../model/documents';
 import type { Workspace } from '../model/types';
 import { StudioProvider, forgetPersistedMemory, hasPersistedMemory } from '../store';
 import { Glyph, Tag } from '../ui';
-import { createSurvey, listSurveys, loadDraft, type SurveySummary } from './api';
+import { createSurvey, libraryAvailable, listSurveys, loadDraft, type SurveySummary } from './api';
+import { LibraryProvider } from './Library';
 import { PersistenceProvider, open, versionLabelOf, type Baseline } from './Persistence';
 import { CandidatePage, ReviewPage, VersionPage } from './ReviewPages';
 import { STANDING_NOTE } from './standing';
@@ -151,7 +152,7 @@ function OpenOne({ code }: { code: string }) {
     (async () => {
       const summary = (await listSurveys()).find((s) => s.code === code);
       if (!summary) return { state: 'missing' } as Load;
-      const o = open(await loadDraft(summary.id), versionLabelOf(summary.latest_version_label));
+      const o = open(await loadDraft(summary.id), versionLabelOf(summary.latest_version_label), await libraryAvailable().catch(() => false));
       return { state: 'ready', baseline: o.baseline, ws: o.ws } as Load;
     })().then((l) => { if (mine === attempt.current) setLoad(l); })
       .catch((e) => { if (mine !== attempt.current) return; setLoad(e instanceof MappingError ? { state: 'unsupported', message: e.message } : e instanceof ApiFailure && e.status === 404 ? { state: 'missing' } : { state: 'error', message: say(e) }); });
@@ -169,6 +170,7 @@ function OpenOne({ code }: { code: string }) {
   return (
     <StudioProvider key={code} memoryKey={code} initial={() => ws!}>
       <PersistenceProvider initial={load.baseline} onBaseline={remember}>
+        <LibraryProvider>
         <Routes>
           <Route index element={<ComposerPage />} />
           <Route path="simulate" element={<SimulatorPage />} />
@@ -179,6 +181,7 @@ function OpenOne({ code }: { code: string }) {
           <Route path="versions/:versionId" element={<VersionPage />} />
           <Route path="modules/:instanceId" element={<BuilderPage />} />
         </Routes>
+        </LibraryProvider>
       </PersistenceProvider>
     </StudioProvider>
   );

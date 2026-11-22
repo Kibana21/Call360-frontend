@@ -8,10 +8,11 @@ import type { Operation } from './api';
 export interface Details { name: string; purpose: string }
 
 /** The operations of one Save: documents first, then the content that pins them, then removals, then the details. */
-export function operationsFor(base: DocumentSet, next: DocumentSet, opts: { removable: ReadonlySet<string>; details?: Details | null }): Operation[] {
+export function operationsFor(base: DocumentSet, next: DocumentSet, opts: { removable: ReadonlySet<string>; details?: Details | null; frozen?: ReadonlySet<string> }): Operation[] {
   const c = changes(base, next);
   return [
-    ...c.put.map((a): Operation => ({ op: 'PUT_ASSET', kind: a.kind, document: a.document })),
+    // a frozen version is never sent: it cannot change, and any difference seen here is only the editor's own form of it
+    ...c.put.filter((a) => !opts.frozen?.has(assetKey(a))).map((a): Operation => ({ op: 'PUT_ASSET', kind: a.kind, document: a.document })),
     ...(c.content ? [{ op: 'SET_CONTENT', content: c.content } as Operation] : []),
     // only this survey's own unfrozen versions are ever removed; a frozen or shared version is simply no longer pinned
     ...c.remove.filter((r) => opts.removable.has(assetKey(r))).map((r): Operation => ({ op: 'REMOVE_ASSET', ...r })),

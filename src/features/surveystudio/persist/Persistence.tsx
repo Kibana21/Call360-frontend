@@ -5,15 +5,18 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ApiFailure } from '../../../api/client';
 import { useAuth } from '../../../auth/AuthContext';
-import { MappingError, assetKey, changes, fromDocuments, isEmpty, seqFor, toDocuments, type DocumentSet } from '../model/documents';
+import { MappingError, assetKey, changes, fromDocuments, isEmpty, seqFor, toDocuments, type AssetDoc, type DocumentSet } from '../model/documents';
+import { codesNeeded, identitiesToIssue, optionSetsToIssue, recode, withOptionSetCodes, type Lineage } from '../model/library';
 import type { Workspace } from '../model/types';
 import { useStudio } from '../store';
-import { documentsOf, loadDraft, saveDraft, type DraftDocuments } from './api';
+import { documentsOf, issueCodes, loadDraft, saveDraft, type DraftDocuments } from './api';
 import { noteHistoryPosition, passHeldMove, setHistoryGuard } from './historyGuard';
 import { compare, onTop, operationsFor, serverHolds, type Comparison, type Details } from './saving';
 
 /** What the editor knows about the server's draft: the revision it started from and the documents at that revision. */
 export interface Baseline {
+  /** LIB-1: whether this server offers the component library and issues codes. */
+  library?: boolean;
   surveyId: string; code: string; revision: number;
   /** The server's documents in the editor's own form (what `toDocuments` gives for the loaded workspace). */
   editor: DocumentSet;
@@ -22,7 +25,7 @@ export interface Baseline {
 }
 
 export type SaveStatus = 'saved' | 'unsaved' | 'saving' | 'failed' | 'conflict';
-export interface SaveError { message: string; code?: string; network: boolean; where?: string }
+export interface SaveError { message: string; code?: string; network: boolean; where?: string; /** The server answered and may have saved: do not say nothing changed there. */ unconfirmed?: boolean }
 export interface Conflict { latest: DraftDocuments; server: DocumentSet; comparison: Comparison; open: boolean }
 
 export interface Persistence {
@@ -39,6 +42,13 @@ export interface Persistence {
    * the editor must then treat them as published (a change is a new version). Refused while there is unsaved work.
    */
   refreshFromServer: () => Promise<void>;
+  /** LIB-1: true when the server offers the component library. */
+  library: boolean;
+  /**
+   * LIB-1: tell the save logic that these documents are published versions the server already has (brought in from the
+   * library). They are never sent, and never owned by this survey.
+   */
+  adopt: (added: AssetDoc[]) => void;
 }
 
 const Ctx = createContext<Persistence | null>(null);
@@ -48,12 +58,20 @@ export const usePersistence = (): Persistence | null => useContext(Ctx);
 export const versionLabelOf = (latest: string | null | undefined) => (latest ? `${latest}+` : '0.1');
 
 /** The baseline and the workspace for a draft the server returned. Throws MappingError when the editor cannot show it. */
-export function open(d: DraftDocuments, versionLabel: string): { baseline: Baseline; ws: Workspace } {
+export function open(d: DraftDocuments, versionLabel: string, library = false): { baseline: Baseline; ws: Workspace } {
   const s = documentsOf(d);
   const ws = fromDocuments(s.set, { meta: { name: d.name, purpose: d.purpose, versionLabel }, frozen: s.frozen, seq: seqFor(d.code, s.set) });
   const editor = toDocuments(ws, ws.surveys[0]!);
-  return { ws, baseline: { surveyId: d.survey_id, code: d.code, revision: d.revision, editor, frozen: s.frozen, owned: s.owned, details: { name: d.name, purpose: d.purpose }, updatedAt: d.updated_at, updatedBy: d.updated_by ?? null, note: d.note, versionLabel } };
+  return { ws, baseline: { library, surveyId: d.survey_id, code: d.code, revision: d.revision, editor, frozen: s.frozen, owned: s.owned, details: { name: d.name, purpose: d.purpose }, updatedAt: d.updated_at, updatedBy: d.updated_by ?? null, note: d.note, versionLabel } };
 }
+
+/**
+ * What the server's reply must hold for a save to count: the content and every document of the survey's own. A published
+ * version brought in from the library but not placed is held in the editor only; the server neither stores it for this
+ * survey nor returns it, so it is not expected back.
+ */
+const mustHold = (intended: DocumentSet, b: Baseline): DocumentSet => ({ content: intended.content, assets: intended.assets.filter((a) => !(b.frozen.has(assetKey(a)) && !b.owned.has(assetKey(a)))) });
+const MISMATCH = 'The server answered, but its saved draft does not match what was sent. Your changes are still here; reload the page to see what the server has.';
 
 const describe = (e: unknown): SaveError => {
   if (e instanceof ApiFailure) {
@@ -66,7 +84,11 @@ const describe = (e: unknown): SaveError => {
 };
 
 export function PersistenceProvider({ initial, onBaseline, children }: { initial: Baseline; onBaseline: (b: Baseline) => void; children: ReactNode }) {
-  const { ws, replace } = useStudio();
+  const { ws, replace, apply } = useStudio();
+  const wsRef = useRef(ws);
+  wsRef.current = ws;
+  /** Codes the server issued in this session, saved or not (`KIND:code`). */
+  const issuedRef = useRef(new Set<string>());
   const { can } = useAuth();
   const [baseline, setBaselineState] = useState(initial);
   const [busy, setBusy] = useState(false);
@@ -84,7 +106,11 @@ export function PersistenceProvider({ initial, onBaseline, children }: { initial
   }, [ws, survey]);
   const details: Details = useMemo(() => ({ name: survey.name, purpose: survey.purpose }), [survey.name, survey.purpose]);
   const detailsChanged = details.name !== baseline.details.name || details.purpose !== baseline.details.purpose;
-  const change = useMemo(() => (current.set ? changes(baseline.editor, current.set) : null), [baseline.editor, current.set]);
+  const change = useMemo(() => {
+    if (!current.set) return null;
+    const c = changes(baseline.editor, current.set);
+    return { ...c, put: c.put.filter((a) => !baseline.frozen.has(assetKey(a))) }; // a frozen version never counts as a change
+  }, [baseline.editor, baseline.frozen, current.set]);
   const changed = (change ? change.put.length + change.remove.length + (change.content ? 1 : 0) : 0) + (detailsChanged ? 1 : 0);
   const dirty = changed > 0 || current.set === null;
   const live = useRef({ current, details, detailsChanged });
@@ -101,7 +127,7 @@ export function PersistenceProvider({ initial, onBaseline, children }: { initial
 
   const raise = useCallback((latest: DraftDocuments, mine: DocumentSet) => {
     const b = baseRef.current;
-    const server = open(latest, b.versionLabel).baseline.editor;
+    const server = open(latest, b.versionLabel, b.library).baseline.editor;
     setError(null);
     setConflict({ latest, server, comparison: compare(b.editor, mine, server), open: true });
   }, []);
@@ -110,23 +136,49 @@ export function PersistenceProvider({ initial, onBaseline, children }: { initial
     const b = baseRef.current;
     const { current: cur, details: det, detailsChanged: detCh } = live.current;
     if (busy || !cur.set) return;
-    const intended = cur.set;
+    let intended = cur.set;
     setBusy(true);
     setSaved(null);
     try {
+      if (b.library) {
+        // LIB-1: nothing the editor numbered itself is ever saved. Every new module, question, condition and answer set
+        // gets the code the server issues for it, and every reference to it is changed with it, before anything is sent.
+        const lineage: Lineage = { known: new Map(b.editor.assets.map((a) => [assetKey(a), { owned: b.owned.has(assetKey(a)) }])), issued: issuedRef.current };
+        let w = wsRef.current;
+        const needs = identitiesToIssue(w, lineage);
+        if (needs.length) {
+          const groups = codesNeeded(needs);
+          const got = await issueCodes(b.surveyId, groups.map((g) => ({ kind: g.kind, count: g.count })));
+          const issued = new Map<string, string>();
+          for (const g of groups) { const mine = got.filter((x) => x.kind === g.kind).map((x) => x.code); g.keys.forEach((key, i) => { issued.set(key, mine[i]!); issuedRef.current.add(`${key.split(':')[0]}:${mine[i]!}`); }); }
+          w = recode(w, needs, issued, lineage);
+        }
+        const sets = optionSetsToIssue(w, lineage);
+        if (sets.length) {
+          const got = (await issueCodes(b.surveyId, [{ kind: 'OPTION_SET', count: sets.length }])).map((x) => x.code);
+          got.forEach((c) => issuedRef.current.add(`OPTION_SET:${c}`));
+          w = withOptionSetCodes(w, sets, got);
+        }
+        if (w !== wsRef.current) {
+          const next = w;
+          apply('Gave new items their permanent codes', () => next);
+          wsRef.current = next;
+          intended = toDocuments(next, next.surveys[0]!);
+        }
+      }
       // a save whose reply was lost: ask the server what it has before sending anything again
       const u = unconfirmed.current;
       if (u) {
         const latest = await loadDraft(b.surveyId);
         const s = documentsOf(latest);
-        if (latest.revision === u.from + 1 && serverHolds(s.set, u.intended) && latest.name === u.details.name && latest.purpose === u.details.purpose) {
+        if (latest.revision === u.from + 1 && serverHolds(s.set, mustHold(u.intended, b)) && latest.name === u.details.name && latest.purpose === u.details.purpose) {
           adopt(latest, u.intended); // it HAD been saved: nothing is sent twice
           return;
         }
         if (latest.revision !== b.revision) { unconfirmed.current = null; raise(latest, intended); return; }
         unconfirmed.current = null; // the server never received it: send it now
       }
-      const ops = operationsFor(b.editor, intended, { removable: new Set([...b.owned].filter((k) => !b.frozen.has(k))), details: detCh ? det : null });
+      const ops = operationsFor(b.editor, intended, { removable: new Set([...b.owned].filter((k) => !b.frozen.has(k))), details: detCh ? det : null, frozen: b.frozen });
       if (!ops.length) { setError(null); return; }
       let reply: DraftDocuments;
       try { reply = await saveDraft(b.surveyId, b.revision, ops); }
@@ -138,15 +190,15 @@ export function PersistenceProvider({ initial, onBaseline, children }: { initial
         return;
       }
       // saved only when the server's reply holds every document that was sent
-      if (!serverHolds(documentsOf(reply).set, intended)) { setError({ message: 'The server answered, but its saved draft does not match what was sent. Your changes are still here; reload the saved draft to compare.', network: false }); return; }
+      if (!serverHolds(documentsOf(reply).set, mustHold(intended, b))) { setError({ message: MISMATCH, network: false, unconfirmed: true }); return; }
       adopt(reply, intended);
     } catch (e) { setError(describe(e)); } finally { setBusy(false); }
-  }, [busy, adopt, raise]);
+  }, [busy, adopt, raise, apply]);
 
   const reloadServerDraft = useCallback(() => {
     const c = conflict;
     if (!c) return;
-    const o = open(c.latest, baseRef.current.versionLabel);
+    const o = open(c.latest, baseRef.current.versionLabel, baseRef.current.library);
     setBaseline(o.baseline);
     setConflict(null);
     setError(null);
@@ -173,8 +225,8 @@ export function PersistenceProvider({ initial, onBaseline, children }: { initial
           return;
         }
       } else reply = c.latest;
-      if (!serverHolds(documentsOf(reply).set, target)) { setError({ message: 'The server answered, but its saved draft does not match what was sent. Your changes are still here.', network: false }); return; }
-      const o = open(reply, b.versionLabel);
+      if (!serverHolds(documentsOf(reply).set, mustHold(target, b))) { setError({ message: MISMATCH, network: false, unconfirmed: true }); return; }
+      const o = open(reply, b.versionLabel, b.library);
       setBaseline(o.baseline);
       setConflict(null);
       setError(null);
@@ -186,10 +238,18 @@ export function PersistenceProvider({ initial, onBaseline, children }: { initial
 
   const refreshFromServer = useCallback(async () => {
     if (live.current.current.set === null || !isEmpty(changes(baseRef.current.editor, live.current.current.set)) || live.current.detailsChanged) return;
-    const o = open(await loadDraft(baseRef.current.surveyId), baseRef.current.versionLabel);
+    const o = open(await loadDraft(baseRef.current.surveyId), baseRef.current.versionLabel, baseRef.current.library);
     setBaseline(o.baseline);
     replace(o.ws, 'The versions this draft pins are now frozen: a change to one is a new version');
   }, [replace, setBaseline]);
+
+  const adoptPublished = useCallback((added: AssetDoc[]) => {
+    const b = baseRef.current;
+    const have = new Set(b.editor.assets.map(assetKey));
+    const fresh = added.filter((a) => !have.has(assetKey(a)));
+    if (!fresh.length) return;
+    setBaseline({ ...b, editor: { ...b.editor, assets: [...b.editor.assets, ...fresh] }, frozen: new Set([...b.frozen, ...fresh.map(assetKey)]) });
+  }, [setBaseline]);
 
   const keepEditing = useCallback(() => setConflict((c) => (c ? { ...c, open: false } : c)), []);
   const openConflict = useCallback(() => setConflict((c) => (c ? { ...c, open: true } : c)), []);
@@ -206,8 +266,8 @@ export function PersistenceProvider({ initial, onBaseline, children }: { initial
   const value = useMemo<Persistence>(() => ({
     surveyId: baseline.surveyId, code: baseline.code, status, revision: baseline.revision, savedAt: baseline.updatedAt, savedBy: baseline.updatedBy,
     canEdit: can('survey.edit'), dirty, changed, error, mappingError: current.problem, conflict, note: baseline.note, lastSavedNotice: status === 'saved' ? saved : null,
-    save, reloadServerDraft, saveOnTop, keepEditing, openConflict, refreshFromServer,
-  }), [baseline, status, can, dirty, changed, error, current.problem, conflict, saved, save, reloadServerDraft, saveOnTop, keepEditing, openConflict, refreshFromServer]);
+    save, reloadServerDraft, saveOnTop, keepEditing, openConflict, refreshFromServer, library: !!baseline.library, adopt: adoptPublished,
+  }), [baseline, status, can, dirty, changed, error, current.problem, conflict, saved, save, reloadServerDraft, saveOnTop, keepEditing, openConflict, refreshFromServer, adoptPublished]);
 
   return <Ctx.Provider value={value}>{children}<LeaveGuard dirty={dirty} code={baseline.code} /></Ctx.Provider>;
 }

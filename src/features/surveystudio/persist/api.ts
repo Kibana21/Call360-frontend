@@ -36,3 +36,20 @@ export function documentsOf(d: DraftDocuments): { set: DocumentSet; frozen: Set<
     hashes: new Map(d.assets.map((a) => [key(a), a.sha256])),
   };
 }
+
+// ---- LIB-1: the component library and server-issued codes -------------------------------------------------------------
+export type ComponentKind = 'MODULE' | 'ITEM' | 'CONDITION' | 'OPTION_SET';
+export type Component = components['schemas']['SurveyComponentOut'];
+export type ComponentDetail = components['schemas']['SurveyComponentDetail'];
+export const listComponents = async (kind: ComponentKind, q = ''): Promise<Component[]> =>
+  unwrap(await api.GET('/api/v1/survey-components', { params: { query: { kind, q } } })).items;
+export const getComponent = async (kind: ComponentKind, code: string, version: number, wordingVersion?: number | null): Promise<ComponentDetail> =>
+  unwrap(await api.GET('/api/v1/survey-components/{kind}/{code}/{version}', { params: { path: { kind, code, version }, query: wordingVersion ? { wording_version: wordingVersion } : {} } }));
+/** New permanent codes, issued by the server to this survey. The editor's own numbering never becomes permanent. */
+export const issueCodes = async (surveyId: string, requests: Array<{ kind: 'MODULE' | 'ITEM' | 'STATEMENT' | 'CONDITION' | 'OPTION_SET'; count: number }>): Promise<Array<{ kind: string; code: string }>> =>
+  unwrap(await api.POST('/api/v1/survey-definitions/{survey_id}/codes', { params: { path: { survey_id: surveyId } }, body: { requests } })).codes;
+/** Whether the library is switched on for this server: with it off its routes do not exist. */
+export const libraryAvailable = async (): Promise<boolean> => {
+  const r = await api.GET('/api/v1/survey-components', { params: { query: { kind: 'MODULE', q: '' } } });
+  return r.response.ok;
+};

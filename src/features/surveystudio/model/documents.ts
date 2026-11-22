@@ -13,7 +13,7 @@
 // The server's SHA-256 of each document is authoritative; nothing here computes a hash.
 import type {
   Activation, Ast, Binding, Condition, DecisionNode, Edge, Entry, FieldType, Instance, Interrupt, Module, ModuleKind, ModuleNode, Option, OutcomeCode,
-  Question, QuestionNode, Routing, SetRule, Survey, SurveyTarget, Target, TextRule, Workspace,
+  Provenance, Question, QuestionNode, Routing, SetRule, Survey, SurveyTarget, Target, TextRule, Workspace,
 } from './types';
 
 export type AssetKind = 'OPTION_SET' | 'ITEM' | 'WORDING' | 'CONDITION' | 'MODULE';
@@ -61,6 +61,9 @@ const bindingIn = (b: Any): Binding => ({
 const entryOut = (e: Entry): Doc => (e.mode === 'RULE' ? { mode: 'RULE', binding: bindingOut(e.binding, false) } : e.mode === 'ON_OUTCOME' ? { mode: 'ON_OUTCOME', of: e.of, outcomes: [...e.outcomes] } : { mode: 'ALWAYS' });
 const entryIn = (e: Any): Entry => (e.mode === 'RULE' ? { mode: 'RULE', binding: bindingIn(e.binding) } : e.mode === 'ON_OUTCOME' ? { mode: 'ON_OUTCOME', of: e.of, outcomes: [...e.outcomes] } : { mode: 'ALWAYS' });
 
+const provOut = (p: Provenance): Doc => ({ code: p.code, version: p.version, ...(p.sha256 ? { sha256: p.sha256 } : {}) });
+const provIn = (p: Any): Provenance => ({ code: p.code, version: p.version, ...(p.sha256 ? { sha256: p.sha256 } : {}) });
+
 const optionOut = (o: Option): Doc => ({
   code: o.code, label: o.label,
   ...(o.exclusive !== undefined ? { exclusive: o.exclusive } : {}), ...(o.isOther !== undefined ? { is_other: o.isOther } : {}),
@@ -71,6 +74,9 @@ const optionIn = (o: Any): Option => ({
   ...(o.exclusive !== undefined ? { exclusive: o.exclusive } : {}), ...(o.is_other !== undefined ? { isOther: o.is_other } : {}),
   ...(o.other_text ? { otherText: textRuleIn(o.other_text) } : {}), ...(o.interrupt ? { interrupt: o.interrupt } : {}),
 });
+
+/** The answers of a published option-set document, in the editor's form. */
+export const optionsOfDocument = (doc: Doc): Option[] => (((doc as Any).options ?? []) as Any[]).map(optionIn);
 
 const routingOut = (r: Routing): Doc => ({
   mode: r.mode,
@@ -92,6 +98,11 @@ const routingIn = (r: Any): Routing => ({
   ...(r.rules ? { rules: (r.rules as Any[]).map((x): SetRule => ({ id: x.rule, kind: x.when.kind, options: [...x.when.options], to: targetIn(x.to) })) } : {}),
   ...(r.fallback !== undefined ? { fallback: targetIn(r.fallback) } : {}),
 });
+
+const itemAuthoring = (q: Question, placed: ReadonlySet<string>): Doc => {
+  const a = { ...(!placed.has(`${q.code}@${q.version}`) && q.wording.version !== q.version ? { wording_version: q.wording.version } : {}), ...(q.derivedFrom ? { derived_from: provOut(q.derivedFrom) } : {}) };
+  return Object.keys(a).length ? { authoring: a } : {};
+};
 
 // ---- Workspace -> documents ---------------------------------------------------------------------------------------
 /**
@@ -147,7 +158,7 @@ export function toDocuments(ws: Workspace, survey: Survey): DocumentSet {
       ...(q.textRule ? { text_rule: textRuleOut(q.textRule) } : {}), ...(q.numberRule ? { number_rule: { ...q.numberRule } } : {}),
       ...(q.statement ? { statement_role: q.statement } : {}), ...(q.role ? { lifecycle_role: q.role } : {}),
       ...(obligation ? { response_obligation: obligation } : {}),
-      ...(!placed.has(`${q.code}@${q.version}`) && q.wording.version !== q.version ? { authoring: { wording_version: q.wording.version } } : {}),
+      ...itemAuthoring(q, placed),
     };
     put('ITEM', q.code, q.version, item, `The item ${q.code} version ${q.version} appears twice with different content.`);
     items.push(...assets.splice(before));
@@ -162,7 +173,7 @@ export function toDocuments(ws: Workspace, survey: Survey): DocumentSet {
   const conditions: AssetDoc[] = [];
   for (const c of ws.conditions) {
     const labels = Object.fromEntries(Object.entries(c.params).filter(([k, p]) => p.label !== k).map(([k, p]) => [k, p.label]));
-    const authoring = { ...(Object.keys(labels).length ? { param_labels: labels } : {}), ...(c.shared ? {} : { shared: false }) };
+    const authoring = { ...(Object.keys(labels).length ? { param_labels: labels } : {}), ...(c.shared ? {} : { shared: false }), ...(c.derivedFrom ? { derived_from: provOut(c.derivedFrom) } : {}) };
     const doc: Doc = {
       schema: SCHEMA.CONDITION, code: c.code, version: c.version, name: c.name, ast: c.ast as unknown as Doc,
       params: Object.fromEntries(Object.entries(c.params).map(([k, p]) => [k, { type: p.type, ...(p.unit !== undefined ? { unit: p.unit } : {}) }])),
@@ -177,7 +188,7 @@ export function toDocuments(ws: Workspace, survey: Survey): DocumentSet {
   const modules: AssetDoc[] = [];
   const wordingOf = new Map(ws.questions.map((q) => [`${q.code}@${q.version}`, q.wording.version]));
   for (const m of ws.modules) {
-    const authoring = { ...(m.intent ? { intent: m.intent } : {}), ...(m.defaultEntry ? { default_entry: entryOut(m.defaultEntry) } : {}), ...(m.derivedFor ? { derived_for: m.derivedFor } : {}) };
+    const authoring = { ...(m.intent ? { intent: m.intent } : {}), ...(m.defaultEntry ? { default_entry: entryOut(m.defaultEntry) } : {}), ...(m.derivedFor ? { derived_for: m.derivedFor } : {}), ...(m.derivedFrom ? { derived_from: provOut(m.derivedFrom) } : {}) };
     const doc: Doc = {
       schema: SCHEMA.MODULE, code: m.code, revision: m.revision, name: m.name, outcomes: [...m.outcomes], entry: m.entry,
       nodes: m.nodes.map((n): Doc => {
@@ -253,6 +264,7 @@ export function fromDocuments(set: DocumentSet, opts: { meta: SurveyMeta; frozen
       ...(obligation === 'MANDATORY' ? { mandatory: true } : obligation ? { obligation } : {}),
       wording: { version: w.wording_version, text: w.text, approval: 'SYNTHETIC_UNAPPROVED', ...(w.delivery_mode !== 'CONTROLLED_TTS' ? { delivery: w.delivery_mode } : {}), ...(w.option_texts ? { optionTexts: { ...w.option_texts } } : {}) },
       published: frozen.has(assetKey(a)),
+      ...(d.authoring?.derived_from ? { derivedFrom: provIn(d.authoring.derived_from) } : {}),
     } as Question;
   });
 
@@ -265,6 +277,7 @@ export function fromDocuments(set: DocumentSet, opts: { meta: SurveyMeta; frozen
       params: Object.fromEntries(Object.entries((d.params ?? {}) as Record<string, Any>).map(([k, p]) => [k, { type: p.type as FieldType, ...(p.unit !== undefined ? { unit: p.unit } : {}), label: labels[k] ?? k }])),
       ...(inputs.length ? { inputs: Object.fromEntries(inputs.map(([k, v]) => [k, { question: { code: v.item.code, version: v.item.version }, answerType: v.answer_type, scope: 'MODULE' as const }])) } : {}),
       shared: d.authoring?.shared ?? true,
+      ...(d.authoring?.derived_from ? { derivedFrom: provIn(d.authoring.derived_from) } : {}),
     };
   });
 
@@ -279,6 +292,7 @@ export function fromDocuments(set: DocumentSet, opts: { meta: SurveyMeta; frozen
       edges: (d.edges as Any[]).map((e): Edge => ({ id: e.edge, from: e.from, on: e.on, to: targetIn(e.to)! })),
       ...(d.authoring?.default_entry ? { defaultEntry: entryIn(d.authoring.default_entry) } : {}),
       ...(d.authoring?.derived_for ? { derivedFor: d.authoring.derived_for } : {}),
+      ...(d.authoring?.derived_from ? { derivedFrom: provIn(d.authoring.derived_from) } : {}),
     };
   });
 
