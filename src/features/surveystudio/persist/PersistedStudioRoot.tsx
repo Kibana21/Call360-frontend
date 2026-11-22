@@ -3,10 +3,9 @@
 // Shown only when the build setting VITE_SURVEY_STUDIO_PERSISTED=1 is on, to people who hold `survey.read`.
 // Synthetic content only. Review and publication run on the real, immutable candidates of the API (persist/ReviewPages).
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { Link, Route, Routes, useNavigate, useParams } from 'react-router-dom';
+import { Link, Route, Routes, useParams } from 'react-router-dom';
 import '../../../styles/survey-studio.css';
 import { ApiFailure } from '../../../api/client';
-import { useAuth } from '../../../auth/AuthContext';
 import { BuilderPage } from '../BuilderPage';
 import { CallPlanPage } from '../CallPlanPage';
 import { ComposerPage } from '../ComposerPage';
@@ -15,16 +14,18 @@ import { ValidationPage } from '../ValidationPage';
 import { MappingError } from '../model/documents';
 import type { Workspace } from '../model/types';
 import { StudioProvider, forgetPersistedMemory, hasPersistedMemory } from '../store';
-import { Glyph, Tag } from '../ui';
+import { Glyph } from '../ui';
 import { createSurvey, libraryAvailable, listSurveys, loadDraft, type SurveySummary } from './api';
 import { AssignmentPage } from './AssignmentPage';
 import { CoordinatedSimulationPage } from './CoordinatedSimulation';
 import { ControlBuilderPage } from './ControlBuilder';
 import { EvaluationWorkbenchPage } from './EvaluationWorkbench';
+import { JourneyListPage, JourneyPage } from './JourneyPage';
 import { LibraryProvider } from './Library';
 import { PersistenceProvider, open, versionLabelOf, type Baseline } from './Persistence';
 import { CandidatePage, ReviewPage, VersionPage } from './ReviewPages';
-import { STANDING_NOTE } from './standing';
+import { RulesExplorerPage } from './RulesExplorer';
+import { WorkspacePage } from './Workspace';
 
 
 // the baseline of each survey opened in this page, beside its unsaved workspace (store.tsx): memory only
@@ -36,11 +37,14 @@ export function PersistedStudioRoot() {
   return (
     <div className="ss" data-testid="survey-studio" data-mode="persisted">
       <Routes>
-        <Route index element={<SurveyListPage />} />
+        <Route index element={<><Bar crumbs={['Survey Studio']} /><WorkspacePage CreateForm={CreateForm} /></>} />
+        <Route path="rules" element={<RulesExplorerPage />} />
         <Route path="assignment" element={<AssignmentPage />} />
         <Route path="coordinated-simulations/:coordinatedId" element={<CoordinatedSimulationPage />} />
         <Route path="evaluations/:evaluationId" element={<EvaluationWorkbenchPage />} />
         <Route path="controls" element={<ControlBuilderPage />} />
+        <Route path="journeys" element={<JourneyListPage />} />
+        <Route path="journeys/:kind/:journeyId" element={<JourneyPage />} />
         <Route path="surveys/:surveyId/*" element={<OpenSurvey />} />
         <Route path="*" element={<Missing />} />
       </Routes>
@@ -63,50 +67,6 @@ function Bar({ crumbs }: { crumbs: string[] }) {
 }
 
 const say = (e: unknown) => (e instanceof ApiFailure ? (e.status === 403 ? 'You do not have permission for this.' : e.message) : 'The server could not be reached.');
-
-// ---- the list -----------------------------------------------------------------------------------------------------
-function SurveyListPage() {
-  const { can } = useAuth();
-  const nav = useNavigate();
-  const [rows, setRows] = useState<SurveySummary[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [creating, setCreating] = useState(false);
-  const fetchAll = useCallback(() => { setError(null); listSurveys().then(setRows).catch((e) => setError(say(e))); }, []);
-  useEffect(fetchAll, [fetchAll]);
-  return (
-    <>
-      <Bar crumbs={['Survey Studio']} />
-      <div className="ss-home" data-testid="ss-saved-home">
-        <header className="ss-home-head">
-          <div><h1 className="ss-title">Surveys</h1>
-            <p className="ss-muted">Saved in Call360. Open one to compose it, build its modules and save your changes as a new revision.</p></div>
-          {can('survey.edit') ? <button type="button" className="ss-btn primary big" onClick={() => setCreating(true)} data-testid="ss-create"><Glyph name="plus" /> New survey</button>
-            : <span className="ss-save-note" data-testid="ss-read-only">Read only: you can open surveys but not change them.</span>}
-        </header>
-        {can('survey.assignment.read') ? <p className="ss-home-links"><Link className="ss-tool" to="/survey-studio/assignment" data-testid="ss-open-assignment"><Glyph name="branch" size={14} /> Survey assignment — which survey the assignment rules select for an application (simulation)</Link></p> : null}
-        {can('survey.evaluation.read') ? <p className="ss-home-links"><Link className="ss-tool" to="/survey-studio/controls" data-testid="ss-open-controls"><Glyph name="check" size={14} /> Controls and evidence — which controls must be assessed, and which survey questions evidence them (simulation)</Link></p> : null}
-        <p className="ss-note" data-testid="ss-standing-note"><Glyph name="info" size={14} /><span>{STANDING_NOTE}</span></p>
-        {creating ? <CreateForm onCancel={() => setCreating(false)} onMade={(s) => nav(`/survey-studio/surveys/${s.code}`)} /> : null}
-        {error ? <div className="ss-empty" role="alert" data-testid="ss-list-error"><p><strong>The surveys could not be loaded.</strong> {error}</p><button type="button" className="ss-btn" onClick={fetchAll}>Try again</button></div>
-          : rows === null ? <p className="ss-loading" role="status" data-testid="ss-loading"><span className="ss-spinner" aria-hidden="true" /> Loading surveys…</p>
-            : rows.length === 0 ? <div className="ss-empty" data-testid="ss-no-surveys"><p><strong>No surveys yet.</strong> {can('survey.edit') ? 'Create the first one.' : 'Nobody has created one.'}</p></div>
-              : (
-                <table className="ss-table" data-testid="ss-surveys">
-                  <thead><tr><th scope="col">Survey</th><th scope="col">Code</th><th scope="col">Draft</th><th scope="col">Published</th><th scope="col">In review</th></tr></thead>
-                  <tbody>{rows.map((s) => (
-                    <tr key={s.id} data-testid={`ss-survey-${s.code}`}>
-                      <td><Link to={`/survey-studio/surveys/${s.code}`} data-testid={`ss-open-${s.code}`}><strong>{s.name}</strong></Link>{s.purpose ? <small> — {s.purpose}</small> : null}
-                        {hasPersistedMemory(s.code) ? <> <Tag tone="draft">Open in this tab</Tag></> : null}</td>
-                      <td><span className="ss-code">{s.code}</span></td>
-                      <td>Revision {s.draft_revision}</td>
-                      <td>{s.latest_version_label ? `Version ${s.latest_version_label}` : 'Never'}</td>
-                      <td>{s.open_candidate_status ? s.open_candidate_status.replace('_', ' ').toLowerCase() : '—'}</td>
-                    </tr>))}</tbody>
-                </table>)}
-      </div>
-    </>
-  );
-}
 
 const codeFrom = (name: string) => `S-${name.toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40)}`;
 

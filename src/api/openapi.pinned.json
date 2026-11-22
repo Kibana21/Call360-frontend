@@ -27583,6 +27583,347 @@
         "title": "SurveyEvaluationPreviewOut",
         "type": "object"
       },
+      "SurveyExecutionAssuranceIn": {
+        "properties": {
+          "coordinated_simulation_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coordinated Simulation Id"
+          },
+          "evaluation_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A control evaluation of the SAME journey to show beside the result. Its outcomes are copied as recorded, never computed again.",
+            "title": "Evaluation Id"
+          },
+          "simulation_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Simulation Id"
+          }
+        },
+        "title": "SurveyExecutionAssuranceIn",
+        "type": "object"
+      },
+      "SurveyExecutionAssuranceList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SurveyExecutionAssuranceRef"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "SurveyExecutionAssuranceList",
+        "type": "object"
+      },
+      "SurveyExecutionAssuranceOut": {
+        "properties": {
+          "contract": {
+            "title": "Contract",
+            "type": "string"
+          },
+          "control_evaluation": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Control Evaluation"
+          },
+          "control_evidence": {
+            "description": "The named control evaluation's results, as recorded, each beside what was verified about the execution evidence it rests on.",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Control Evidence",
+            "type": "array"
+          },
+          "coordinated_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coordinated Id"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "title": "Created By",
+            "type": "string"
+          },
+          "current_status": {
+            "description": "The recorded status, or ASSURANCE_DRIFT when the result no longer recomputes from the evidence as it stands.",
+            "enum": [
+              "VERIFIED",
+              "INCOMPLETE",
+              "DEVIATION_DETECTED",
+              "INTEGRITY_FAILED",
+              "NOT_ASSESSABLE",
+              "ASSURANCE_DRIFT"
+            ],
+            "title": "Current Status",
+            "type": "string"
+          },
+          "evaluation_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluation Id"
+          },
+          "execution_contract": {
+            "title": "Execution Contract",
+            "type": "string"
+          },
+          "findings": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Findings",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "input_sha256": {
+            "title": "Input Sha256",
+            "type": "string"
+          },
+          "journey": {
+            "additionalProperties": true,
+            "title": "Journey",
+            "type": "object"
+          },
+          "journey_checks": {
+            "description": "Coordinated journeys: selection, governed order, no bypass, own evidence, no de-duplication.",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Journey Checks",
+            "type": "array"
+          },
+          "journey_kind": {
+            "enum": [
+              "SINGLE_SURVEY",
+              "COORDINATED"
+            ],
+            "title": "Journey Kind",
+            "type": "string"
+          },
+          "market_code": {
+            "title": "Market Code",
+            "type": "string"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "operational_call_eligibility": {
+            "additionalProperties": true,
+            "description": "Always NOT_ESTABLISHED.",
+            "title": "Operational Call Eligibility",
+            "type": "object"
+          },
+          "pins": {
+            "additionalProperties": true,
+            "title": "Pins",
+            "type": "object"
+          },
+          "record_class": {
+            "const": "SIMULATION",
+            "title": "Record Class",
+            "type": "string"
+          },
+          "replay": {
+            "additionalProperties": true,
+            "title": "Replay",
+            "type": "object"
+          },
+          "result_sha256": {
+            "title": "Result Sha256",
+            "type": "string"
+          },
+          "simulation_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Simulation Id"
+          },
+          "status": {
+            "description": "VERIFIED: the supported checks passed for the recording. INCOMPLETE: the evidence does not let every check finish. DEVIATION_DETECTED: the recording differs from what it pinned. INTEGRITY_FAILED: replay or fingerprints failed. NOT_ASSESSABLE: a contract is not supported. Technical statuses, not compliance outcomes.",
+            "enum": [
+              "VERIFIED",
+              "INCOMPLETE",
+              "DEVIATION_DETECTED",
+              "INTEGRITY_FAILED",
+              "NOT_ASSESSABLE"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "summary": {
+            "additionalProperties": true,
+            "title": "Summary",
+            "type": "object"
+          },
+          "surveys": {
+            "description": "Each survey execution: status, every check with its question and findings, every delivery with its pinned wording, every placement that was not delivered and why, branches, refusals, the ending.",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Surveys",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "record_class",
+          "note",
+          "contract",
+          "execution_contract",
+          "market_code",
+          "created_at",
+          "created_by",
+          "journey_kind",
+          "simulation_id",
+          "coordinated_id",
+          "evaluation_id",
+          "journey",
+          "status",
+          "current_status",
+          "summary",
+          "surveys",
+          "journey_checks",
+          "findings",
+          "control_evidence",
+          "pins",
+          "input_sha256",
+          "result_sha256",
+          "replay",
+          "operational_call_eligibility"
+        ],
+        "title": "SurveyExecutionAssuranceOut",
+        "type": "object"
+      },
+      "SurveyExecutionAssuranceRef": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "title": "Created By",
+            "type": "string"
+          },
+          "evaluation_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluation Id"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "input_sha256": {
+            "title": "Input Sha256",
+            "type": "string"
+          },
+          "journey_kind": {
+            "title": "Journey Kind",
+            "type": "string"
+          },
+          "result_sha256": {
+            "title": "Result Sha256",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "summary": {
+            "additionalProperties": true,
+            "title": "Summary",
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "journey_kind",
+          "status",
+          "evaluation_id",
+          "input_sha256",
+          "result_sha256",
+          "created_at",
+          "created_by",
+          "summary"
+        ],
+        "title": "SurveyExecutionAssuranceRef",
+        "type": "object"
+      },
       "SurveyFindingOut": {
         "properties": {
           "at": {
@@ -28270,6 +28611,206 @@
           "summary"
         ],
         "title": "SurveyJourneyEvaluationRef",
+        "type": "object"
+      },
+      "SurveyJourneyTraceLink": {
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "records": {
+            "description": "Each: kind, id, label, version, sha256, sha256_of, source, facts.",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Records",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "RECORDED",
+              "NOT_RECORDED_YET",
+              "NOT_PART_OF_THIS_JOURNEY",
+              "NONE",
+              "NONE_SELECTED",
+              "WITHHELD",
+              "NOT_AVAILABLE"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "step": {
+            "title": "Step",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "step",
+          "key",
+          "title",
+          "status",
+          "records",
+          "notes"
+        ],
+        "title": "SurveyJourneyTraceLink",
+        "type": "object"
+      },
+      "SurveyJourneyTraceOut": {
+        "properties": {
+          "assurance_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assurance Id"
+          },
+          "assurances": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Assurances",
+            "type": "array"
+          },
+          "chain": {
+            "items": {
+              "$ref": "#/components/schemas/SurveyJourneyTraceLink"
+            },
+            "title": "Chain",
+            "type": "array"
+          },
+          "contract": {
+            "title": "Contract",
+            "type": "string"
+          },
+          "dimensions": {
+            "additionalProperties": true,
+            "description": "Five separate statements: completion, satisfaction, coverage, assurance, eligibility. None is derived from another; eligibility is always NOT_ESTABLISHED.",
+            "title": "Dimensions",
+            "type": "object"
+          },
+          "evaluation_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluation Id"
+          },
+          "evaluations": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Evaluations",
+            "type": "array"
+          },
+          "evidence_gaps": {
+            "description": "The shown evaluation's own control results whose evidence is missing, contradictory or undecided. Recorded results, filtered; nothing is computed here.",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Evidence Gaps",
+            "type": "array"
+          },
+          "integrity": {
+            "additionalProperties": true,
+            "title": "Integrity",
+            "type": "object"
+          },
+          "journey": {
+            "additionalProperties": true,
+            "description": "kind: SINGLE_SURVEY, COORDINATED, or APPLICATION_ONLY (a composite plan whose journey never started).",
+            "title": "Journey",
+            "type": "object"
+          },
+          "market_code": {
+            "title": "Market Code",
+            "type": "string"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "open_points": {
+            "description": "What is unverified or undecided for this journey, stated once.",
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "title": "Open Points",
+            "type": "array"
+          },
+          "operational_call_eligibility": {
+            "additionalProperties": true,
+            "description": "Always NOT_ESTABLISHED.",
+            "title": "Operational Call Eligibility",
+            "type": "object"
+          },
+          "questions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Questions",
+            "type": "array"
+          },
+          "record_class": {
+            "const": "SIMULATION",
+            "title": "Record Class",
+            "type": "string"
+          },
+          "trace_sha256": {
+            "description": "SHA-256 over the kind, id and fingerprint of every record in the chain, in order.",
+            "title": "Trace Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "record_class",
+          "note",
+          "contract",
+          "market_code",
+          "journey",
+          "evaluation_id",
+          "assurance_id",
+          "evaluations",
+          "assurances",
+          "dimensions",
+          "questions",
+          "chain",
+          "evidence_gaps",
+          "integrity",
+          "open_points",
+          "trace_sha256",
+          "operational_call_eligibility"
+        ],
+        "title": "SurveyJourneyTraceOut",
         "type": "object"
       },
       "SurveyLibraryItem": {
@@ -29123,6 +29664,90 @@
           }
         },
         "title": "SurveyWithdrawIn",
+        "type": "object"
+      },
+      "SurveyWorkspaceOut": {
+        "description": "UX-HOME-1 — what the Survey Studio workspace shows first. READ ONLY: counted and listed from the records as they\nstand, in the reader's markets. Nothing here is a metric of use, quality or compliance, and nothing is estimated.",
+        "properties": {
+          "awaiting_you": {
+            "description": "Survey candidates the identity rules AND the reader's permissions allow the reader to approve or publish now.",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Awaiting You",
+            "type": "array"
+          },
+          "inventory": {
+            "additionalProperties": true,
+            "description": "Counts of surveys by derived status and, when the library is on, of published reusable components by kind.",
+            "title": "Inventory",
+            "type": "object"
+          },
+          "library_enabled": {
+            "title": "Library Enabled",
+            "type": "boolean"
+          },
+          "markets": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Markets",
+            "type": "array"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "recent_drafts": {
+            "description": "Drafts most recently saved, newest first.",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Recent Drafts",
+            "type": "array"
+          },
+          "recent_published": {
+            "description": "Survey versions most recently published, newest first.",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Recent Published",
+            "type": "array"
+          },
+          "reused_modules": {
+            "description": "Published modules pinned by more than one survey, most widely pinned first. Counted from published versions; empty when none is reused.",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Reused Modules",
+            "type": "array"
+          },
+          "waiting_on_others": {
+            "description": "Open candidates the reader submitted, which someone else must decide or publish.",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Waiting On Others",
+            "type": "array"
+          }
+        },
+        "required": [
+          "markets",
+          "library_enabled",
+          "inventory",
+          "recent_drafts",
+          "recent_published",
+          "awaiting_you",
+          "waiting_on_others",
+          "reused_modules",
+          "note"
+        ],
+        "title": "SurveyWorkspaceOut",
         "type": "object"
       },
       "SystemHealth": {
@@ -50308,6 +50933,88 @@
         ]
       }
     },
+    "/api/v1/survey-definitions/workspace": {
+      "get": {
+        "description": "One read for the workspace's first screen. Counts and lists only; it decides nothing and changes nothing.",
+        "operationId": "survey_workspace_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurveyWorkspaceOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Survey Workspace Get",
+        "tags": [
+          "survey-definitions"
+        ]
+      }
+    },
     "/api/v1/survey-definitions/{survey_id}": {
       "get": {
         "operationId": "survey_definition_get",
@@ -51280,6 +51987,318 @@
           }
         },
         "summary": "Survey Control Applicability",
+        "tags": [
+          "survey-evaluation"
+        ]
+      }
+    },
+    "/api/v1/survey-evaluation/assurance": {
+      "get": {
+        "description": "Every assurance result of one journey, oldest first. New evidence adds one; none is rewritten.",
+        "operationId": "survey_execution_assurance_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "simulation_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Simulation Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "coordinated_simulation_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Coordinated Simulation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurveyExecutionAssuranceList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Survey Execution Assurance List",
+        "tags": [
+          "survey-evaluation"
+        ]
+      },
+      "post": {
+        "description": "Verify the recorded execution of one synthetic journey against the survey versions it pinned. 201 for a new\nresult; 200 with the existing one when nothing it would be computed from has changed.",
+        "operationId": "survey_execution_assurance_create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SurveyExecutionAssuranceIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurveyExecutionAssuranceOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurveyExecutionAssuranceOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Survey Execution Assurance Create",
+        "tags": [
+          "survey-evaluation"
+        ]
+      }
+    },
+    "/api/v1/survey-evaluation/assurance/{assurance_id}": {
+      "get": {
+        "description": "The result as recorded, computed again now from the evidence as it stands (drift is reported, never hidden).",
+        "operationId": "survey_execution_assurance_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "assurance_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Assurance Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurveyExecutionAssuranceOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Survey Execution Assurance Get",
         "tags": [
           "survey-evaluation"
         ]
@@ -52433,6 +53452,171 @@
           }
         },
         "summary": "Survey Journey Evaluation Get",
+        "tags": [
+          "survey-evaluation"
+        ]
+      }
+    },
+    "/api/v1/survey-evaluation/journey-trace": {
+      "get": {
+        "description": "One journey's records as one chain, each with its version, fingerprint and source. Read-only.",
+        "operationId": "survey_journey_trace_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "simulation_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Simulation Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "coordinated_simulation_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Coordinated Simulation Id"
+            }
+          },
+          {
+            "description": "An application whose journey never started. Needs survey.assignment.read.",
+            "in": "query",
+            "name": "composite_plan_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "An application whose journey never started. Needs survey.assignment.read.",
+              "title": "Composite Plan Id"
+            }
+          },
+          {
+            "description": "Default: the latest evaluation of the journey.",
+            "in": "query",
+            "name": "evaluation_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Default: the latest evaluation of the journey.",
+              "title": "Evaluation Id"
+            }
+          },
+          {
+            "description": "Default: the latest assurance result beside that evaluation.",
+            "in": "query",
+            "name": "assurance_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Default: the latest assurance result beside that evaluation.",
+              "title": "Assurance Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurveyJourneyTraceOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          }
+        },
+        "summary": "Survey Journey Trace Get",
         "tags": [
           "survey-evaluation"
         ]

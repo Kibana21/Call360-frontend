@@ -3285,6 +3285,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/survey-definitions/workspace": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Survey Workspace Get
+         * @description One read for the workspace's first screen. Counts and lists only; it decides nothing and changes nothing.
+         */
+        get: operations["survey_workspace_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/survey-definitions/{survey_id}": {
         parameters: {
             query?: never;
@@ -3485,6 +3505,51 @@ export interface paths {
          *     is not proposed yet. Nothing is recorded. Unknown stays unknown.
          */
         post: operations["survey_control_applicability"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-evaluation/assurance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Survey Execution Assurance List
+         * @description Every assurance result of one journey, oldest first. New evidence adds one; none is rewritten.
+         */
+        get: operations["survey_execution_assurance_list"];
+        put?: never;
+        /**
+         * Survey Execution Assurance Create
+         * @description Verify the recorded execution of one synthetic journey against the survey versions it pinned. 201 for a new
+         *     result; 200 with the existing one when nothing it would be computed from has changed.
+         */
+        post: operations["survey_execution_assurance_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-evaluation/assurance/{assurance_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Survey Execution Assurance Get
+         * @description The result as recorded, computed again now from the evidence as it stands (drift is reported, never hidden).
+         */
+        get: operations["survey_execution_assurance_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3693,6 +3758,26 @@ export interface paths {
          * @description The evaluation as recorded, computed again now from what it pinned (drift is reported, never hidden).
          */
         get: operations["survey_journey_evaluation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-evaluation/journey-trace": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Survey Journey Trace Get
+         * @description One journey's records as one chain, each with its version, fingerprint and source. Read-only.
+         */
+        get: operations["survey_journey_trace_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -14607,6 +14692,159 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /** SurveyExecutionAssuranceIn */
+        SurveyExecutionAssuranceIn: {
+            /** Coordinated Simulation Id */
+            coordinated_simulation_id?: string | null;
+            /**
+             * Evaluation Id
+             * @description A control evaluation of the SAME journey to show beside the result. Its outcomes are copied as recorded, never computed again.
+             */
+            evaluation_id?: string | null;
+            /** Simulation Id */
+            simulation_id?: string | null;
+        };
+        /** SurveyExecutionAssuranceList */
+        SurveyExecutionAssuranceList: {
+            /** Items */
+            items: components["schemas"]["SurveyExecutionAssuranceRef"][];
+        };
+        /** SurveyExecutionAssuranceOut */
+        SurveyExecutionAssuranceOut: {
+            /** Contract */
+            contract: string;
+            /** Control Evaluation */
+            control_evaluation?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Control Evidence
+             * @description The named control evaluation's results, as recorded, each beside what was verified about the execution evidence it rests on.
+             */
+            control_evidence: {
+                [key: string]: unknown;
+            }[];
+            /** Coordinated Id */
+            coordinated_id: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By */
+            created_by: string;
+            /**
+             * Current Status
+             * @description The recorded status, or ASSURANCE_DRIFT when the result no longer recomputes from the evidence as it stands.
+             * @enum {string}
+             */
+            current_status: "VERIFIED" | "INCOMPLETE" | "DEVIATION_DETECTED" | "INTEGRITY_FAILED" | "NOT_ASSESSABLE" | "ASSURANCE_DRIFT";
+            /** Evaluation Id */
+            evaluation_id: string | null;
+            /** Execution Contract */
+            execution_contract: string;
+            /** Findings */
+            findings: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Input Sha256 */
+            input_sha256: string;
+            /** Journey */
+            journey: {
+                [key: string]: unknown;
+            };
+            /**
+             * Journey Checks
+             * @description Coordinated journeys: selection, governed order, no bypass, own evidence, no de-duplication.
+             */
+            journey_checks: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Journey Kind
+             * @enum {string}
+             */
+            journey_kind: "SINGLE_SURVEY" | "COORDINATED";
+            /** Market Code */
+            market_code: string;
+            /** Note */
+            note: string;
+            /**
+             * Operational Call Eligibility
+             * @description Always NOT_ESTABLISHED.
+             */
+            operational_call_eligibility: {
+                [key: string]: unknown;
+            };
+            /** Pins */
+            pins: {
+                [key: string]: unknown;
+            };
+            /**
+             * Record Class
+             * @constant
+             */
+            record_class: "SIMULATION";
+            /** Replay */
+            replay: {
+                [key: string]: unknown;
+            };
+            /** Result Sha256 */
+            result_sha256: string;
+            /** Simulation Id */
+            simulation_id: string | null;
+            /**
+             * Status
+             * @description VERIFIED: the supported checks passed for the recording. INCOMPLETE: the evidence does not let every check finish. DEVIATION_DETECTED: the recording differs from what it pinned. INTEGRITY_FAILED: replay or fingerprints failed. NOT_ASSESSABLE: a contract is not supported. Technical statuses, not compliance outcomes.
+             * @enum {string}
+             */
+            status: "VERIFIED" | "INCOMPLETE" | "DEVIATION_DETECTED" | "INTEGRITY_FAILED" | "NOT_ASSESSABLE";
+            /** Summary */
+            summary: {
+                [key: string]: unknown;
+            };
+            /**
+             * Surveys
+             * @description Each survey execution: status, every check with its question and findings, every delivery with its pinned wording, every placement that was not delivered and why, branches, refusals, the ending.
+             */
+            surveys: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** SurveyExecutionAssuranceRef */
+        SurveyExecutionAssuranceRef: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By */
+            created_by: string;
+            /** Evaluation Id */
+            evaluation_id: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Input Sha256 */
+            input_sha256: string;
+            /** Journey Kind */
+            journey_kind: string;
+            /** Result Sha256 */
+            result_sha256: string;
+            /** Status */
+            status: string;
+            /** Summary */
+            summary: {
+                [key: string]: unknown;
+            };
+        };
         /** SurveyFindingOut */
         SurveyFindingOut: {
             /** At */
@@ -14908,6 +15146,105 @@ export interface components {
             summary: {
                 [key: string]: unknown;
             };
+        };
+        /** SurveyJourneyTraceLink */
+        SurveyJourneyTraceLink: {
+            /** Key */
+            key: string;
+            /** Notes */
+            notes: string[];
+            /**
+             * Records
+             * @description Each: kind, id, label, version, sha256, sha256_of, source, facts.
+             */
+            records: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "RECORDED" | "NOT_RECORDED_YET" | "NOT_PART_OF_THIS_JOURNEY" | "NONE" | "NONE_SELECTED" | "WITHHELD" | "NOT_AVAILABLE";
+            /** Step */
+            step: number;
+            /** Title */
+            title: string;
+        };
+        /** SurveyJourneyTraceOut */
+        SurveyJourneyTraceOut: {
+            /** Assurance Id */
+            assurance_id: string | null;
+            /** Assurances */
+            assurances: {
+                [key: string]: unknown;
+            }[];
+            /** Chain */
+            chain: components["schemas"]["SurveyJourneyTraceLink"][];
+            /** Contract */
+            contract: string;
+            /**
+             * Dimensions
+             * @description Five separate statements: completion, satisfaction, coverage, assurance, eligibility. None is derived from another; eligibility is always NOT_ESTABLISHED.
+             */
+            dimensions: {
+                [key: string]: unknown;
+            };
+            /** Evaluation Id */
+            evaluation_id: string | null;
+            /** Evaluations */
+            evaluations: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Evidence Gaps
+             * @description The shown evaluation's own control results whose evidence is missing, contradictory or undecided. Recorded results, filtered; nothing is computed here.
+             */
+            evidence_gaps: {
+                [key: string]: unknown;
+            }[];
+            /** Integrity */
+            integrity: {
+                [key: string]: unknown;
+            };
+            /**
+             * Journey
+             * @description kind: SINGLE_SURVEY, COORDINATED, or APPLICATION_ONLY (a composite plan whose journey never started).
+             */
+            journey: {
+                [key: string]: unknown;
+            };
+            /** Market Code */
+            market_code: string;
+            /** Note */
+            note: string;
+            /**
+             * Open Points
+             * @description What is unverified or undecided for this journey, stated once.
+             */
+            open_points: {
+                [key: string]: string;
+            }[];
+            /**
+             * Operational Call Eligibility
+             * @description Always NOT_ESTABLISHED.
+             */
+            operational_call_eligibility: {
+                [key: string]: unknown;
+            };
+            /** Questions */
+            questions: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Record Class
+             * @constant
+             */
+            record_class: "SIMULATION";
+            /**
+             * Trace Sha256
+             * @description SHA-256 over the kind, id and fingerprint of every record in the chain, in order.
+             */
+            trace_sha256: string;
         };
         /** SurveyLibraryItem */
         SurveyLibraryItem: {
@@ -15292,6 +15629,61 @@ export interface components {
              * @default
              */
             reason: string;
+        };
+        /**
+         * SurveyWorkspaceOut
+         * @description UX-HOME-1 — what the Survey Studio workspace shows first. READ ONLY: counted and listed from the records as they
+         *     stand, in the reader's markets. Nothing here is a metric of use, quality or compliance, and nothing is estimated.
+         */
+        SurveyWorkspaceOut: {
+            /**
+             * Awaiting You
+             * @description Survey candidates the identity rules AND the reader's permissions allow the reader to approve or publish now.
+             */
+            awaiting_you: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Inventory
+             * @description Counts of surveys by derived status and, when the library is on, of published reusable components by kind.
+             */
+            inventory: {
+                [key: string]: unknown;
+            };
+            /** Library Enabled */
+            library_enabled: boolean;
+            /** Markets */
+            markets: string[];
+            /** Note */
+            note: string;
+            /**
+             * Recent Drafts
+             * @description Drafts most recently saved, newest first.
+             */
+            recent_drafts: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Recent Published
+             * @description Survey versions most recently published, newest first.
+             */
+            recent_published: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Reused Modules
+             * @description Published modules pinned by more than one survey, most widely pinned first. Counted from published versions; empty when none is reused.
+             */
+            reused_modules: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Waiting On Others
+             * @description Open candidates the reader submitted, which someone else must decide or publish.
+             */
+            waiting_on_others: {
+                [key: string]: unknown;
+            }[];
         };
         /** SystemHealth */
         SystemHealth: {
@@ -30350,6 +30742,80 @@ export interface operations {
             };
         };
     };
+    survey_workspace_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyWorkspaceOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     survey_definition_get: {
         parameters: {
             query?: never;
@@ -31070,6 +31536,246 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SurveyControlApplicabilityOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_execution_assurance_list: {
+        parameters: {
+            query?: {
+                simulation_id?: string | null;
+                coordinated_simulation_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyExecutionAssuranceList"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_execution_assurance_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyExecutionAssuranceIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyExecutionAssuranceOut"];
+                };
+            };
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyExecutionAssuranceOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_execution_assurance_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assurance_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyExecutionAssuranceOut"];
                 };
             };
             /** @description Unauthorized */
@@ -32051,6 +32757,80 @@ export interface operations {
             };
             /** @description Too Many Requests */
             429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_journey_trace_get: {
+        parameters: {
+            query?: {
+                simulation_id?: string | null;
+                coordinated_simulation_id?: string | null;
+                /** @description An application whose journey never started. Needs survey.assignment.read. */
+                composite_plan_id?: string | null;
+                /** @description Default: the latest evaluation of the journey. */
+                evaluation_id?: string | null;
+                /** @description Default: the latest assurance result beside that evaluation. */
+                assurance_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyJourneyTraceOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

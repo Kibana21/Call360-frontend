@@ -40,6 +40,14 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<{ kind: ComponentKind; focus?: Focus } | null>(null);
   const available = !!p?.library;
   const openLibrary = useCallback((kind: ComponentKind = 'MODULE', focus?: Focus) => setState({ kind: focus?.kind ?? kind, focus }), []);
+  // UX-HOME-1: "Use in a survey" from the workspace inspector opens this survey with ?library=KIND~code~version: the
+  // library opens on that published block. Adding it is still the author's own action here, and nothing is saved by it.
+  const asked = useRef(false);
+  useEffect(() => {
+    if (!available || asked.current) return;
+    const [kind, code, version] = (new URLSearchParams(window.location.search).get('library') ?? '').split('~');
+    if (kind && code && Number(version) > 0 && TABS.some((t) => t.kind === kind)) { asked.current = true; openLibrary(kind as ComponentKind, { kind: kind as ComponentKind, code, version: Number(version) }); }
+  }, [available, openLibrary]);
   const value = useMemo(() => ({ openLibrary, available }), [openLibrary, available]);
   return <Ctx.Provider value={value}>{children}{state && available ? <Drawer initial={state.kind} focus={state.focus} onClose={() => setState(null)} /> : null}</Ctx.Provider>;
 }

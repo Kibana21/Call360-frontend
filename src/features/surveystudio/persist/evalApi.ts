@@ -58,3 +58,25 @@ export const previewEvaluation = async (j: Journey, policyId: string | null, map
   unwrap(await api.POST('/api/v1/survey-evaluation/evaluations/preview', { body: { ...query(j), control_policy_id: policyId, mappings } }));
 export const evaluateUnder = async (j: Journey, policyId: string | null): Promise<JourneyEvaluation> =>
   unwrap(await api.POST('/api/v1/survey-evaluation/evaluations', { body: { ...query(j), control_policy_id: policyId } }));
+
+// ---- EVAL-2B: execution assurance — whether the RECORDED execution of a simulated journey followed what it pinned ----
+export type ExecutionAssurance = components['schemas']['SurveyExecutionAssuranceOut'];
+export type ExecutionAssuranceRef = components['schemas']['SurveyExecutionAssuranceRef'];
+/** null when execution assurance is not switched on for this server. */
+export const listAssurance = (j: Journey): Promise<ExecutionAssuranceRef[] | null> =>
+  orNull(async () => unwrap(await api.GET('/api/v1/survey-evaluation/assurance', { params: { query: query(j) } })).items);
+export const getAssurance = async (id: string): Promise<ExecutionAssurance> =>
+  unwrap(await api.GET('/api/v1/survey-evaluation/assurance/{assurance_id}', { params: { path: { assurance_id: id } } }));
+export const createAssurance = async (j: Journey, evaluationId: string | null): Promise<ExecutionAssurance> =>
+  unwrap(await api.POST('/api/v1/survey-evaluation/assurance', { body: { ...query(j), evaluation_id: evaluationId } }));
+
+// ---- E2E-1: one journey's records as one chain, from the application to its execution assurance. Read-only. ----------
+export type JourneyTrace = components['schemas']['SurveyJourneyTraceOut'];
+export type JourneyTraceLink = components['schemas']['SurveyJourneyTraceLink'];
+export type TraceKind = 'coordinated' | 'survey' | 'application';
+/** null when the journey view is not switched on for this server, or the journey is not available to you. */
+export const getJourneyTrace = (kind: TraceKind, id: string, evaluationId?: string | null): Promise<JourneyTrace | null> =>
+  orNull(async () => unwrap(await api.GET('/api/v1/survey-evaluation/journey-trace', { params: { query: {
+    ...(kind === 'coordinated' ? { coordinated_simulation_id: id } : kind === 'survey' ? { simulation_id: id } : { composite_plan_id: id }),
+    ...(evaluationId ? { evaluation_id: evaluationId } : {}),
+  } } })));

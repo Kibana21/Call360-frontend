@@ -9,6 +9,7 @@ import { ApiFailure } from '../../../api/client';
 import { useAuth } from '../../../auth/AuthContext';
 import { Glyph, Tag } from '../ui';
 import { evaluateUnder, getEvaluation, listEvaluations, listPolicies, type ControlPolicy, type Journey, type JourneyEvaluation, type JourneyEvaluationRef } from './evalApi';
+import { EVIDENCE, ExecutionAssurancePanel, useAssurance } from './ExecutionAssurance';
 import { short } from './reviewApi';
 
 type Any = any; // eslint-disable-line @typescript-eslint/no-explicit-any -- the evaluation is read as JSON
@@ -120,6 +121,8 @@ export function EvaluationWorkbenchPage() {
   }, [evaluationId, allowed]);
   useEffect(load, [load]);
 
+  const assurance = useAssurance(ev);
+  const trustOf = (c: Any): Any | null => ((assurance.result?.control_evidence ?? []) as Any[]).find((x) => x.control_code === c.control_code && (x.obligation ?? '') === (c.obligation ?? '')) ?? null;
   const controls = useMemo(() => [...((ev?.controls ?? []) as Any[])].sort((a, b) => ORDER.indexOf(a.outcome) - ORDER.indexOf(b.outcome) || a.control_code.localeCompare(b.control_code)), [ev]);
   const findings = (ev?.findings ?? []) as Any[];
   const shown = controls.filter((c) => (!outcome || c.outcome === outcome) && (!survey || (c.observations as Any[]).some((o) => o.survey?.survey_code === survey)) && (!finding || (finding === 'WITH' ? c.findings > 0 : c.findings === 0)) && (!covered || c.coverage === covered));
@@ -185,6 +188,8 @@ export function EvaluationWorkbenchPage() {
         ) : null}
         <p className="ss-note" data-testid="ss-ev-eligibility" data-status={(ev.operational_compliance_eligibility as Any).status}><Glyph name="info" size={14} /><span><strong>Operational compliance eligibility: not established.</strong> Four things are reported separately — how the evaluation ended, each control’s outcome, coverage of what is required, and this. No simulation, evaluation or coverage result establishes it.</span></p>
 
+        <ExecutionAssurancePanel available={assurance.available} result={assurance.result} run={assurance.run} coverage={{ label: cov.label, tone: cov.tone }} processing={st.title} />
+
         <div className="ss-co-grid">
           <aside aria-label="The journey and its surveys">
             <h2>The journey</h2>
@@ -228,6 +233,11 @@ export function EvaluationWorkbenchPage() {
                           <span className="ss-ev-control-tags">{c.findings ? <Tag tone="warn">{c.findings} {c.findings === 1 ? 'finding' : 'findings'}</Tag> : null}{cv ? <Tag tone={cv.tone}>{cv.label}</Tag> : null}<Tag tone={o.tone}>{o.label}</Tag></span>
                         </summary>
                         <p className="ss-ev-means">{o.means}{cv ? ` Coverage: ${cv.means}` : ''}</p>
+                        {(() => { const t = trustOf(c); if (!t) return null; const e = EVIDENCE[t.execution_evidence] ?? { label: t.execution_evidence, tone: 'draft' as Tone }; return (
+                          <p className={`ss-ea-trust ${t.result_is_trustworthy ? '' : 'bad'}`} data-testid={`ss-ev-trust-${k}`} data-execution={t.execution_evidence} data-trustworthy={String(t.result_is_trustworthy)}>
+                            <Tag tone={e.tone}>{e.label}</Tag> {t.result_is_trustworthy ? 'The recorded execution behind this result was checked against the pinned survey versions.' : <strong>This result rests on execution evidence that could not be trusted. Do not rely on it.</strong>}
+                            {(t.evidence as Any[]).filter((x) => x.not_delivered_class).map((x) => <span key={x.seq} className="ss-muted"> Not delivered at {x.placement}: {x.why}.</span>)}
+                          </p>); })()}
                         {c.purpose ? <p className="ss-ev-means"><strong>What this control is for:</strong> {c.purpose}</p> : null}
                         {c.requirements ? <ul className="ss-ev-reasons" data-testid={`ss-ev-requirements-${k}`}>{(c.requirements as Any[]).map((r) => <li key={r.key} data-requirement={r.key} data-status={r.status}>{r.description} — {r.evidence_type === 'ANSWER' ? 'an answer' : 'a delivery'}, {r.required ? 'required' : 'optional'}: {r.status === 'MAPPED' ? `supplied by ${r.mapped_entries} mapped ${r.mapped_entries === 1 ? 'item' : 'items'}` : 'nothing is mapped to it'}</li>)}</ul> : null}
                         {(c.reasons as Any[]).length ? <ul className="ss-ev-reasons" data-testid={`ss-ev-reasons-${k}`}>{(c.reasons as Any[]).map((r, i) => <li key={i} data-code={r.code}>{r.text}</li>)}</ul> : null}
@@ -321,6 +331,7 @@ export function EvaluationWorkbenchPage() {
             {!replay.consistent ? <ul className="ss-ev-reasons" data-testid="ss-ev-drift">{(replay.reasons as Any[]).map((r) => <li key={r.code}><span className="ss-code">{r.code}</span> {r.text}</li>)}</ul> : null}
             {superseded.length ? <ul className="ss-ev-reasons" data-testid="ss-ev-superseded">{superseded.map((s, i) => <li key={i}><span className="ss-code">{s.code}</span> {s.text}</li>)}</ul> : null}
             {can('survey.evaluation.read') ? <p><Link to="/survey-studio/controls" data-testid="ss-ev-open-builder">Controls and evidence</Link></p> : null}
+            <p><Link to={`/survey-studio/journeys/${ev.coordinated_id ? 'coordinated' : 'survey'}/${ev.coordinated_id ?? ev.simulation_id}?evaluation=${ev.id}`} data-testid="ss-ev-open-journey">Follow this journey end to end</Link></p>
             {can('survey.evaluate') ? <button type="button" className="ss-btn" onClick={again} disabled={busy} data-testid="ss-ev-again" title="A changed journey, mapping or rule set gives a new evaluation; this one is kept as it is">Evaluate the journey again</button> : null}
 
             <h2>Exactly what was used</h2>
