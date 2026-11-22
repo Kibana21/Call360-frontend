@@ -49,17 +49,42 @@ test('UX-HOME-1 the workspace: discover a published module, inspect everything i
   await expect(page.getByTestId('ss-ws-count-surveys')).toHaveAttribute('data-count', String(surveys.length));
   for (const k of ['MODULE', 'ITEM', 'CONDITION', 'OPTION_SET']) await expect(page.getByTestId(`ss-ws-count-${k}`)).toHaveAttribute('data-count', String(ws.inventory.components[k].components));
   await expect(page.getByTestId('ss-ws-count-ITEM')).toContainText(String(ws.inventory.components.ITEM.questions));
-  // recents are the server's, newest first; nothing is waiting for the author of everything
-  await expect(page.getByTestId('ss-ws-recent-drafts').locator('li')).toHaveCount(ws.recent_drafts.length);
-  await expect(page.getByTestId('ss-ws-recent-drafts').locator('li').first()).toContainText(ws.recent_drafts[0].survey_name);
-  await expect(page.getByTestId('ss-ws-recent-published').locator('li').first()).toContainText(ws.recent_published[0].survey_name);
+  // the overview is short: counts, the reader's surveys (most recently saved first, by the server's times), the ways on
+  await expect(home).toHaveAttribute('data-view', 'overview');
+  await expect(page.getByTestId('ss-surveys').locator('> li')).toHaveCount(surveys.length);
+  await expect(page.getByTestId('ss-surveys').locator('> li').first()).toContainText(ws.recent_drafts[0].survey_name);
+  await expect(page.getByTestId('ss-ws-preview').locator('li')).toHaveCount(Math.min(4, modules.filter((m) => m.is_latest).length));
   // the ways on are cards, and the notice is one line
   for (const id of ['ss-open-assignment', 'ss-open-controls', 'ss-open-journeys', 'ss-open-rules']) await expect(page.getByTestId(id)).toBeVisible();
   await expect(page.getByTestId('ss-standing-note')).toContainText('No survey here is eligible for a live call');
   expect((await page.getByTestId('ss-standing-note').boundingBox())!.height).toBeLessThan(40);
-  // reused modules are the ones the server counts as pinned by more than one survey
-  if (ws.reused_modules.length) await expect(page.getByTestId('ss-ws-reused').locator('li')).toHaveCount(ws.reused_modules.length);
   await page.screenshot({ path: `${SHOTS}/UXHOME01-workspace-desktop.png`, fullPage: true });
+
+  // ---- where a building block is created: said plainly, with the survey to make it in — and nothing is created here
+  await page.getByTestId('ss-ws-new-block').click();
+  const make = page.getByTestId('ss-ws-make');
+  await expect(make).toContainText('A module is made in a survey’s composer');
+  await expect(make).toContainText('becomes a reusable building block here once that survey is published');
+  for (const [k, where] of [['ITEM', 'inside a module, in the module builder'], ['CONDITION', 'where a decision is needed'], ['OPTION_SET', 'with a question']] as const) { await page.getByTestId(`ss-ws-make-${k}`).click(); await expect(make).toContainText(where); }
+  await page.getByTestId('ss-ws-make-MODULE').click();
+  const editable = surveys.find((x) => !x.open_candidate_status)!;
+  await expect(make.locator('ul.ss-ws-rows li').first()).toContainText('Open its composer');
+  await page.screenshot({ path: `${SHOTS}/UXHOME01b-where-a-building-block-is-created.png`, fullPage: true });
+  expect((await get(author, '/api/v1/survey-definitions')).items.length).toBe(surveys.length); // the panel made nothing
+  expect(editable).toBeTruthy();
+  await page.getByTestId('ss-ws-make-close').click();
+
+  // ---- the surveys view: every survey as a card, with status filters
+  await page.getByTestId('ss-ws-view-surveys').click();
+  await expect(page.getByTestId('ss-ws-surveys-view').locator('ul.ss-ws-grid > li')).toHaveCount(surveys.length);
+  await page.getByTestId('ss-ws-surveys-published').click();
+  await expect(page.getByTestId('ss-ws-surveys-view').locator('ul.ss-ws-grid > li')).toHaveCount(surveys.filter((x) => x.latest_version_label).length);
+  await page.getByTestId('ss-ws-surveys-all').click();
+
+  // ---- the building-blocks view, reached from its count
+  await page.getByTestId('ss-ws-view-overview').click();
+  await page.getByTestId('ss-ws-count-MODULE').click();
+  await expect(home).toHaveAttribute('data-view', 'blocks');
 
   // ---- the gallery: every latest published module is a card; filters and tabs
   const latest = modules.filter((m) => m.is_latest);
@@ -86,6 +111,8 @@ test('UX-HOME-1 the workspace: discover a published module, inspect everything i
   await expect(page.getByTestId(`ss-survey-${someSurvey.code}`)).toBeVisible();
   await page.screenshot({ path: `${SHOTS}/UXHOME02-search-across-asset-kinds.png`, fullPage: true });
   await page.getByTestId('ss-ws-search-clear').click();
+  await expect(home).toHaveAttribute('data-view', 'blocks');
+  await page.screenshot({ path: `${SHOTS}/UXHOME02b-building-blocks-view.png`, fullPage: true });
 
   // ============ PRIMARY ACCEPTANCE: a module with a decision, inspected from its card ============
   const detail = await get(author, `/api/v1/survey-components/MODULE/${target.code}/${target.version}`);
@@ -137,6 +164,7 @@ test('UX-HOME-1 the workspace: discover a published module, inspect everything i
   await expect(ins).toHaveAttribute('data-loaded', 'true');
   await page.getByTestId('ss-in-close').click();
   await expect(ins).toHaveCount(0);
+  await expect(home).toHaveAttribute('data-view', 'blocks'); // closing the inspector leaves the reader where they were
   // the next permitted action: reuse — opens the chosen survey with its library on this exact block
   await page.getByTestId(`ss-ws-block-MODULE-${target.code}-${target.version}`).click();
   await expect(ins).toHaveAttribute('data-loaded', 'true');
@@ -178,7 +206,10 @@ test('UX-HOME-1 the workspace: discover a published module, inspect everything i
   await expect(reader.page.getByTestId('ss-read-only')).toBeVisible();
   await expect(reader.page.getByTestId('ss-create')).toHaveCount(0);
   await expect(reader.page.getByTestId('ss-open-assignment')).toHaveCount(0);
+  await expect(reader.page.getByTestId('ss-ws-new-block')).toHaveCount(0);
   await reader.page.screenshot({ path: `${SHOTS}/UXHOME09-workspace-1024-reader.png`, fullPage: true });
+  await reader.page.getByTestId('ss-ws-view-blocks').click();
+  await expect(reader.page.getByTestId('ss-ws-new-of-kind')).toHaveCount(0);
   await reader.page.getByTestId(`ss-ws-block-MODULE-${target.code}-${target.version}`).click();
   await expect(reader.page.getByTestId('ss-inspector')).toHaveAttribute('data-loaded', 'true');
   await expect(reader.page.getByTestId('ss-in-read-only')).toBeVisible();
@@ -193,6 +224,7 @@ test('UX-HOME-1 the workspace: discover a published module, inspect everything i
   await expect(narrow.page.getByTestId('ss-saved-home')).toHaveAttribute('data-loaded', 'true');
   expect(await narrow.page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
   await narrow.page.screenshot({ path: `${SHOTS}/UXHOME11-workspace-768.png`, fullPage: true });
+  await narrow.page.getByTestId('ss-ws-view-blocks').click();
   await narrow.page.getByTestId(`ss-ws-block-MODULE-${target.code}-${target.version}`).click();
   await expect(narrow.page.getByTestId('ss-inspector')).toHaveAttribute('data-loaded', 'true');
   await expect(narrow.page.getByTestId('ss-in-test')).toBeVisible(); // a simulator may test it

@@ -29,7 +29,7 @@ const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? o
 // ---- a published module as steps and links ----------------------------------------------------------------------------
 interface Step { node: string; n: number; type: 'QUESTION' | 'STATEMENT' | 'DECISION'; title: string; item: Any; wording: Any; options: Any[]; condition: Any; binding: Any; routing: Any; entry: boolean; ref: Any }
 interface Arrow { from: string; to: Any; label: string; soft?: boolean }
-function read(d: ComponentDetail): { steps: Step[]; arrows: Arrow[]; outcomes: string[]; name: (node: string) => string } {
+export function read(d: ComponentDetail): { steps: Step[]; arrows: Arrow[]; outcomes: string[]; name: (node: string) => string } {
   const doc = d.document as Any;
   const dep = (kind: string, code: string, version: number) => d.dependencies.find((x) => x.kind === kind && x.code === code && x.version === version)?.document as Any;
   const steps: Step[] = ((doc.nodes ?? []) as Any[]).map((n, i) => {
