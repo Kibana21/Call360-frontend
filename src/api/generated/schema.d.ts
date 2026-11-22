@@ -2689,6 +2689,412 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/survey-assignment/bindings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Assignment Binding Propose
+         * @description Propose that an exact published rule version stands for an exact published survey version of the same market.
+         */
+        post: operations["survey_assignment_binding_propose"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-assignment/bindings/{binding_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Survey Assignment Binding Get */
+        get: operations["survey_assignment_binding_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-assignment/bindings/{binding_id}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Assignment Binding Decide
+         * @description Approve or reject a proposed binding. Never by its proposer.
+         */
+        post: operations["survey_assignment_binding_decide"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-assignment/bindings/{binding_id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Assignment Binding Publish
+         * @description Publish an approved binding. Never by its proposer or its approver. An earlier published binding of the same rule version is superseded.
+         */
+        post: operations["survey_assignment_binding_publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-assignment/bindings/{binding_id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Assignment Binding Withdraw
+         * @description Withdraw an open proposal (its proposer) or a published binding (a person who may publish).
+         */
+        post: operations["survey_assignment_binding_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-assignment/composite-plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Composite Plan Create
+         * @description For one synthetic application: decide every requirement group with the existing rules, verify each selected
+         *     version's manifest, compute each survey's own SS-03B plan, and record the composite. Nothing is assigned.
+         */
+        post: operations["survey_composite_plan_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-assignment/composite-plans/{composite_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Survey Composite Plan Get
+         * @description A recorded composite plan, as recorded; with whether computing it again now would give the same.
+         */
+        get: operations["survey_composite_plan_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-assignment/composite-plans/{composite_id}/coordinated-simulations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Coordinated Simulation Create
+         * @description Start a coordinated simulation of a recorded composite plan, in its governed order. Refused — with the stable
+         *     code of what is unresolved — unless the selection and the order are settled, every individual plan can be
+         *     computed and no survey version is required twice.
+         */
+        post: operations["survey_coordinated_simulation_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-assignment/coordinated-simulations/{coordinated_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Survey Coordinated Simulation Get
+         * @description The coordinated simulation as it stands, computed now from its steps and the replay of each survey's own run.
+         */
+        get: operations["survey_coordinated_simulation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-assignment/coordinated-simulations/{coordinated_id}/inputs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Coordinated Simulation Input
+         * @description Give one typed input to the current question of the current survey. That survey's own simulation decides
+         *     whether it is accepted. The next survey starts only if this one thereby reaches COMPLETED.
+         */
+        post: operations["survey_coordinated_simulation_input"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-assignment/evaluations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Assignment Evaluate
+         * @description For one synthetic application: decide with the existing assignment rules which published survey version is
+         *     selected, verify its manifest, assemble its call plan, and record all of it as a simulation record. A selection
+         *     assigns nothing to any customer case.
+         */
+        post: operations["survey_assignment_evaluate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-assignment/evaluations/{evaluation_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Survey Assignment Evaluation Get
+         * @description A recorded selection with its decision trace, its plan and the simulations started from it.
+         */
+        get: operations["survey_assignment_evaluation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-assignment/evaluations/{evaluation_id}/simulations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Assignment Simulate
+         * @description Start a server simulation of the selected version with the same facts, linked to the selection.
+         */
+        post: operations["survey_assignment_simulate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-assignment/groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Survey Assignment Groups
+         * @description Every version of every requirement group in the caller's markets, with its members and state.
+         */
+        get: operations["survey_assignment_groups"];
+        put?: never;
+        /**
+         * Survey Assignment Group Propose
+         * @description Propose a new version of a requirement group: PRIMARY, ADD_REQUIRED or ALTERNATIVE, with its stated purpose,
+         *     its optional governed position, and the exact published rule versions that compete to satisfy it.
+         */
+        post: operations["survey_assignment_group_propose"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-assignment/groups/{group_id}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Assignment Group Decide
+         * @description Approve or reject a proposed group version. Never by its proposer.
+         */
+        post: operations["survey_assignment_group_decide"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-assignment/groups/{group_id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Assignment Group Publish
+         * @description Publish an approved group version. Never by its proposer or approver. Refused when it would give the market a
+         *     second primary group or put a rule in two groups.
+         */
+        post: operations["survey_assignment_group_publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-assignment/groups/{group_id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Assignment Group Withdraw
+         * @description Withdraw an open proposal (its proposer) or a published group (a person who may publish).
+         */
+        post: operations["survey_assignment_group_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-assignment/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Survey Assignment Options
+         * @description The governed assignment inputs and their values: the fields of the existing assignment rules.
+         */
+        get: operations["survey_assignment_options"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-assignment/policy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Survey Assignment Policy
+         * @description The published assignment rules in precedence order, each with the survey version bound to it, and every binding.
+         */
+        get: operations["survey_assignment_policy"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-call-plans/{plan_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Survey Call Plan Get */
+        get: operations["survey_call_plan_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/survey-candidates/{candidate_id}": {
         parameters: {
             query?: never;
@@ -3064,6 +3470,359 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/survey-evaluation/applicability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Control Applicability
+         * @description Which obligations of a policy a synthetic application requires — for a recorded revision, or for a policy that
+         *     is not proposed yet. Nothing is recorded. Unknown stays unknown.
+         */
+        post: operations["survey_control_applicability"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-evaluation/builder-options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Survey Evaluation Builder Options
+         * @description What a policy and a mapping can be built from: published conditions and published questions and statements of the
+         *     market, the supported combination, and the fact catalog. Nothing here is a draft or an unpublished component.
+         */
+        get: operations["survey_evaluation_builder_options"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-evaluation/control-policies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Survey Control Policy List
+         * @description Every control policy revision of the caller's markets, whatever its status.
+         */
+        get: operations["survey_control_policy_list"];
+        put?: never;
+        /**
+         * Survey Control Policy Propose
+         * @description Propose a new revision of a control policy. Refused, saying what is wrong and where, unless every control is in
+         *     the register, every condition is published and reads application facts only, and every obligation names required evidence.
+         */
+        post: operations["survey_control_policy_propose"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-evaluation/control-policies/{policy_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Survey Control Policy Get */
+        get: operations["survey_control_policy_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-evaluation/control-policies/{policy_id}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Control Policy Decide
+         * @description Approve or reject a proposed policy revision. Never by its proposer.
+         */
+        post: operations["survey_control_policy_decide"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-evaluation/control-policies/{policy_id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Control Policy Publish
+         * @description Publish an approved revision: a third person. The published revision of the same policy is superseded; evaluations made under it keep it.
+         */
+        post: operations["survey_control_policy_publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-evaluation/control-policies/{policy_id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Control Policy Withdraw
+         * @description Withdraw an open proposal (its proposer) or a published revision (a person who may publish).
+         */
+        post: operations["survey_control_policy_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-evaluation/controls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Survey Evaluation Controls
+         * @description The existing control register with, per control, the mapping revisions of the caller's markets.
+         */
+        get: operations["survey_evaluation_controls"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-evaluation/evaluations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Survey Journey Evaluation List
+         * @description Every evaluation of one journey, oldest first. A revised rule or mapping adds one; none is rewritten.
+         */
+        get: operations["survey_journey_evaluation_list"];
+        put?: never;
+        /**
+         * Survey Journey Evaluation Create
+         * @description Evaluate one synthetic journey — a simulation or a coordinated simulation — as it stands, against the mappings
+         *     and the finding rule set published now. 201 for a new evaluation; 200 with the existing one when nothing it would
+         *     be computed from has changed.
+         */
+        post: operations["survey_journey_evaluation_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-evaluation/evaluations/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Journey Evaluation Preview
+         * @description What an evaluation of a simulated journey WOULD say under a policy and mappings that are not published yet.
+         *     Validated exactly as proposals are; nothing is recorded or proposed.
+         */
+        post: operations["survey_journey_evaluation_preview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-evaluation/evaluations/{evaluation_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Survey Journey Evaluation Get
+         * @description The evaluation as recorded, computed again now from what it pinned (drift is reported, never hidden).
+         */
+        get: operations["survey_journey_evaluation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-evaluation/journeys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Survey Evaluation Journeys
+         * @description Recent simulated journeys of the caller's markets, to try a policy or a mapping out against.
+         */
+        get: operations["survey_evaluation_journeys"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-evaluation/mappings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Survey Control Mapping List
+         * @description Every mapping revision of the caller's markets, whatever its status.
+         */
+        get: operations["survey_control_mapping_list"];
+        put?: never;
+        /**
+         * Survey Control Mapping Propose
+         * @description Propose a new revision of the mapping of one control: exact published items, the evidence each gives, the rule
+         *     of the existing rule language for an answer, how the evidence combines, and when the control applies.
+         */
+        post: operations["survey_control_mapping_propose"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-evaluation/mappings/{mapping_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Survey Control Mapping Get */
+        get: operations["survey_control_mapping_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-evaluation/mappings/{mapping_id}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Control Mapping Decide
+         * @description Approve or reject a proposed mapping. Never by its proposer.
+         */
+        post: operations["survey_control_mapping_decide"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-evaluation/mappings/{mapping_id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Control Mapping Publish
+         * @description Publish an approved mapping: a third person. The previous published revision of the control is superseded.
+         */
+        post: operations["survey_control_mapping_publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-evaluation/mappings/{mapping_id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Control Mapping Withdraw
+         * @description Withdraw an open proposal (its proposer) or a published mapping (a person who may publish).
+         */
+        post: operations["survey_control_mapping_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/survey-library/{kind}": {
         parameters: {
             query?: never;
@@ -3073,7 +3832,10 @@ export interface paths {
         };
         /**
          * Survey Library List
-         * @description Frozen asset versions of one kind, with how many candidates and versions pin each.
+         * @description Published, reusable asset versions of one kind in the reader's markets, with their fingerprint and how many
+         *     published versions pin each. Kept for backward compatibility; since the LIB-1 security correction it never lists a
+         *     draft or a version that only an unpublished, rejected or withdrawn candidate pins, nor anything of another market.
+         *     The component library (``/survey-components``) is the full read.
          */
         get: operations["survey_library_list"];
         put?: never;
@@ -3101,6 +3863,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/survey-simulations/{simulation_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Survey Simulation Get
+         * @description The simulation's state and complete execution trace, replayed now from its recorded inputs.
+         */
+        get: operations["survey_simulation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-simulations/{simulation_id}/inputs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Simulation Input
+         * @description Give one typed input to the question that is current. A rejected answer is recorded as refused with its stable
+         *     code and the same question stays current. An input for another question, to an ended run or against a stale count
+         *     is refused and nothing is recorded.
+         */
+        post: operations["survey_simulation_input"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/survey-versions/{version_id}": {
         parameters: {
             query?: never;
@@ -3112,6 +3916,27 @@ export interface paths {
         get: operations["survey_version_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-versions/{version_id}/call-plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Call Plan Create
+         * @description Assemble and record the deterministic call plan of a PUBLISHED version for one synthetic fact snapshot. A plan
+         *     that can be computed is not an authorisation or eligibility for any call.
+         */
+        post: operations["survey_call_plan_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3132,6 +3957,27 @@ export interface paths {
         get: operations["survey_version_content"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-versions/{version_id}/simulations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Simulation Create
+         * @description Start an isolated simulation of a PUBLISHED version for one synthetic fact snapshot. The version's manifest is
+         *     verified first. The simulation runs as far as the first question that needs an answer.
+         */
+        post: operations["survey_simulation_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -11949,6 +12795,559 @@ export interface components {
             /** Reason */
             reason: string;
         };
+        /** SurveyAssignmentBinding */
+        SurveyAssignmentBinding: {
+            /** Approved By */
+            approved_by?: string | null;
+            /** Content Sha256 */
+            content_sha256: string;
+            /** History */
+            history?: components["schemas"]["SurveyAssignmentBindingEvent"][];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Is Approver
+             * @default false
+             */
+            is_approver: boolean;
+            /**
+             * Is Proposer
+             * @default false
+             */
+            is_proposer: boolean;
+            /** Manifest Sha256 */
+            manifest_sha256: string;
+            /** Market Code */
+            market_code: string;
+            /** Note */
+            note: string;
+            /**
+             * Proposed At
+             * Format: date-time
+             */
+            proposed_at: string;
+            /** Proposed By */
+            proposed_by: string;
+            /** Published By */
+            published_by?: string | null;
+            /** Rule Code */
+            rule_code: string;
+            /** Rule Version */
+            rule_version: number;
+            /**
+             * Rule Version Id
+             * Format: uuid
+             */
+            rule_version_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "PROPOSED" | "APPROVED" | "REJECTED" | "WITHDRAWN" | "PUBLISHED" | "SUPERSEDED";
+            /** Survey Code */
+            survey_code: string;
+            /**
+             * Survey Definition Id
+             * Format: uuid
+             */
+            survey_definition_id: string;
+            /** Survey Name */
+            survey_name: string;
+            /**
+             * Survey Version Id
+             * Format: uuid
+             */
+            survey_version_id: string;
+            /** Survey Version Status */
+            survey_version_status: string | null;
+            /** Version Label */
+            version_label: string;
+        };
+        /** SurveyAssignmentBindingEvent */
+        SurveyAssignmentBindingEvent: {
+            /** Actor Ref */
+            actor_ref: string;
+            /** Comment */
+            comment: string;
+            /** Display Name */
+            display_name?: string | null;
+            /** Event */
+            event: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Seq */
+            seq: number;
+        };
+        /** SurveyAssignmentBindingIn */
+        SurveyAssignmentBindingIn: {
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+            /** Rule Code */
+            rule_code: string;
+            /** Rule Version */
+            rule_version: number;
+            /**
+             * Survey Version Id
+             * Format: uuid
+             */
+            survey_version_id: string;
+        };
+        /** SurveyAssignmentDecisionIn */
+        SurveyAssignmentDecisionIn: {
+            /**
+             * Comment
+             * @default
+             */
+            comment: string;
+            /**
+             * Verdict
+             * @enum {string}
+             */
+            verdict: "APPROVE" | "REJECT";
+        };
+        /** SurveyAssignmentEvaluationIn */
+        SurveyAssignmentEvaluationIn: {
+            /**
+             * Assignment Inputs
+             * @description The fields of the existing assignment rules, with governed values. Absent or null = unknown.
+             */
+            assignment_inputs: {
+                [key: string]: unknown;
+            };
+            /**
+             * Facts
+             * @description The synthetic application's facts for the call plan: governed catalog fields.
+             */
+            facts?: {
+                [key: string]: unknown;
+            };
+        };
+        /** SurveyAssignmentEvaluationOut */
+        SurveyAssignmentEvaluationOut: {
+            /** Assignment Inputs */
+            assignment_inputs: {
+                [key: string]: unknown;
+            };
+            /** Binding Id */
+            binding_id: string | null;
+            /** @description The SS-03B plan of the selected version. Whether a plan can be computed is not whether a call may be made. */
+            call_plan: components["schemas"]["SurveyCallPlanOut"] | null;
+            /** Call Plan Id */
+            call_plan_id: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Decision
+             * @description Reason, winning rules, missing inputs, the selected version and the complete trace of every rule.
+             */
+            decision: {
+                [key: string]: unknown;
+            };
+            /** Decision Sha256 */
+            decision_sha256: string;
+            /** Engine */
+            engine: string;
+            /**
+             * Evaluated At
+             * Format: date-time
+             */
+            evaluated_at: string;
+            /** Facts */
+            facts: {
+                [key: string]: unknown;
+            };
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Inputs Sha256 */
+            inputs_sha256: string;
+            /** Market Code */
+            market_code: string;
+            /** Note */
+            note: string;
+            /**
+             * Outcome
+             * @description The existing engine's outcome, or SURVEY_NOT_BOUND when the winning rule has no published survey binding.
+             */
+            outcome: string;
+            /** Plan Fingerprint */
+            plan_fingerprint: string | null;
+            /** Recompute Consistent */
+            recompute_consistent: boolean;
+            /** Recomputed Decision Sha256 */
+            recomputed_decision_sha256: string;
+            /**
+             * Record Class
+             * @constant
+             */
+            record_class: "SIMULATION";
+            /**
+             * Selection
+             * @enum {string}
+             */
+            selection: "MATCHED" | "NO_MATCH" | "AMBIGUOUS" | "UNKNOWN_INPUT" | "TARGET_UNAVAILABLE";
+            /** Simulations */
+            simulations: string[];
+            /** Survey Version Id */
+            survey_version_id: string | null;
+        };
+        /** SurveyAssignmentGroup */
+        SurveyAssignmentGroup: {
+            /** Approved By */
+            approved_by?: string | null;
+            /** Code */
+            code: string;
+            /** History */
+            history?: components["schemas"]["SurveyAssignmentBindingEvent"][];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Is Approver
+             * @default false
+             */
+            is_approver: boolean;
+            /**
+             * Is Proposer
+             * @default false
+             */
+            is_proposer: boolean;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "PRIMARY" | "ADD_REQUIRED" | "ALTERNATIVE";
+            /** Market Code */
+            market_code: string;
+            /** Members */
+            members: components["schemas"]["SurveyAssignmentGroupMember"][];
+            /** Name */
+            name: string;
+            /** Note */
+            note: string;
+            /**
+             * Proposed At
+             * Format: date-time
+             */
+            proposed_at: string;
+            /** Proposed By */
+            proposed_by: string;
+            /** Purpose */
+            purpose: string;
+            /**
+             * Sequence
+             * @description The group's position in a governed ordering; null when none was governed.
+             */
+            sequence: number | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "PROPOSED" | "APPROVED" | "REJECTED" | "WITHDRAWN" | "PUBLISHED" | "SUPERSEDED";
+            /** Version */
+            version: number;
+        };
+        /** SurveyAssignmentGroupIn */
+        SurveyAssignmentGroupIn: {
+            /** Code */
+            code: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "PRIMARY" | "ADD_REQUIRED" | "ALTERNATIVE";
+            /** Members */
+            members: components["schemas"]["SurveyAssignmentGroupMemberIn"][];
+            /** Name */
+            name: string;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+            /**
+             * Purpose
+             * @description Which survey requirement this group stands for, in words.
+             */
+            purpose: string;
+            /** Sequence */
+            sequence?: number | null;
+        };
+        /** SurveyAssignmentGroupMember */
+        SurveyAssignmentGroupMember: {
+            /** Rule Code */
+            rule_code: string;
+            /** Rule Status */
+            rule_status: string;
+            /** Rule Version */
+            rule_version: number;
+            /**
+             * Rule Version Id
+             * Format: uuid
+             */
+            rule_version_id: string;
+        };
+        /** SurveyAssignmentGroupMemberIn */
+        SurveyAssignmentGroupMemberIn: {
+            /** Rule Code */
+            rule_code: string;
+            /** Rule Version */
+            rule_version: number;
+        };
+        /** SurveyAssignmentGroups */
+        SurveyAssignmentGroups: {
+            /** Groups */
+            groups: components["schemas"]["SurveyAssignmentGroup"][];
+            /** Note */
+            note: string;
+        };
+        /** SurveyAssignmentOptions */
+        SurveyAssignmentOptions: {
+            /** Fields */
+            fields: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** SurveyAssignmentPolicy */
+        SurveyAssignmentPolicy: {
+            /** Bindings */
+            bindings: components["schemas"]["SurveyAssignmentBinding"][];
+            /** Engine */
+            engine: string;
+            /** Note */
+            note: string;
+            /** Rules */
+            rules: components["schemas"]["SurveyAssignmentRule"][];
+        };
+        /** SurveyAssignmentRule */
+        SurveyAssignmentRule: {
+            /** Effective From */
+            effective_from: string | null;
+            /** Effective Now */
+            effective_now: boolean;
+            /** Effective To */
+            effective_to: string | null;
+            /** Is Fallback */
+            is_fallback: boolean;
+            /** Market Code */
+            market_code: string | null;
+            /** Name */
+            name: string;
+            /** Open Binding */
+            open_binding: string | null;
+            /** Priority */
+            priority: number;
+            /** Published Binding */
+            published_binding: string | null;
+            /** Ref */
+            ref: string;
+            /** Rule Code */
+            rule_code: string;
+            /** Rule Version */
+            rule_version: number | null;
+            /** Rule Version Id */
+            rule_version_id: string | null;
+            /** Specificity */
+            specificity: number;
+            /** When */
+            when: string[];
+        };
+        /** SurveyAssignmentWithdrawIn */
+        SurveyAssignmentWithdrawIn: {
+            /** Reason */
+            reason: string;
+        };
+        /** SurveyBuilderCondition */
+        SurveyBuilderCondition: {
+            /** Code */
+            code: string;
+            /** Description */
+            description: string;
+            /** Fields */
+            fields: string[];
+            /** Name */
+            name: string;
+            /** Params */
+            params: string[];
+            /**
+             * Usable
+             * @description False when it reads answers: applicability reads application facts only.
+             */
+            usable: boolean;
+            /** Version */
+            version: number;
+        };
+        /** SurveyBuilderItem */
+        SurveyBuilderItem: {
+            /** Answer Type */
+            answer_type: string;
+            /** Code */
+            code: string;
+            /**
+             * Evidence
+             * @description What it can be evidence of: ANSWER, DELIVERY, or DELIVERY only for a statement.
+             */
+            evidence: string[];
+            /**
+             * Methods
+             * @description The evaluation methods of the existing rule language that suit its answer; empty when none exists.
+             */
+            methods: string[];
+            /** Name */
+            name: string;
+            /** Options */
+            options: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Surveys
+             * @description The published survey versions that pin this exact item revision.
+             */
+            surveys: {
+                [key: string]: unknown;
+            }[];
+            /** Version */
+            version: number;
+        };
+        /** SurveyBuilderOptions */
+        SurveyBuilderOptions: {
+            /** Combinations */
+            combinations: string[];
+            /** Completeness */
+            completeness: string[];
+            /** Conditions */
+            conditions: components["schemas"]["SurveyBuilderCondition"][];
+            /** Evidence Types */
+            evidence_types: string[];
+            /**
+             * Fields
+             * @description The governed fact catalog: what a synthetic application can state.
+             */
+            fields: {
+                [key: string]: {
+                    [key: string]: unknown;
+                };
+            };
+            /** Instance Coverage */
+            instance_coverage: string[];
+            /** Items */
+            items: components["schemas"]["SurveyBuilderItem"][];
+            /** Journey Coverage */
+            journey_coverage: string[];
+            /** Market Code */
+            market_code: string;
+            /** Note */
+            note: string;
+            /** Operators */
+            operators: {
+                [key: string]: string;
+            };
+            /**
+             * Set Modes
+             * @description SET_MATCH: how a multiple-choice selection is compared with the expected options.
+             */
+            set_modes: {
+                [key: string]: string;
+            };
+            /** Units */
+            units: {
+                [key: string]: string;
+            };
+        };
+        /** SurveyCallPlanCreateIn */
+        SurveyCallPlanCreateIn: {
+            /** Facts */
+            facts?: {
+                [key: string]: unknown;
+            };
+        };
+        /** SurveyCallPlanOut */
+        SurveyCallPlanOut: {
+            /** Content Sha256 */
+            content_sha256: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Current Plan Contract */
+            current_plan_contract: string;
+            /** Facts */
+            facts: {
+                [key: string]: unknown;
+            };
+            /** Facts Sha256 */
+            facts_sha256: string;
+            /** Fingerprint */
+            fingerprint: string;
+            /** Fingerprint Verified */
+            fingerprint_verified: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Manifest Sha256 */
+            manifest_sha256: string;
+            /** Note */
+            note: string;
+            /** Plan */
+            plan: {
+                [key: string]: unknown;
+            };
+            /** Plan Contract */
+            plan_contract: string;
+            /**
+             * Recompute Consistent
+             * @description False when assembling the plan again now does not give the recorded plan.
+             */
+            recompute_consistent: boolean;
+            /** Recomputed Fingerprint */
+            recomputed_fingerprint: string;
+            /**
+             * Record Class
+             * @constant
+             */
+            record_class: "SIMULATION";
+            /**
+             * Status
+             * @description Whether a technical plan can be computed from these facts. It says nothing about whether a call may be made.
+             * @enum {string}
+             */
+            status: "READY" | "BLOCKED";
+            /** Survey Code */
+            survey_code: string;
+            /**
+             * Survey Id
+             * Format: uuid
+             */
+            survey_id: string;
+            /** Survey Name */
+            survey_name: string;
+            /**
+             * Version Id
+             * Format: uuid
+             */
+            version_id: string;
+            /** Version Label */
+            version_label: string;
+        };
         /** SurveyCandidateAsset */
         SurveyCandidateAsset: {
             /** Code */
@@ -12308,6 +13707,119 @@ export interface components {
              */
             versions: number;
         };
+        /** SurveyCompositePlanIn */
+        SurveyCompositePlanIn: {
+            /** Assignment Inputs */
+            assignment_inputs: {
+                [key: string]: unknown;
+            };
+            /** Facts */
+            facts?: {
+                [key: string]: unknown;
+            };
+        };
+        /** SurveyCompositePlanMember */
+        SurveyCompositePlanMember: {
+            /** Binding Id */
+            binding_id: string | null;
+            /** Call Plan Id */
+            call_plan_id: string | null;
+            /**
+             * Group Id
+             * Format: uuid
+             */
+            group_id: string;
+            /** Kind */
+            kind: string;
+            /** Outcome */
+            outcome: string;
+            /** Plan Fingerprint */
+            plan_fingerprint: string | null;
+            /** Plan Intact */
+            plan_intact: boolean;
+            /** Position */
+            position: number;
+            /** Rule Version Id */
+            rule_version_id: string | null;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "SELECTED" | "NOT_APPLICABLE" | "UNRESOLVED";
+            /** Survey Version Id */
+            survey_version_id: string | null;
+        };
+        /** SurveyCompositePlanOut */
+        SurveyCompositePlanOut: {
+            /** Application Sha256 */
+            application_sha256: string;
+            /**
+             * Composite
+             * @description Schema call360.survey.composite-plan/1: application, policy, requirements with their traces, selected surveys with individual plans, ordering, cross-survey policy.
+             */
+            composite: {
+                [key: string]: unknown;
+            };
+            /** Contract */
+            contract: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Evaluated At
+             * Format: date-time
+             */
+            evaluated_at: string;
+            /** Fingerprint */
+            fingerprint: string;
+            /** Fingerprint Verified */
+            fingerprint_verified: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Market Code */
+            market_code: string;
+            /** Members */
+            members: components["schemas"]["SurveyCompositePlanMember"][];
+            /** Note */
+            note: string;
+            /**
+             * Ordering Status
+             * @enum {string}
+             */
+            ordering_status: "NOT_APPLICABLE" | "GOVERNED" | "UNRESOLVED";
+            /**
+             * Plan Status
+             * @description READY: the set of surveys is settled, their order is governed and each plan can be computed. It says nothing about whether a call may be made, and nothing about what happens between surveys.
+             * @enum {string}
+             */
+            plan_status: "READY" | "BLOCKED" | "UNRESOLVED";
+            /** Recompute Consistent */
+            recompute_consistent: boolean;
+            /** Recomputed Fingerprint */
+            recomputed_fingerprint: string | null;
+            /**
+             * Record Class
+             * @constant
+             */
+            record_class: "SIMULATION";
+            /**
+             * Selection Status
+             * @enum {string}
+             */
+            selection_status: "RESOLVED" | "UNRESOLVED_REQUIREMENT" | "UNRESOLVED_CONFIGURATION";
+            /**
+             * States
+             * @description Three separate answers: call_plan (COMPUTABLE, NOT_COMPUTABLE, UNRESOLVED); coordinated_simulation (PERMITTED or BLOCKED, with stable blocker codes); operational_call_eligibility (always NOT_ESTABLISHED). None implies another.
+             */
+            states: {
+                [key: string]: unknown;
+            };
+        };
         /** SurveyConditionEvaluateIn */
         SurveyConditionEvaluateIn: {
             /** Answers */
@@ -12359,6 +13871,493 @@ export interface components {
              * @enum {string}
              */
             result: "TRUE" | "FALSE" | "UNKNOWN";
+        };
+        /** SurveyControl */
+        SurveyControl: {
+            /** Content Approval Status */
+            content_approval_status: string;
+            /** Control Code */
+            control_code: string;
+            /**
+             * Control Sha256
+             * @description The register has no revisions: the fingerprint of the control as it is now.
+             */
+            control_sha256: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Open */
+            open: components["schemas"]["SurveyControlMappingRef"][];
+            /** Owner Role */
+            owner_role: string;
+            /** Published */
+            published: components["schemas"]["SurveyControlMappingRef"][];
+        };
+        /** SurveyControlApplicabilityIn */
+        SurveyControlApplicabilityIn: {
+            /** Control Policy Id */
+            control_policy_id?: string | null;
+            /**
+             * Facts
+             * @description A synthetic application snapshot: catalog fields and their values.
+             */
+            facts?: {
+                [key: string]: unknown;
+            };
+            /** @description A policy that is not proposed yet, to try out. */
+            policy?: components["schemas"]["SurveyControlPolicyIn"] | null;
+        };
+        /** SurveyControlApplicabilityOut */
+        SurveyControlApplicabilityOut: {
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /**
+             * Fingerprint
+             * @description The same policy revision and the same facts always give the same fingerprint.
+             */
+            fingerprint: string;
+            /** Input Lineage */
+            input_lineage: {
+                [key: string]: unknown;
+            };
+            /** Missing Inputs */
+            missing_inputs: string[];
+            /**
+             * Obligations
+             * @description Every obligation of the policy: APPLICABLE (required), NOT_APPLICABLE or UNKNOWN, with the facts read and the facts missing.
+             */
+            obligations: {
+                [key: string]: unknown;
+            }[];
+            /** Operational Compliance Eligibility */
+            operational_compliance_eligibility: {
+                [key: string]: unknown;
+            };
+            /** Policy */
+            policy: {
+                [key: string]: unknown;
+            };
+            /**
+             * Record Class
+             * @constant
+             */
+            record_class: "SIMULATION";
+            /**
+             * Recorded
+             * @constant
+             */
+            recorded: false;
+            /** Scope */
+            scope: {
+                [key: string]: unknown;
+            };
+        };
+        /** SurveyControlMapping */
+        SurveyControlMapping: {
+            /**
+             * Applicability
+             * @description None: declared for every journey of the market. Otherwise a published condition, its parameters and its fingerprint.
+             */
+            applicability: {
+                [key: string]: unknown;
+            } | null;
+            /** Approved By */
+            approved_by?: string | null;
+            /** Combination */
+            combination: string;
+            /** Control Code */
+            control_code: string;
+            /**
+             * Control Id
+             * Format: uuid
+             */
+            control_id: string;
+            /** Control Name */
+            control_name: string;
+            /** Control Sha256 */
+            control_sha256: string;
+            /**
+             * Entries
+             * @description Each: the exact item (code, version, fingerprint), ANSWER or DELIVERY evidence, whether it is required, an optional survey context, and the rule in the existing rule language.
+             */
+            entries: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * History
+             * @default []
+             */
+            history: components["schemas"]["SurveyControlMappingEvent"][];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Approver */
+            is_approver: boolean;
+            /** Is Proposer */
+            is_proposer: boolean;
+            /** Mapping Sha256 */
+            mapping_sha256: string;
+            /** Market Code */
+            market_code: string;
+            /**
+             * Proposed At
+             * Format: date-time
+             */
+            proposed_at: string;
+            /** Proposed By */
+            proposed_by: string;
+            /** Published By */
+            published_by?: string | null;
+            /** Revision */
+            revision: number;
+            /** Source */
+            source: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "PROPOSED" | "APPROVED" | "REJECTED" | "WITHDRAWN" | "PUBLISHED" | "SUPERSEDED";
+        };
+        /** SurveyControlMappingDecisionIn */
+        SurveyControlMappingDecisionIn: {
+            /**
+             * Comment
+             * @default
+             */
+            comment: string;
+            /**
+             * Verdict
+             * @enum {string}
+             */
+            verdict: "APPROVE" | "REJECT";
+        };
+        /** SurveyControlMappingEvent */
+        SurveyControlMappingEvent: {
+            /** Actor Ref */
+            actor_ref: string;
+            /** Comment */
+            comment: string;
+            /** Display Name */
+            display_name?: string | null;
+            /** Event */
+            event: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Seq */
+            seq: number;
+        };
+        /** SurveyControlMappingIn */
+        SurveyControlMappingIn: {
+            /** Applicability */
+            applicability?: {
+                [key: string]: unknown;
+            } | null;
+            /** Combination */
+            combination: string;
+            /** Control Code */
+            control_code: string;
+            /** Entries */
+            entries: {
+                [key: string]: unknown;
+            }[];
+            /** Market Code */
+            market_code: string;
+            /** Source */
+            source: string;
+        };
+        /** SurveyControlMappingList */
+        SurveyControlMappingList: {
+            /** Items */
+            items: components["schemas"]["SurveyControlMapping"][];
+        };
+        /** SurveyControlMappingRef */
+        SurveyControlMappingRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Market Code */
+            market_code: string;
+            /** Revision */
+            revision: number;
+            /** Status */
+            status?: string | null;
+        };
+        /** SurveyControlMappingWithdrawIn */
+        SurveyControlMappingWithdrawIn: {
+            /** Reason */
+            reason: string;
+        };
+        /** SurveyControlPolicy */
+        SurveyControlPolicy: {
+            /** Approved By */
+            approved_by?: string | null;
+            /** Code */
+            code: string;
+            /**
+             * Completeness
+             * @description DECLARED_COMPLETE: its governors state that, within its scope, its controls are the complete list to assess. Coverage can be asserted only then.
+             * @enum {string}
+             */
+            completeness: "DECLARED_COMPLETE" | "PARTIAL";
+            /**
+             * Controls
+             * @description Each: the register control (code, id, fingerprint), purpose, description and obligations — key, title, applicability, combination, evidence requirements.
+             */
+            controls: {
+                [key: string]: unknown;
+            }[];
+            /** Empty Set Is Complete */
+            empty_set_is_complete: boolean;
+            /**
+             * History
+             * @default []
+             */
+            history: components["schemas"]["SurveyControlPolicyEvent"][];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Approver */
+            is_approver: boolean;
+            /** Is Proposer */
+            is_proposer: boolean;
+            /** Market Code */
+            market_code: string;
+            /** Name */
+            name: string;
+            /** Owner */
+            owner: string;
+            /** Policy Sha256 */
+            policy_sha256: string;
+            /**
+             * Proposed At
+             * Format: date-time
+             */
+            proposed_at: string;
+            /** Proposed By */
+            proposed_by: string;
+            /** Published By */
+            published_by?: string | null;
+            /** Revision */
+            revision: number;
+            /**
+             * Scope
+             * @description None: every application of the market. Otherwise a published condition on application facts.
+             */
+            scope: {
+                [key: string]: unknown;
+            } | null;
+            /** Scope Statement */
+            scope_statement: string;
+            /** Source */
+            source: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "PROPOSED" | "APPROVED" | "REJECTED" | "WITHDRAWN" | "PUBLISHED" | "SUPERSEDED";
+        };
+        /** SurveyControlPolicyDecisionIn */
+        SurveyControlPolicyDecisionIn: {
+            /**
+             * Comment
+             * @default
+             */
+            comment: string;
+            /**
+             * Verdict
+             * @enum {string}
+             */
+            verdict: "APPROVE" | "REJECT";
+        };
+        /** SurveyControlPolicyEvent */
+        SurveyControlPolicyEvent: {
+            /** Actor Ref */
+            actor_ref: string;
+            /** Comment */
+            comment: string;
+            /** Display Name */
+            display_name?: string | null;
+            /** Event */
+            event: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Seq */
+            seq: number;
+        };
+        /** SurveyControlPolicyIn */
+        SurveyControlPolicyIn: {
+            /** Code */
+            code: string;
+            /** Completeness */
+            completeness: string;
+            /** Controls */
+            controls: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Empty Set Is Complete
+             * @default false
+             */
+            empty_set_is_complete: boolean;
+            /** Market Code */
+            market_code: string;
+            /** Name */
+            name: string;
+            /** Owner */
+            owner: string;
+            /** Scope */
+            scope?: {
+                [key: string]: unknown;
+            } | null;
+            /** Scope Statement */
+            scope_statement: string;
+            /** Source */
+            source: string;
+        };
+        /** SurveyControlPolicyList */
+        SurveyControlPolicyList: {
+            /** Items */
+            items: components["schemas"]["SurveyControlPolicy"][];
+        };
+        /** SurveyControlPolicyWithdrawIn */
+        SurveyControlPolicyWithdrawIn: {
+            /** Reason */
+            reason: string;
+        };
+        /** SurveyControlRegister */
+        SurveyControlRegister: {
+            /**
+             * Combinations
+             * @description The evidence combinations a mapping may declare. Nothing else has an approved meaning.
+             */
+            combinations: string[];
+            /** Evidence Types */
+            evidence_types: string[];
+            /** Items */
+            items: components["schemas"]["SurveyControl"][];
+            /** Note */
+            note: string;
+        };
+        /** SurveyCoordinatedSimulationIn */
+        SurveyCoordinatedSimulationIn: {
+            /**
+             * Label
+             * @default
+             */
+            label: string;
+        };
+        /** SurveyCoordinatedSimulationOut */
+        SurveyCoordinatedSimulationOut: {
+            /** Application */
+            application: {
+                [key: string]: unknown;
+            };
+            /** Application Sha256 */
+            application_sha256: string;
+            /** Composite Fingerprint */
+            composite_fingerprint: string;
+            /** Composite Intact */
+            composite_intact: boolean;
+            /**
+             * Composite Plan Id
+             * Format: uuid
+             */
+            composite_plan_id: string;
+            /** Contract */
+            contract: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Current */
+            current: {
+                [key: string]: unknown;
+            } | null;
+            /** Current Contract */
+            current_contract: string;
+            /**
+             * Decisions
+             * @description Each boundary between surveys: the ending, PROCEED or STOP, and the rule applied.
+             */
+            decisions: {
+                [key: string]: unknown;
+            }[];
+            /** Execution Contracts */
+            execution_contracts: string[];
+            /** Governed Order */
+            governed_order: string[];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Input Consistency */
+            input_consistency: {
+                [key: string]: unknown;
+            };
+            /** Label */
+            label: string;
+            /** Market Code */
+            market_code: string;
+            /** Note */
+            note: string;
+            /** Operational Call Eligibility */
+            operational_call_eligibility: {
+                [key: string]: unknown;
+            };
+            /** Progress */
+            progress: {
+                [key: string]: number;
+            };
+            /**
+             * Record Class
+             * @constant
+             */
+            record_class: "SIMULATION";
+            /**
+             * Replay Sha256
+             * @description Fingerprint of the coordinated result: the same composite and the same inputs always give the same one.
+             */
+            replay_sha256: string;
+            /**
+             * Status
+             * @description RUNNING: the current survey waits for an answer. POLICY_UNRESOLVED: a non-answer in the current survey. CROSS_SURVEY_POLICY_UNRESOLVED: a survey ended without COMPLETED and what follows is undecided. ALL_SURVEYS_COMPLETED: progress only — not a business outcome. REPLAY_DRIFT: an individual simulation no longer recomputes to its record.
+             * @enum {string}
+             */
+            status: "RUNNING" | "POLICY_UNRESOLVED" | "CROSS_SURVEY_POLICY_UNRESOLVED" | "ALL_SURVEYS_COMPLETED" | "REPLAY_DRIFT";
+            /**
+             * Stop
+             * @description Why the coordinated run is not continuing, with a stable code.
+             */
+            stop: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Surveys
+             * @description Every survey in the governed order: its pinned version, state, individual simulation (in full), run fingerprint and execution contract.
+             */
+            surveys: {
+                [key: string]: unknown;
+            }[];
         };
         /** SurveyCreateIn */
         SurveyCreateIn: {
@@ -12495,6 +14494,119 @@ export interface components {
                 [key: string]: unknown;
             }[];
         };
+        /** SurveyEvaluationJourney */
+        SurveyEvaluationJourney: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "SINGLE_SURVEY" | "COORDINATED";
+            /** Label */
+            label: string;
+            /** Surveys */
+            surveys: number;
+            /** Title */
+            title: string;
+        };
+        /** SurveyEvaluationJourneyList */
+        SurveyEvaluationJourneyList: {
+            /** Items */
+            items: components["schemas"]["SurveyEvaluationJourney"][];
+        };
+        /** SurveyEvaluationPreviewIn */
+        SurveyEvaluationPreviewIn: {
+            /** Control Policy Id */
+            control_policy_id?: string | null;
+            /** Coordinated Simulation Id */
+            coordinated_simulation_id?: string | null;
+            /**
+             * Mappings
+             * @description Mappings that are not proposed yet: control_code, combination, applicability, entries.
+             */
+            mappings?: {
+                [key: string]: unknown;
+            }[];
+            policy?: components["schemas"]["SurveyControlPolicyIn"] | null;
+            /** Simulation Id */
+            simulation_id?: string | null;
+        };
+        /** SurveyEvaluationPreviewOut */
+        SurveyEvaluationPreviewOut: {
+            /** Applicability */
+            applicability?: {
+                [key: string]: unknown;
+            } | null;
+            /** Contract */
+            contract: string;
+            /** Controls */
+            controls: {
+                [key: string]: unknown;
+            }[];
+            /** Coverage */
+            coverage: {
+                [key: string]: unknown;
+            };
+            /** Finding Rules */
+            finding_rules: {
+                [key: string]: unknown;
+            } | null;
+            /** Findings */
+            findings: {
+                [key: string]: unknown;
+            }[];
+            /** Findings Status */
+            findings_status: string;
+            /** Journey */
+            journey: {
+                [key: string]: unknown;
+            };
+            /** Market Code */
+            market_code: string;
+            /** Not Converted */
+            not_converted: {
+                [key: string]: unknown;
+            }[];
+            /** Operational Compliance Eligibility */
+            operational_compliance_eligibility: {
+                [key: string]: unknown;
+            };
+            /** Policy */
+            policy?: {
+                [key: string]: unknown;
+            } | null;
+            /** Preview */
+            preview: {
+                [key: string]: unknown;
+            };
+            /** Processing Status */
+            processing_status: string;
+            /**
+             * Record Class
+             * @constant
+             */
+            record_class: "SIMULATION";
+            /**
+             * Recorded
+             * @constant
+             */
+            recorded: false;
+            /** Result Sha256 */
+            result_sha256: string;
+            /** Summary */
+            summary: {
+                [key: string]: unknown;
+            };
+        };
         /** SurveyFindingOut */
         SurveyFindingOut: {
             /** At */
@@ -12607,6 +14719,195 @@ export interface components {
             code: string;
             /** Kind */
             kind: string;
+        };
+        /** SurveyJourneyEvaluationIn */
+        SurveyJourneyEvaluationIn: {
+            /**
+             * Control Policy Id
+             * @description EVAL-2A: a PUBLISHED control policy revision to evaluate under. Without one the evaluation is the EVAL-1 one and coverage is not asserted.
+             */
+            control_policy_id?: string | null;
+            /** Coordinated Simulation Id */
+            coordinated_simulation_id?: string | null;
+            /** Simulation Id */
+            simulation_id?: string | null;
+        };
+        /** SurveyJourneyEvaluationList */
+        SurveyJourneyEvaluationList: {
+            /** Items */
+            items: components["schemas"]["SurveyJourneyEvaluationRef"][];
+        };
+        /** SurveyJourneyEvaluationOut */
+        SurveyJourneyEvaluationOut: {
+            /**
+             * Applicability
+             * @description Policy scope, missing inputs, lineage and the applicability fingerprint.
+             */
+            applicability?: {
+                [key: string]: unknown;
+            } | null;
+            /** Contract */
+            contract: string;
+            /** Control Policy Id */
+            control_policy_id?: string | null;
+            /**
+             * Controls
+             * @description One control instance per control of the register: outcome, applicability, reasons, pinned mapping revision and every evidence observation.
+             */
+            controls: {
+                [key: string]: unknown;
+            }[];
+            /** Coordinated Id */
+            coordinated_id: string | null;
+            /**
+             * Coverage
+             * @description Always NOT_ASSERTED: controls without a mapping, with unknown applicability, and items no mapping names.
+             */
+            coverage: {
+                [key: string]: unknown;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By */
+            created_by: string;
+            /** Engines */
+            engines: {
+                [key: string]: string;
+            };
+            /** Finding Rules */
+            finding_rules: {
+                [key: string]: unknown;
+            } | null;
+            /** Findings */
+            findings: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Findings Status
+             * @enum {string}
+             */
+            findings_status: "GENERATED" | "FINDING_RULES_MISSING" | "NOT_GENERATED_EVIDENCE_NOT_TRUSTED";
+            /** Human Assessment */
+            human_assessment: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Input Sha256 */
+            input_sha256: string;
+            /**
+             * Journey
+             * @description The journey as evaluated: its status, whether every survey completed, whether its evidence was trusted, and each survey execution.
+             */
+            journey: {
+                [key: string]: unknown;
+            };
+            /**
+             * Journey Kind
+             * @enum {string}
+             */
+            journey_kind: "SINGLE_SURVEY" | "COORDINATED";
+            /** Market Code */
+            market_code: string;
+            /** Not Converted */
+            not_converted: {
+                [key: string]: unknown;
+            }[];
+            /** Note */
+            note: string;
+            /**
+             * Operational Compliance Eligibility
+             * @description Always NOT_ESTABLISHED.
+             */
+            operational_compliance_eligibility: {
+                [key: string]: unknown;
+            };
+            /** Pins */
+            pins: {
+                [key: string]: unknown;
+            };
+            /**
+             * Policy
+             * @description The control policy revision this evaluation was made under, if any.
+             */
+            policy?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Processing Status
+             * @description How the EVALUATION ended — not whether surveys completed and not whether controls are satisfied. COMPLETED does not mean compliant.
+             * @enum {string}
+             */
+            processing_status: "COMPLETED" | "INCOMPLETE" | "REQUIRES_REVIEW" | "FAILED_TECHNICALLY";
+            /**
+             * Record Class
+             * @constant
+             */
+            record_class: "SIMULATION";
+            /** Replay */
+            replay: {
+                [key: string]: unknown;
+            };
+            /** Result Sha256 */
+            result_sha256: string;
+            /** Simulation Id */
+            simulation_id: string | null;
+            /**
+             * Status
+             * @description The processing status, or EVALUATION_DRIFT when the evaluation no longer recomputes from what it pinned.
+             * @enum {string}
+             */
+            status: "COMPLETED" | "INCOMPLETE" | "REQUIRES_REVIEW" | "FAILED_TECHNICALLY" | "EVALUATION_DRIFT";
+            /** Summary */
+            summary: {
+                [key: string]: unknown;
+            };
+            /**
+             * Superseded By Current Governance
+             * @description What is published now that this evaluation did not use. Evaluating again gives a NEW evaluation; this one is not rewritten.
+             */
+            superseded_by_current_governance: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** SurveyJourneyEvaluationRef */
+        SurveyJourneyEvaluationRef: {
+            /** Coverage Status */
+            coverage_status?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By */
+            created_by: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Input Sha256 */
+            input_sha256: string;
+            /** Journey Kind */
+            journey_kind: string;
+            /** Policy */
+            policy?: {
+                [key: string]: unknown;
+            } | null;
+            /** Processing Status */
+            processing_status: string;
+            /** Result Sha256 */
+            result_sha256: string;
+            /** Summary */
+            summary: {
+                [key: string]: unknown;
+            };
         };
         /** SurveyLibraryItem */
         SurveyLibraryItem: {
@@ -12763,6 +15064,145 @@ export interface components {
             started_at: string | null;
             /** Status */
             status: string;
+        };
+        /** SurveySimulationCreateIn */
+        SurveySimulationCreateIn: {
+            /**
+             * Facts
+             * @description A synthetic fact snapshot: governed catalog fields only.
+             */
+            facts?: {
+                [key: string]: unknown;
+            };
+            /**
+             * Label
+             * @default
+             */
+            label: string;
+        };
+        /** SurveySimulationInput */
+        SurveySimulationInput: {
+            /** Accepted */
+            accepted: boolean;
+            /** Answer */
+            answer: {
+                [key: string]: unknown;
+            };
+            /** Key */
+            key: string;
+            /** Rejection Code */
+            rejection_code: string | null;
+            /** Run Sha256 */
+            run_sha256: string;
+            /** Run Status */
+            run_status: string;
+            /** Seq */
+            seq: number;
+        };
+        /** SurveySimulationInputIn */
+        SurveySimulationInputIn: {
+            /** Answer */
+            answer: {
+                [key: string]: unknown;
+            };
+            /**
+             * Expected Inputs
+             * @description How many inputs the simulation holds as the caller last saw it.
+             */
+            expected_inputs: number;
+            /**
+             * Key
+             * @description The question instance being answered: <instance>/<node>.
+             */
+            key: string;
+        };
+        /** SurveySimulationOut */
+        SurveySimulationOut: {
+            /** Content Sha256 */
+            content_sha256: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Current Engine Contract */
+            current_engine_contract: string;
+            /**
+             * Drift
+             * @description What differs when the recomputed run is not the recorded one.
+             */
+            drift?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Engine Contract
+             * @description The execution contract the simulation was recorded under.
+             */
+            engine_contract: string;
+            /** Facts */
+            facts: {
+                [key: string]: unknown;
+            };
+            /** Facts Sha256 */
+            facts_sha256: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Initial Run Sha256 */
+            initial_run_sha256: string;
+            /** Inputs */
+            inputs: components["schemas"]["SurveySimulationInput"][];
+            /** Label */
+            label: string;
+            /** Manifest Sha256 */
+            manifest_sha256: string;
+            /** Note */
+            note: string;
+            /**
+             * Record Class
+             * @constant
+             */
+            record_class: "SIMULATION";
+            /** Replay Consistent */
+            replay_consistent: boolean;
+            /**
+             * Run
+             * @description The complete deterministic run: delivered items, decisions, routes, modules.
+             */
+            run: {
+                [key: string]: unknown;
+            };
+            /** Run Sha256 */
+            run_sha256: string;
+            /**
+             * Run Status
+             * @enum {string}
+             */
+            run_status: "PENDING" | "POLICY_UNRESOLVED" | "TERMINAL";
+            /**
+             * Status
+             * @description PENDING: a question needs an answer. POLICY_UNRESOLVED: the last input was a non-answer whose handling is an open business decision — a simulation status, never a business outcome. TERMINAL: the run ended. REPLAY_DRIFT: the run recomputed now is not the one recorded; the simulation takes no further input.
+             * @enum {string}
+             */
+            status: "PENDING" | "POLICY_UNRESOLVED" | "TERMINAL" | "REPLAY_DRIFT";
+            /** Survey Code */
+            survey_code: string;
+            /**
+             * Survey Id
+             * Format: uuid
+             */
+            survey_id: string;
+            /** Survey Name */
+            survey_name: string;
+            /**
+             * Version Id
+             * Format: uuid
+             */
+            version_id: string;
+            /** Version Label */
+            version_label: string;
         };
         /** SurveySubmitIn */
         SurveySubmitIn: {
@@ -25509,6 +27949,1628 @@ export interface operations {
             };
         };
     };
+    survey_assignment_binding_propose: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyAssignmentBindingIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyAssignmentBinding"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_assignment_binding_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                binding_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyAssignmentBinding"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_assignment_binding_decide: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                binding_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyAssignmentDecisionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyAssignmentBinding"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_assignment_binding_publish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                binding_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyAssignmentBinding"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_assignment_binding_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                binding_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyAssignmentWithdrawIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyAssignmentBinding"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_composite_plan_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyCompositePlanIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyCompositePlanOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_composite_plan_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                composite_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyCompositePlanOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_coordinated_simulation_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                composite_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyCoordinatedSimulationIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyCoordinatedSimulationOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_coordinated_simulation_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                coordinated_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyCoordinatedSimulationOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_coordinated_simulation_input: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                coordinated_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveySimulationInputIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyCoordinatedSimulationOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_assignment_evaluate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyAssignmentEvaluationIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyAssignmentEvaluationOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_assignment_evaluation_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                evaluation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyAssignmentEvaluationOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_assignment_simulate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                evaluation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveySimulationOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_assignment_groups: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyAssignmentGroups"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_assignment_group_propose: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyAssignmentGroupIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyAssignmentGroup"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_assignment_group_decide: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                group_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyAssignmentDecisionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyAssignmentGroup"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_assignment_group_publish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                group_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyAssignmentGroup"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_assignment_group_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                group_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyAssignmentWithdrawIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyAssignmentGroup"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_assignment_options: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyAssignmentOptions"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_assignment_policy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyAssignmentPolicy"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_call_plan_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyCallPlanOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     survey_candidate_get: {
         parameters: {
             query?: never;
@@ -26988,6 +31050,1554 @@ export interface operations {
             };
         };
     };
+    survey_control_applicability: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyControlApplicabilityIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyControlApplicabilityOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_evaluation_builder_options: {
+        parameters: {
+            query?: {
+                market_code?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyBuilderOptions"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_control_policy_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyControlPolicyList"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_control_policy_propose: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyControlPolicyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyControlPolicy"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_control_policy_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                policy_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyControlPolicy"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_control_policy_decide: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                policy_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyControlPolicyDecisionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyControlPolicy"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_control_policy_publish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                policy_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyControlPolicy"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_control_policy_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                policy_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyControlPolicyWithdrawIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyControlPolicy"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_evaluation_controls: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyControlRegister"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_journey_evaluation_list: {
+        parameters: {
+            query?: {
+                simulation_id?: string | null;
+                coordinated_simulation_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyJourneyEvaluationList"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_journey_evaluation_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyJourneyEvaluationIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyJourneyEvaluationOut"];
+                };
+            };
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyJourneyEvaluationOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_journey_evaluation_preview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyEvaluationPreviewIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyEvaluationPreviewOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_journey_evaluation_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                evaluation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyJourneyEvaluationOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_evaluation_journeys: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyEvaluationJourneyList"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_control_mapping_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyControlMappingList"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_control_mapping_propose: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyControlMappingIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyControlMapping"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_control_mapping_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mapping_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyControlMapping"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_control_mapping_decide: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mapping_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyControlMappingDecisionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyControlMapping"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_control_mapping_publish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mapping_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyControlMapping"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_control_mapping_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mapping_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyControlMappingWithdrawIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyControlMapping"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     survey_library_list: {
         parameters: {
             query?: never;
@@ -27131,6 +32741,162 @@ export interface operations {
             };
         };
     };
+    survey_simulation_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                simulation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveySimulationOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_simulation_input: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                simulation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveySimulationInputIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveySimulationOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     survey_version_get: {
         parameters: {
             query?: never;
@@ -27207,6 +32973,86 @@ export interface operations {
             };
         };
     };
+    survey_call_plan_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyCallPlanCreateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyCallPlanOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     survey_version_content: {
         parameters: {
             query?: never;
@@ -27225,6 +33071,86 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SurveyVersionContent"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_simulation_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveySimulationCreateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveySimulationOut"];
                 };
             };
             /** @description Unauthorized */

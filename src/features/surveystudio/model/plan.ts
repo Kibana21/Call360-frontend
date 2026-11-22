@@ -10,7 +10,7 @@ import { describeAst, evaluate, fieldDef, fieldsOf, type Tri } from './engine';
 import { buildFlow } from './flow';
 import { activationOf, eligibilityOf, findCondition, findModule, findQuestion, jumpSources, routesFrom } from './ops';
 import { FIELDS, OUTCOME_CATALOG, OUTCOME_LABEL } from './sample';
-import { isQuestion, mKey, singleRoute, type AnswerType, type DeliveryMode, type Module, type OutcomeCode, type QuestionNode, type Survey, type SurveyTarget, type Target, type Workspace } from './types';
+import { isQuestion, mKey, policyOf, singleRoute, type AnswerType, type DeliveryMode, type Module, type OutcomeCode, type QuestionNode, type Survey, type SurveyTarget, type Target, type Workspace } from './types';
 import { liveGates, standing, type SurveyGov } from './governance';
 import { deliveryOf, fieldOf, formatValue, renderWording, variablesOf, type Facts, type Rendered } from './wording';
 
@@ -204,7 +204,7 @@ function openPoint(n: QuestionNode, type: AnswerType, options: Array<[string, st
   const label = (code: string) => options.find(([c]) => c === code)?.[1] ?? code;
   return [
     ...(r.followups ?? []).map((f) => ({ when: `“${label(f.option)}” is among the answers`, leads: `adds ${f.nodes.map((id) => leads({ node: id })).join(', ') || 'nothing'} to the follow-up queue`, on: `FOLLOWUP:${f.option}`, to: f.nodes[0] ? { node: f.nodes[0] } : null })),
-    ...(r.interrupts ?? []).map((i) => ({ when: `“${label(i.option)}” is among the answers`, leads: i.policy === 'STOP_ESCALATE' ? `stops the follow-ups — ${leads(i.outcome ? { outcome: i.outcome } : null)}` : i.policy === 'STOP_REJOIN' ? `stops the follow-ups and goes to ${leads(i.rejoin)}` : `is handled first (${(i.nodes ?? []).map((id) => leads({ node: id })).join(', ') || 'not set'}), then the queue resumes`, on: `INTERRUPT:${i.option}`, to: i.policy === 'STOP_ESCALATE' ? (i.outcome ? { outcome: i.outcome } : null) : i.policy === 'STOP_REJOIN' ? i.rejoin ?? null : i.nodes?.[0] ? { node: i.nodes[0] } : null })),
+    ...(r.interrupts ?? []).map((i) => ({ when: `“${label(i.option)}” is among the answers`, leads: policyOf(i) === 'STOP_ESCALATE' ? `stops the follow-ups — ${leads(i.outcome ? { outcome: i.outcome } : null)}` : policyOf(i) === 'STOP_REJOIN' ? `stops the follow-ups and goes to ${leads(i.rejoin)}` : `is handled first (${(i.nodes ?? []).map((id) => leads({ node: id })).join(', ') || 'not set'}), then the queue resumes`, on: `INTERRUPT:${i.option}`, to: policyOf(i) === 'STOP_ESCALATE' ? (i.outcome ? { outcome: i.outcome } : null) : policyOf(i) === 'STOP_REJOIN' ? i.rejoin ?? null : i.nodes?.[0] ? { node: i.nodes[0] } : null })),
     { when: 'the follow-ups are finished', leads: leads(r.rejoin), on: 'REJOIN', to: r.rejoin ?? null },
   ];
 }

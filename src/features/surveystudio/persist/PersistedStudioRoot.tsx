@@ -17,6 +17,10 @@ import type { Workspace } from '../model/types';
 import { StudioProvider, forgetPersistedMemory, hasPersistedMemory } from '../store';
 import { Glyph, Tag } from '../ui';
 import { createSurvey, libraryAvailable, listSurveys, loadDraft, type SurveySummary } from './api';
+import { AssignmentPage } from './AssignmentPage';
+import { CoordinatedSimulationPage } from './CoordinatedSimulation';
+import { ControlBuilderPage } from './ControlBuilder';
+import { EvaluationWorkbenchPage } from './EvaluationWorkbench';
 import { LibraryProvider } from './Library';
 import { PersistenceProvider, open, versionLabelOf, type Baseline } from './Persistence';
 import { CandidatePage, ReviewPage, VersionPage } from './ReviewPages';
@@ -33,6 +37,10 @@ export function PersistedStudioRoot() {
     <div className="ss" data-testid="survey-studio" data-mode="persisted">
       <Routes>
         <Route index element={<SurveyListPage />} />
+        <Route path="assignment" element={<AssignmentPage />} />
+        <Route path="coordinated-simulations/:coordinatedId" element={<CoordinatedSimulationPage />} />
+        <Route path="evaluations/:evaluationId" element={<EvaluationWorkbenchPage />} />
+        <Route path="controls" element={<ControlBuilderPage />} />
         <Route path="surveys/:surveyId/*" element={<OpenSurvey />} />
         <Route path="*" element={<Missing />} />
       </Routes>
@@ -75,6 +83,8 @@ function SurveyListPage() {
           {can('survey.edit') ? <button type="button" className="ss-btn primary big" onClick={() => setCreating(true)} data-testid="ss-create"><Glyph name="plus" /> New survey</button>
             : <span className="ss-save-note" data-testid="ss-read-only">Read only: you can open surveys but not change them.</span>}
         </header>
+        {can('survey.assignment.read') ? <p className="ss-home-links"><Link className="ss-tool" to="/survey-studio/assignment" data-testid="ss-open-assignment"><Glyph name="branch" size={14} /> Survey assignment — which survey the assignment rules select for an application (simulation)</Link></p> : null}
+        {can('survey.evaluation.read') ? <p className="ss-home-links"><Link className="ss-tool" to="/survey-studio/controls" data-testid="ss-open-controls"><Glyph name="check" size={14} /> Controls and evidence — which controls must be assessed, and which survey questions evidence them (simulation)</Link></p> : null}
         <p className="ss-note" data-testid="ss-standing-note"><Glyph name="info" size={14} /><span>{STANDING_NOTE}</span></p>
         {creating ? <CreateForm onCancel={() => setCreating(false)} onMade={(s) => nav(`/survey-studio/surveys/${s.code}`)} /> : null}
         {error ? <div className="ss-empty" role="alert" data-testid="ss-list-error"><p><strong>The surveys could not be loaded.</strong> {error}</p><button type="button" className="ss-btn" onClick={fetchAll}>Try again</button></div>

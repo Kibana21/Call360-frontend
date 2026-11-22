@@ -11,7 +11,7 @@ import {
 import { ESCALATION_OUTCOMES, OUTCOME_LABEL } from './sample';
 
 const STATEMENT_NAME = { OPENING: 'Opening', TRANSITION: 'Transition', DISCLOSURE: 'Disclosure', CLOSING: 'Closing' } as const;
-import { isQuestion, mKey, type AnswerType, type Issue, type Module, type ModuleKind, type OutcomeCode, type Survey, type SurveyTarget, type Target, type Workspace } from './types';
+import { isQuestion, mKey, policyOf, type AnswerType, type Issue, type Module, type ModuleKind, type OutcomeCode, type Survey, type SurveyTarget, type Target, type Workspace } from './types';
 
 export type Tone = 'normal' | 'alt' | 'unknown' | 'escalate' | 'queue';
 
@@ -127,8 +127,8 @@ export function slotsOf(ws: Workspace, m: Module, entry: FlowEntry): Slot[] {
   }
   // sequential follow-ups: the queue is drawn as a chain; what is left to route here is the rejoin and any interruption
   return [
-    ...(r.interrupts ?? []).filter((i) => i.policy !== 'RESUME').map((i) => mk(`INT:${i.option}`, `“${clip(name(i.option), 26)}” stops`,
-      i.policy === 'STOP_ESCALATE' ? (i.outcome ? { outcome: i.outcome } : null) : i.rejoin ?? null, 'escalate',
+    ...(r.interrupts ?? []).filter((i) => policyOf(i) !== 'RESUME').map((i) => mk(`INT:${i.option}`, `“${clip(name(i.option), 26)}” stops`,
+      policyOf(i) === 'STOP_ESCALATE' ? (i.outcome ? { outcome: i.outcome } : null) : i.rejoin ?? null, 'escalate',
       { connect: false, must: q.options.find((o) => o.code === i.option)?.interrupt === 'MANDATORY' })),
     mk('REJOIN', 'After the follow-ups', r.rejoin ?? null, 'normal'),
   ];
@@ -142,7 +142,7 @@ function queueOf(ws: Workspace, entry: FlowEntry): Array<{ node: string; because
   const name = (code: string) => q.options.find((o) => o.code === code)?.label || code;
   const out: Array<{ node: string; because: string[] }> = [];
   const push = (node: string, option: string) => { const hit = out.find((x) => x.node === node); if (hit) hit.because.push(name(option)); else out.push({ node, because: [name(option)] }); };
-  for (const i of nd.routing.interrupts ?? []) if (i.policy === 'RESUME') for (const n of i.nodes ?? []) push(n, i.option);
+  for (const i of nd.routing.interrupts ?? []) if (policyOf(i) === 'RESUME') for (const n of i.nodes ?? []) push(n, i.option);
   for (const f of nd.routing.followups ?? []) for (const n of f.nodes) push(n, f.option); // a question shared by two answers is asked once
   return out.map((x) => ({ node: x.node, because: x.because.map((b) => `“${clip(b, 18)}”`).join(' or ') }));
 }

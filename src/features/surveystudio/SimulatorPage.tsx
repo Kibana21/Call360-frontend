@@ -16,6 +16,7 @@ import { variablesOf } from './model/wording';
 import { STATEMENT_LABEL } from './labels';
 import { JourneyNav } from './JourneyNav';
 import { StudioBar } from './StudioRoot';
+import { ServerSimulation } from './persist/ServerSimulation';
 import { useStudio } from './store';
 import { Glyph, Tag, type GlyphName } from './ui';
 
@@ -45,10 +46,12 @@ const fmtFact = (code: string, v: unknown) => {
 
 export function SimulatorPage() {
   const { surveyId = '' } = useParams();
-  const { ws } = useStudio();
+  const { ws, persisted } = useStudio();
   const [params, setParams] = useSearchParams();
   const survey = findSurvey(ws, surveyId);
   const profile = PROFILES.find((p) => p.id === params.get('profile')) ?? PROFILES[0]!;
+  // SS-03B: with saved surveys the Call360 server is the authority; the browser's run of the unsaved draft is a preview
+  const onServer = persisted && params.get('engine') !== 'draft';
   const other = PROFILES.find((p) => p.id === params.get('compare')) ?? null;
   const [inputs, setInputs] = useState<SimAnswer[]>([]);
   const [playing, setPlaying] = useState(false);
@@ -93,9 +96,15 @@ export function SimulatorPage() {
         <header className="ss-sim-head">
           <div>
             <h1 className="ss-title">Journey simulator</h1>
-            <p className="ss-sim-note" data-testid="ss-sim-notice"><Glyph name="info" size={14} /> A demonstration in your browser with invented customers. It is not the Call360 runtime: nothing here was executed, approved, saved or sent.</p>
+            {onServer ? null : <p className="ss-sim-note" data-testid="ss-sim-notice"><Glyph name="info" size={14} /> {persisted ? 'A preview of your draft, run in your browser with invented customers. It is not the Call360 engine: for the authoritative result, publish and simulate the published version on the server.' : 'A demonstration in your browser with invented customers. It is not the Call360 runtime: nothing here was executed, approved, saved or sent.'}</p>}
+            {persisted ? (
+              <div className="ss-seg" role="group" aria-label="What to simulate" data-testid="ss-sim-engine">
+                <button type="button" className={onServer ? 'on' : ''} aria-pressed={onServer} onClick={() => set({ engine: null, compare: null })} data-testid="ss-sim-engine-server">Published version · Call360 server</button>
+                <button type="button" className={onServer ? '' : 'on'} aria-pressed={!onServer} onClick={() => set({ engine: 'draft', compare: null })} data-testid="ss-sim-engine-draft">Draft · browser preview</button>
+              </div>
+            ) : null}
           </div>
-          <div className="ss-sim-head-tools">
+          {onServer ? <div className="ss-sim-head-tools"><Link className="ss-tool" to={`/survey-studio/surveys/${survey.id}/plan?profile=${profile.id}`} data-testid="ss-sim-plan"><Glyph name="list" size={14} /> Call plan</Link></div> : <div className="ss-sim-head-tools">
             <Link className="ss-tool" to={`/survey-studio/surveys/${survey.id}/plan?profile=${profile.id}`} data-testid="ss-sim-plan" title="What can be settled before the call for this customer"><Glyph name="list" size={14} /> Call plan preview</Link>
             {issues.length ? <Link className="ss-tool warn" to={`/survey-studio/surveys/${survey.id}`} data-testid="ss-sim-draft-issues" title="The simulator stops where the draft is incomplete; it never guesses a route."><Glyph name="alert" size={14} /> {issues.length} to fix in this draft</Link> : null}
             <label className="ss-sim-compare"><span>Compare with</span>
@@ -103,10 +112,10 @@ export function SimulatorPage() {
                 <option value="">— one customer —</option>
                 {PROFILES.filter((p) => p.id !== profile.id).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select></label>
-          </div>
+          </div>}
         </header>
 
-        {other ? <Compare ws={ws} survey={survey} a={profile} b={other} onClose={() => set({ compare: null })} /> : (
+        {onServer ? <ServerSimulation profile={profile} other={other} onProfile={(id) => set({ profile: id })} onCompare={(id) => set({ compare: id })} base={`/survey-studio/surveys/${survey.id}`} simulationId={params.get('simulation')} assignmentId={params.get('assignment')} onLeaveOpened={() => set({ simulation: null, assignment: null })} /> : other ? <Compare ws={ws} survey={survey} a={profile} b={other} onClose={() => set({ compare: null })} /> : (
           <div className="ss-sim-grid">
             <aside className="ss-sim-side" aria-label="Customer and modules">
               <section aria-labelledby="ss-sim-profile-h">

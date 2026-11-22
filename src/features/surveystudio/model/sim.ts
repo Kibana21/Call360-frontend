@@ -11,6 +11,7 @@ import { activationOf, eligibilityOf, findCondition, findModule, findQuestion } 
 import { OUTCOME_CATALOG, OUTCOME_LABEL } from './sample';
 import { deliveryOf, renderWording, type Rendered } from './wording';
 import {
+  policyOf,
   isQuestion, mKey, singleRoute,
   type DeliveryMode, type StatementRole, type Binding, type Instance, type Module, type OutcomeCode, type Question, type QuestionNode, type Survey, type SurveyTarget, type Target, type Workspace,
 } from './types';
@@ -329,7 +330,7 @@ export function simulate(ws: Workspace, survey: Survey, profile: Profile, next: 
         const label = (id: string) => { const fn = m.nodes.find((x) => x.id === id); const fq = fn && isQuestion(fn) ? findQuestion(ws, fn.q) : undefined; return `${num(id)} ${clip(fq?.wording.text ?? '', 50)}`; };
         const notAsked = (r.followups ?? []).filter((x) => !chosen.includes(x.option)).flatMap((x) => x.nodes).filter((t, i, all) => !queueIds.includes(t) && all.indexOf(t) === i);
         const queued = queueIds.map((id) => ({ node: id, label: label(id), because: becauseOf.get(id)!.join(' and ') }));
-        const hit = hits[0];
+        const hit = hits[0] ? { ...hits[0], policy: policyOf(hits[0]) } : undefined; // an absent policy means STOP_ESCALATE
         if (hit && hit.policy === 'STOP_ESCALATE') {
           if (!hit.outcome) throw new Stop('BLOCKED', 'ROUTE_MISSING', key, `“${optLabel(q, hit.option)}” stops the follow-ups but has no outcome.`);
           trace.push(`${key}: INTERRUPT ${hit.option} -> ${hit.outcome}; skipped [${queueIds.map((x) => `'${x}'`).join(', ')}]`);

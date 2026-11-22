@@ -116,6 +116,12 @@ export interface SetRule { id: string; kind: 'ANY' | 'ALL' | 'NONE'; options: st
 
 export interface Followup { option: string; nodes: string[] }
 export interface Interrupt { option: string; policy: InterruptPolicy; outcome?: OutcomeCode; nodes?: string[]; rejoin?: Target | null }
+/**
+ * The policy of an interrupt. A canonical document may leave it out, and the contract then means STOP_ESCALATE (the
+ * server's validator and its execution engine read it so). Found by the SS-03B cross-engine comparison on fixture F4:
+ * the browser engine used to read an absent policy as "resume". It is read here, never written back into the document.
+ */
+export const policyOf = (i: { policy?: InterruptPolicy }): InterruptPolicy => i.policy ?? 'STOP_ESCALATE';
 
 export interface Routing {
   mode: RoutingMode;

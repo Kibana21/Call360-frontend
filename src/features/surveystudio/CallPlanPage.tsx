@@ -16,6 +16,7 @@ import { buildCallPlan, liveEligibility, type ConditionState, type PlanItem, typ
 import type { QuestionRole, StatementRole } from './model/types';
 import { DELIVERY_LABEL } from './model/wording';
 import { StudioBar } from './StudioRoot';
+import { ServerCallPlan } from './persist/ServerCallPlan';
 import { useStudio } from './store';
 import { Glyph, Tag } from './ui';
 
@@ -46,7 +47,7 @@ function Fold({ id, open, onToggle, children, summary }: { id: string; open: boo
 
 export function CallPlanPage() {
   const { surveyId = '' } = useParams();
-  const { ws, gov } = useStudio();
+  const { ws, gov, persisted } = useStudio();
   const [params, setParams] = useSearchParams();
   const survey = findSurvey(ws, surveyId);
   const profile = PROFILES.find((p) => p.id === params.get('profile')) ?? PROFILES[0]!;
@@ -64,6 +65,9 @@ export function CallPlanPage() {
   const wordingIssues = plan.issues.filter((i) => i.code === 'WORDING_VALUE_MISSING');
   const openPoints = runnable.flatMap((m) => m.open.map((o) => ({ ...o, module: m.name })));
   const computable = plan.status === 'READY';
+  // SS-03B: with saved surveys the server's plan of the published version is the authority; the draft's is a preview
+  const onServer = persisted && params.get('engine') !== 'draft';
+  const engine = (v: string | null) => { const next = new URLSearchParams(params); if (v) next.set('engine', v); else next.delete('engine'); setParams(next, { replace: true }); };
   return (
     <>
       <StudioBar crumbs={[{ label: 'Survey Studio', to: '/survey-studio' }, { label: survey.name, to: base }, { label: 'Call plan preview' }]} badge={<Tag tone="draft">Draft v{survey.versionLabel}</Tag>} />
@@ -72,7 +76,7 @@ export function CallPlanPage() {
         <header className="ss-plan-head">
           <div>
             <h1 className="ss-title">Call plan preview</h1>
-            <p className="ss-sim-note" data-testid="ss-plan-notice"><Glyph name="info" size={14} /> A demonstration in your browser on an invented application. No call is assembled, approved or made.</p>
+            <p className="ss-sim-note" data-testid="ss-plan-notice"><Glyph name="info" size={14} /> {onServer ? 'The plan of the published version, assembled by the Call360 server on an invented application.' : persisted ? 'A preview of your draft, computed in your browser on an invented application. It is not the Call360 engine.' : 'A demonstration in your browser on an invented application.'} No call is assembled, approved or made.</p>
           </div>
           <div className="ss-plan-tools">
             <label className="ss-field inline"><span>Synthetic application</span>
@@ -83,6 +87,13 @@ export function CallPlanPage() {
           </div>
         </header>
 
+        {persisted ? (
+          <div className="ss-seg" role="group" aria-label="Which plan" data-testid="ss-plan-engine">
+            <button type="button" className={onServer ? 'on' : ''} aria-pressed={onServer} onClick={() => engine(null)} data-testid="ss-plan-engine-server">Published version · Call360 server</button>
+            <button type="button" className={onServer ? '' : 'on'} aria-pressed={!onServer} onClick={() => engine('draft')} data-testid="ss-plan-engine-draft">Draft · browser preview</button>
+          </div>
+        ) : null}
+        {onServer ? <ServerCallPlan profile={profile} base={base} /> : <>
         <dl className="ss-plan-identity" data-testid="ss-plan-identity">
           <div><dt>Survey</dt><dd>{survey.name} · draft v{survey.versionLabel}</dd></div>
           <div><dt>Application</dt><dd>{profile.name} — {profile.summary}</dd></div>
@@ -211,6 +222,7 @@ export function CallPlanPage() {
             </ol>
           </Fold>
         </section>
+        </>}
       </div>
     </>
   );
