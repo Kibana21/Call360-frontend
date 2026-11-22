@@ -8,6 +8,7 @@ import { useAuth } from '../../../auth/AuthContext';
 import { MappingError, assetKey, changes, fromDocuments, isEmpty, seqFor, toDocuments, type AssetDoc, type DocumentSet } from '../model/documents';
 import { codesNeeded, identitiesToIssue, optionSetsToIssue, recode, withOptionSetCodes, type Lineage } from '../model/library';
 import type { Workspace } from '../model/types';
+import { usePlace } from '../place';
 import { useStudio } from '../store';
 import { documentsOf, issueCodes, loadDraft, saveDraft, type DraftDocuments } from './api';
 import { noteHistoryPosition, passHeldMove, setHistoryGuard } from './historyGuard';
@@ -105,7 +106,9 @@ export function PersistenceProvider({ initial, onBaseline, children }: { initial
     try { return { set: toDocuments(ws, survey), problem: null }; } catch (e) { if (e instanceof MappingError) return { set: null, problem: e.message }; throw e; }
   }, [ws, survey]);
   const details: Details = useMemo(() => ({ name: survey.name, purpose: survey.purpose }), [survey.name, survey.purpose]);
-  const detailsChanged = details.name !== baseline.details.name || details.purpose !== baseline.details.purpose;
+  // LIB-2: a standalone module is named by its own document; the server takes the name from there, so it is never sent
+  const moduleMode = usePlace(baseline.code).mode === 'module';
+  const detailsChanged = !moduleMode && (details.name !== baseline.details.name || details.purpose !== baseline.details.purpose);
   const change = useMemo(() => {
     if (!current.set) return null;
     const c = changes(baseline.editor, current.set);
@@ -280,13 +283,14 @@ export function PersistenceProvider({ initial, onBaseline, children }: { initial
  * browser itself asks about.
  */
 function LeaveGuard({ dirty, code }: { dirty: boolean; code: string }) {
+  const { base } = usePlace(code);
   const nav = useNavigate();
   const location = useLocation();
   const [to, setTo] = useState<{ href: string } | { delta: number } | null>(null);
   const stay = useRef<HTMLButtonElement | null>(null);
   useEffect(() => {
     if (!dirty) return;
-    const inside = `/survey-studio/surveys/${code}`;
+    const inside = base;
     const within = (pathname: string) => pathname === inside || pathname.startsWith(`${inside}/`);
     const onClick = (e: MouseEvent) => {
       if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
@@ -300,7 +304,7 @@ function LeaveGuard({ dirty, code }: { dirty: boolean; code: string }) {
     document.addEventListener('click', onClick, true);
     setHistoryGuard({ inside: within, onBlocked: (delta) => setTo({ delta }) });
     return () => { document.removeEventListener('click', onClick, true); setHistoryGuard(null); };
-  }, [dirty, code]);
+  }, [dirty, base]);
   useEffect(() => { noteHistoryPosition(); }, [location]);
   useEffect(() => { if (to) stay.current?.focus(); }, [to]);
   if (!to) return null;

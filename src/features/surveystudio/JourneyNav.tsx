@@ -5,10 +5,11 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { PEOPLE, assess, govOf, person, setActor, standing, type Readiness, type Stage, type Standing } from './model/governance';
 import type { Survey } from './model/types';
+import { usePlace } from './place';
 import { useStudio } from './store';
 import { Glyph } from './ui';
 
-export type JourneyStep = 'compose' | 'build' | 'simulate' | 'validate' | 'review';
+export type JourneyStep = 'compose' | 'build' | 'simulate' | 'validate' | 'review' | 'test';
 
 export const STAGE_LABEL: Record<Stage, string> = { DRAFT: 'Draft', IN_REVIEW: 'In review', REJECTED: 'Sent back', APPROVED: 'Approved', PUBLISHED: 'Published' };
 
@@ -26,9 +27,17 @@ export function useGovernance(survey: Survey | undefined): { readiness: Readines
 export function JourneyNav({ survey, at, compact }: { survey: Survey; at: JourneyStep; compact?: boolean }) {
   const { gov, govern, persisted } = useStudio();
   const { readiness, standing: st } = useGovernance(survey);
-  const base = `/survey-studio/surveys/${survey.id}`;
+  const place = usePlace(survey.id);
+  const base = place.base;
   const first = survey.sequence[0]?.id;
-  const steps: Array<{ id: JourneyStep | 'library'; label: string; to: string | null; state: string; tone?: 'warn' | 'ok' }> = [
+  type Step = { id: JourneyStep | 'library' | 'test'; label: string; to: string | null; state: string; tone?: 'warn' | 'ok' };
+  // LIB-2: a module authored on its own has its own, shorter, journey — there is no survey to compose
+  const steps: Step[] = place.mode === 'module' ? [
+    { id: 'library', label: 'Building blocks', to: '/survey-studio?view=blocks', state: 'The library' },
+    { id: 'build', label: 'Build the module', to: base, state: 'Guided or graph' },
+    { id: 'test', label: 'Test', to: `${base}/test`, state: 'The Call360 engine' },
+    { id: 'review', label: 'Review and publish', to: `${base}/review`, state: 'Candidates and revisions' },
+  ] : [
     { id: 'library', label: persisted ? 'Surveys' : 'Library', to: '/survey-studio', state: persisted ? 'Saved in Call360' : 'Modules and surveys' },
     { id: 'compose', label: 'Compose', to: base, state: `${survey.sequence.length} module${survey.sequence.length === 1 ? '' : 's'}` },
     { id: 'build', label: 'Build modules', to: first ? `${base}/modules/${first}` : null, state: 'Guided or graph' },
@@ -38,8 +47,8 @@ export function JourneyNav({ survey, at, compact }: { survey: Survey; at: Journe
       : { id: 'review', label: 'Review and publish', to: `${base}/review`, state: st ? STAGE_LABEL[st.stage] : 'Draft', ...(st?.stage === 'REJECTED' ? { tone: 'warn' as const } : st?.stage === 'APPROVED' || st?.stage === 'PUBLISHED' ? { tone: 'ok' as const } : {}) },
   ];
   return (
-    <div className={`ss-journey ${compact ? 'compact' : ''}`} data-testid="ss-journey">
-      <nav aria-label="Steps for this survey">
+    <div className={`ss-journey ${compact ? 'compact' : ''}`} data-testid="ss-journey" data-mode={place.mode}>
+      <nav aria-label={place.mode === 'module' ? 'Steps for this module' : 'Steps for this survey'}>
         <ol>
           {steps.map((s, i) => {
             const body = (<><span className="ss-journey-n" aria-hidden="true">{i + 1}</span><span className="ss-journey-text"><strong>{s.label}</strong>

@@ -8,6 +8,7 @@ import { ApiFailure } from '../../../api/client';
 import { useAuth } from '../../../auth/AuthContext';
 import { Glyph, Tag } from '../ui';
 import { loadDraft, type Component, type DraftDocuments, type SurveySummary } from './api';
+import { useDialogFocus } from './focus';
 import type { Inspect } from './Inspector';
 import { EVENT_LABEL, STATUS_LABEL, getHistory, short, type SurveyHistory } from './reviewApi';
 import { answerOf, words } from './workspaceApi';
@@ -29,7 +30,7 @@ export function SurveyOverviewDrawer({ survey, facts, published, onInspect, onCl
     getHistory(survey.id).then((h) => { if (current) setHistory(h); }).catch(() => undefined);
     return () => { current = false; };
   }, [survey.id]);
-  useEffect(() => { panel.current?.focus(); const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); }; window.addEventListener('keydown', esc); return () => window.removeEventListener('keydown', esc); }, [onClose]);
+  useDialogFocus(panel, onClose);
   const assets = (draft?.assets ?? []) as Any[];
   const docOf = (kind: string, code: string, version: number) => assets.find((a) => a.kind === kind && a.code === code && a.version === version) as Any | undefined;
   const sequence = (((draft?.content as Any)?.sequence ?? []) as Any[]);

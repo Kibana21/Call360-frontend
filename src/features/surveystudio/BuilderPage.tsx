@@ -97,8 +97,10 @@ function outline(flow: Flow): Array<{ entry: FlowEntry; depth: number; group: st
   return out;
 }
 
-export function BuilderPage() {
-  const { surveyId, instanceId, moduleKey: paramKey } = useParams();
+export function BuilderPage({ standalone }: { /** LIB-2: the one module of a module authored on its own. */ standalone?: { surveyId: string; instanceId: string; onNextRevision: () => void; head?: ReactNode } } = {}) {
+  const routed = useParams();
+  const { surveyId, instanceId } = standalone ?? routed;
+  const paramKey = routed.moduleKey;
   const { ws, apply, requestFocus } = useStudio();
   const survey = surveyId ? findSurvey(ws, surveyId) : undefined;
   const inst = survey?.sequence.find((x) => x.id === instanceId);
@@ -153,7 +155,8 @@ export function BuilderPage() {
     numbers: flow.numbers, editCondition: setRuleFor, created: (id) => select(id),
     open: closed, toggle: (key) => setClosed((s) => { const n = new Set(s); if (n.has(key)) n.delete(key); else n.add(key); return n; }),
   };
-  const crumbs = [{ label: 'Survey Studio', to: '/survey-studio' }, ...(survey ? [{ label: survey.name, to: `/survey-studio/surveys/${survey.id}` }] : []), { label: m.name }];
+  const crumbs = standalone ? [{ label: 'Survey Studio', to: '/survey-studio' }, { label: 'Building blocks', to: '/survey-studio?view=blocks' }, { label: m.name }]
+    : [{ label: 'Survey Studio', to: '/survey-studio' }, ...(survey ? [{ label: survey.name, to: `/survey-studio/surveys/${survey.id}` }] : []), { label: m.name }];
   const steps = outline(flow);
   const chosen = selected ? steps.find((x) => x.entry.node.id === selected)?.entry : undefined;
   const outlineItems: PickItem[] = steps.map(({ entry: e, depth, group }) => {
@@ -180,7 +183,8 @@ export function BuilderPage() {
   return (
     <BuilderCtx.Provider value={ctx}>
       <StudioBar crumbs={crumbs} issues={issues} wording={wordingStatus(ws, [m])}
-        badge={editable ? <Tag tone="draft">{m.derivedFor ? `Draft v${m.revision} · this survey only` : 'Draft · not in the shared library'}</Tag> : <Tag tone="shared" glyph="lock">Shared module · v{m.revision}</Tag>}
+        badge={standalone ? (editable ? <Tag tone="draft">Draft · revision {m.revision}</Tag> : <Tag tone="shared" glyph="lock">Revision {m.revision} · frozen</Tag>)
+          : editable ? <Tag tone="draft">{m.derivedFor ? `Draft v${m.revision} · this survey only` : 'Draft · not in the shared library'}</Tag> : <Tag tone="shared" glyph="lock">Shared module · v{m.revision}</Tag>}
         onIssue={(i) => { if (i.where.nodeId) select(i.where.nodeId); }} />
       {survey && inst ? <JourneyNav survey={survey} at="build" compact /> : null}
       <div className={`ss-builder ${view === 'graph' ? 'graph' : ''}`}>
@@ -189,10 +193,19 @@ export function BuilderPage() {
           {editable
             ? <InlineText className="ss-title" value={m.name} label="Module name" placeholder="Module name" onCommit={(v) => { if (v.trim()) apply('Renamed the module', (w) => renameModule(w, moduleKey, v.trim())); }} />
             : <h1 className="ss-title">{m.name}</h1>}
-          <p className="ss-muted">{m.intent}</p>
+          {standalone && editable
+            ? <InlineText className="ss-muted ss-module-intent" value={m.intent} label="What this module is for" placeholder="Say in one line what this module is for — it is shown on its library card" onCommit={(v) => { if (v.trim() !== m.intent) apply('Changed the description', (w) => ({ ...w, modules: w.modules.map((x) => (mKey(x) === moduleKey ? { ...x, intent: v.trim() } : x)) })); }} />
+            : <p className="ss-muted">{m.intent}</p>}
+          {standalone?.head}
         </header>
 
-        {!editable ? (
+        {!editable && standalone ? (
+          <div className="ss-lockbar" data-testid="ss-lockbar" data-mode="module">
+            <Glyph name="lock" />
+            <div><strong>Revision {m.revision} has been submitted, so it is frozen.</strong> It can no longer be changed — that is what makes a published revision trustworthy to the surveys that use it. To change the module, start revision {m.revision + 1}: it begins as a copy, and nothing that uses revision {m.revision} is affected.</div>
+            <button type="button" className="ss-btn primary" data-testid="ss-next-revision" onClick={standalone.onNextRevision}>Start revision {m.revision + 1}</button>
+          </div>
+        ) : !editable ? (
           <div className="ss-lockbar" data-testid="ss-lockbar">
             <Glyph name="lock" />
             <div><strong>This is the approved library version.</strong> It is used by other surveys, so it cannot be changed here.

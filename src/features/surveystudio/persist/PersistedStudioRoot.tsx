@@ -2,7 +2,7 @@
 // and Validation screens as the prototype, on real surveys saved to Call360 through the survey-definition API.
 // Shown only when the build setting VITE_SURVEY_STUDIO_PERSISTED=1 is on, to people who hold `survey.read`.
 // Synthetic content only. Review and publication run on the real, immutable candidates of the API (persist/ReviewPages).
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, Route, Routes, useParams } from 'react-router-dom';
 import '../../../styles/survey-studio.css';
 import { ApiFailure } from '../../../api/client';
@@ -22,11 +22,16 @@ import { ControlBuilderPage } from './ControlBuilder';
 import { EvaluationWorkbenchPage } from './EvaluationWorkbench';
 import { JourneyListPage, JourneyPage } from './JourneyPage';
 import { LibraryProvider } from './Library';
+import { listModules } from './moduleApi';
+import { ModuleBuild, ModuleReviewLead, ModuleTestPage, PublishedModuleTestPage } from './ModuleStudio';
 import { PersistenceProvider, open, versionLabelOf, type Baseline } from './Persistence';
 import { CandidatePage, ReviewPage, VersionPage } from './ReviewPages';
 import { RulesExplorerPage } from './RulesExplorer';
 import { SimulationHubPage } from './SimulationHub';
 import { WorkspacePage } from './Workspace';
+import { missing } from './workspaceApi';
+import { keepFrame } from '../model/standalone';
+import { PlaceProvider, type Place } from '../place';
 
 
 // the baseline of each survey opened in this page, beside its unsaved workspace (store.tsx): memory only
@@ -48,6 +53,9 @@ export function PersistedStudioRoot() {
         <Route path="journeys" element={<JourneyListPage />} />
         <Route path="journeys/:kind/:journeyId" element={<JourneyPage />} />
         <Route path="surveys/:surveyId/*" element={<OpenSurvey />} />
+        {/* LIB-2: a reusable module authored on its own, and the test of any published module */}
+        <Route path="modules/:moduleCode/*" element={<OpenModule />} />
+        <Route path="module-tests/:code/:revision" element={<PublishedModuleTestPage bar={(crumbs) => <Bar crumbs={crumbs} />} />} />
         <Route path="*" element={<Missing />} />
       </Routes>
     </div>
@@ -115,30 +123,61 @@ function OpenSurvey() {
   return <OpenOne key={surveyId} code={surveyId} />;
 }
 
-function OpenOne({ code }: { code: string }) {
-  const [load, setLoad] = useState<Load>(() => (baselines.has(code) && hasPersistedMemory(code) ? { state: 'ready', baseline: baselines.get(code)!, ws: null } : { state: 'loading' }));
+/** LIB-2: a standalone module is opened like a survey — the same draft, the same save — under its own address. */
+function OpenModule() {
+  const { moduleCode = '' } = useParams();
+  return <OpenOne key={`module:${moduleCode}`} code={moduleCode} module />;
+}
+
+function OpenOne({ code, module = false }: { code: string; module?: boolean }) {
+  const memory = module ? `module:${code}` : code;
+  const what = module ? 'module' : 'survey';
+  const place = useMemo((): Place | null => (module ? { mode: 'module', base: `/survey-studio/modules/${code}`, reviewLead: <ModuleReviewLead /> } : null), [module, code]);
+  const [load, setLoad] = useState<Load>(() => (baselines.has(memory) && hasPersistedMemory(memory) ? { state: 'ready', baseline: baselines.get(memory)!, ws: null } : { state: 'loading' }));
   const attempt = useRef(0);
   const fetchDraft = useCallback(() => {
     const mine = ++attempt.current;
     setLoad({ state: 'loading' });
     (async () => {
-      const summary = (await listSurveys()).find((s) => s.code === code);
+      let summary: { id: string; latest_version_label?: string | null } | undefined;
+      if (module) { const all = await listModules(); summary = missing(all) ? undefined : all.find((m) => m.code === code); }
+      else summary = (await listSurveys()).find((s) => s.code === code);
       if (!summary) return { state: 'missing' } as Load;
       const o = open(await loadDraft(summary.id), versionLabelOf(summary.latest_version_label), await libraryAvailable().catch(() => false));
       return { state: 'ready', baseline: o.baseline, ws: o.ws } as Load;
     })().then((l) => { if (mine === attempt.current) setLoad(l); })
       .catch((e) => { if (mine !== attempt.current) return; setLoad(e instanceof MappingError ? { state: 'unsupported', message: e.message } : e instanceof ApiFailure && e.status === 404 ? { state: 'missing' } : { state: 'error', message: say(e) }); });
-  }, [code]);
+  }, [code, module]);
   useEffect(() => { if (load.state === 'loading') fetchDraft(); /* only on first arrival */ }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const remember = useCallback((b: Baseline) => { baselines.set(code, b); }, [code]);
+  const remember = useCallback((b: Baseline) => { baselines.set(memory, b); }, [memory]);
 
   if (load.state === 'loading') return (<><Bar crumbs={['Survey Studio', code]} /><p className="ss-loading page" role="status" data-testid="ss-loading"><span className="ss-spinner" aria-hidden="true" /> Loading the saved draft of {code}…</p></>);
-  if (load.state === 'missing') return (<><Bar crumbs={['Survey Studio', 'Survey not found']} /><div className="ss-empty page" data-testid="ss-missing"><p><strong>There is no survey {code} that you can open.</strong> It may not exist, or it may belong to a market you do not work in.</p><Link className="ss-btn" to="/survey-studio">Back to Survey Studio</Link></div></>);
+  if (load.state === 'missing') return (<><Bar crumbs={['Survey Studio', module ? 'Module not found' : 'Survey not found']} /><div className="ss-empty page" data-testid="ss-missing"><p><strong>There is no {what} {code} that you can open.</strong> It may not exist, {module ? 'standalone modules may not be switched on for this server, ' : ''}or it may belong to a market you do not work in.</p><Link className="ss-btn" to="/survey-studio">Back to Survey Studio</Link></div></>);
   if (load.state === 'error') return (<><Bar crumbs={['Survey Studio', code]} /><div className="ss-empty page" role="alert" data-testid="ss-load-error"><p><strong>The saved draft could not be loaded.</strong> {load.message}</p><button type="button" className="ss-btn" onClick={fetchDraft}>Try again</button></div></>);
   if (load.state === 'unsupported') return (<><Bar crumbs={['Survey Studio', code]} /><div className="ss-empty page" role="alert" data-testid="ss-unsupported"><p><strong>This editor cannot open the saved draft without losing something, so it has not opened it.</strong> {load.message}</p><Link className="ss-btn" to="/survey-studio">Back to Survey Studio</Link></div></>);
 
-  if (load.ws) baselines.set(code, load.baseline);
+  if (load.ws) baselines.set(memory, load.baseline);
   const ws = load.ws;
+  if (place) {
+    return (
+      <PlaceProvider value={place}>
+        <StudioProvider key={memory} memoryKey={memory} initial={() => ws!} normalize={keepFrame}>
+          <PersistenceProvider initial={load.baseline} onBaseline={remember}>
+            <LibraryProvider>
+              <Routes>
+                <Route index element={<ModuleBuild />} />
+                <Route path="test" element={<ModuleTestPage />} />
+                <Route path="review" element={<ReviewPage />} />
+                <Route path="candidates/:candidateId" element={<CandidatePage />} />
+                <Route path="versions/:versionId" element={<VersionPage />} />
+                <Route path="*" element={<Missing />} />
+              </Routes>
+            </LibraryProvider>
+          </PersistenceProvider>
+        </StudioProvider>
+      </PlaceProvider>
+    );
+  }
   return (
     <StudioProvider key={code} memoryKey={code} initial={() => ws!}>
       <PersistenceProvider initial={load.baseline} onBaseline={remember}>

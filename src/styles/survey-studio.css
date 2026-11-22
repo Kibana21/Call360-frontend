@@ -1390,3 +1390,39 @@ button.ss-in-edge-label{font:inherit;font-size:11px;font-weight:600;cursor:point
 /* seven counts in one row from 1280 px wide; four, then two, below that */
 .ss-ws-inventory{grid-template-columns:repeat(7,minmax(0,1fr));gap:10px}.ss-ws-inventory button{padding:11px 12px}.ss-ws-inventory strong{font-size:22px}.ss-ws-inventory span{font-size:13px}.ss-ws-inventory small{font-size:11.5px}
 @media (max-width:1240px){.ss-ws-inventory{grid-template-columns:repeat(4,minmax(0,1fr))}}@media (max-width:860px){.ss-ws-inventory{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* ---- LIB-2: a reusable module authored on its own -------------------------------------------------------------------- */
+.ss-create-module .ss-create-lede{grid-column:1/-1;margin:0;font-size:13.5px;line-height:1.5;color:var(--ss-ink-2);max-width:92ch}
+.ss-create-module .ss-actions .ss-muted{font-size:12px}
+.ss-btn.small.primary{background:var(--ss-action);border-color:var(--ss-action);color:#fff}
+.ss-module-head{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.ss-module-standing{display:flex;align-items:flex-start;gap:7px;margin:0;font-size:12.5px;line-height:1.45;color:var(--ss-ink-2)}
+.ss-module-standing .ss-code{font-size:11.5px}
+.ss-module-tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.ss-module-tools .ss-field.inline{display:flex;align-items:center;gap:6px;margin:0;font-size:12px}
+.ss-module-tools .ss-field.inline select{padding:4px 8px;font-size:12.5px}
+.ss-module-intent{display:block;width:100%;max-width:90ch}
+.ss-ws-card.preview{max-width:360px;border-style:dashed}
+.ss-ws-card.preview>div{display:flex;flex-direction:column;gap:8px;padding:14px;height:100%}
+.ss-ws-card-text.quiet{font-style:italic;color:var(--ss-ink-3)}
+.ss-module-lead{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,360px);gap:var(--ss-s5);align-items:start}
+.ss-module-lead h2{margin-top:0}
+.ss-mt-page{padding:0 var(--ss-s5) var(--ss-s6);display:flex;flex-direction:column;gap:var(--ss-s4)}
+.ss-mt-page>.ss-review-head{padding:var(--ss-s4) 0 0}
+.ss-mt{display:flex;flex-direction:column;gap:var(--ss-s3)}
+.ss-mt-facts{display:flex;flex-direction:column;gap:10px}
+.ss-mt-facts .ss-field{margin:0}
+.ss-mt-manifest{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--ss-ink-2)}
+.ss-mt-manifest li>span:first-child{text-transform:capitalize}
+.ss-mt-given{background:var(--ss-surface);border:1px solid var(--ss-line);border-radius:var(--ss-r3);padding:12px 14px}
+.ss-mt-given h3{margin:0 0 8px;font-size:13px}
+.ss-mt-given ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:12.5px}
+.ss-mt-given li[data-accepted="false"]{color:var(--ss-ink-3)}
+.ss-ws-drafts{border:1px dashed var(--ss-line);border-radius:var(--ss-r3);padding:12px 14px;background:var(--ss-surface)}
+.ss-ws-drafts h3{margin:0 0 8px;font-size:13px}
+.ss-ws-rows.quiet li a{background:transparent}
+.ss-in-working{margin:10px 0 0;font-size:12.5px;line-height:1.45;padding:8px 10px;border-left:3px solid var(--ss-line);background:var(--ss-surface)}
+@media (max-width:1000px){.ss-module-lead{grid-template-columns:1fr}.ss-mt-page{padding:0 var(--ss-s4) var(--ss-s5)}}
+/* the editor's bar (crumbs, Save, tools) wraps onto a second row on a narrow window instead of pushing the page sideways */
+@media (max-width:1000px){.ss-bar{flex-wrap:wrap;row-gap:8px}.ss-bar-tools{flex:1 1 100%;flex-wrap:wrap;justify-content:flex-start}}
+.ss-module-tools .ss-field.inline{flex-direction:row}.ss-module-tools .ss-field.inline>span{margin:0}

@@ -20,6 +20,7 @@ import {
   EVENT_LABEL, RULE_TEXT, STATUS_LABEL, decideCandidate, getCandidateDocuments, getHistory, getVersion, publishCandidate, short, submitCandidate, when, withdrawCandidate,
   type CandidateDocuments, type SurveyHistory, type SurveyVersion,
 } from './reviewApi';
+import { usePlace } from '../place';
 import { STANDING_NOTE } from './standing';
 
 type Any = any; // eslint-disable-line @typescript-eslint/no-explicit-any -- frozen documents are read as JSON
@@ -31,12 +32,13 @@ const tone = (status: string) => (status === 'PUBLISHED' || status === 'APPROVED
 function Frame({ crumb, children }: { crumb: string; children: ReactNode }) {
   const { ws } = useStudio();
   const survey = ws.surveys[0]!;
-  const base = `/survey-studio/surveys/${survey.id}`;
+  const place = usePlace(survey.id);
+  const base = place.base;
   return (
     <>
       <StudioBar crumbs={[{ label: 'Survey Studio', to: '/survey-studio' }, { label: survey.name, to: base }, ...(crumb === 'Review and publish' ? [{ label: crumb }] : [{ label: 'Review and publish', to: `${base}/review` }, { label: crumb }])]} />
       <JourneyNav survey={survey} at="review" />
-      <div className="ss-review" data-testid="ss-review">{children}</div>
+      <div className="ss-review" data-testid="ss-review" data-mode={place.mode}>{crumb === 'Review and publish' ? place.reviewLead : null}{children}</div>
     </>
   );
 }
@@ -47,7 +49,9 @@ export function ReviewPage() {
   const { can } = useAuth();
   const nav = useNavigate();
   const { ws } = useStudio();
-  const base = `/survey-studio/surveys/${ws.surveys[0]!.id}`;
+  const place = usePlace(ws.surveys[0]!.id);
+  const base = place.base;
+  const thing = place.mode === 'module' ? 'module' : 'survey';
   const [history, setHistory] = useState<SurveyHistory | null>(null);
   const [validation, setValidation] = useState<ServerValidation | null>(null);
   const [error, setError] = useState<{ code?: string; message: string } | null>(null);
@@ -111,7 +115,7 @@ export function ReviewPage() {
             {why ? <span className="ss-muted" data-testid="ss-submit-why">{why}</span> : <span className="ss-muted">Freezes the saved revision {p.revision} as a new candidate. You cannot approve or publish it yourself.</span>}
           </div>
         </section>
-      ) : <p className="ss-note" data-testid="ss-submit-not-author"><Glyph name="info" size={14} /><span>You can review this survey’s candidates. Submitting a draft needs the survey.edit permission.</span></p>}
+      ) : <p className="ss-note" data-testid="ss-submit-not-author"><Glyph name="info" size={14} /><span>You can review this {thing}’s candidates. Submitting a draft needs the survey.edit permission.</span></p>}
 
       <section className="ss-review-card" aria-labelledby="ss-cands-title">
         <h2 id="ss-cands-title">Candidates</h2>
@@ -206,6 +210,7 @@ function FrozenContent({ d }: { d: CandidateDocuments }) {
 }
 
 function ChangesSince({ d, history }: { d: CandidateDocuments; history: SurveyHistory | null }) {
+  const { base } = usePlace(d.survey_code);
   const [before, setBefore] = useState<CandidateDocuments | null | 'none'>(null);
   const previous = useMemo(() => history?.versions.filter((v) => v.candidate_n < d.n).at(-1) ?? null, [history, d.n]);
   useEffect(() => {
@@ -224,7 +229,7 @@ function ChangesSince({ d, history }: { d: CandidateDocuments; history: SurveyHi
   ];
   return (
     <div data-testid="ss-changes">
-      <p className="ss-muted">Compared with <Link to={`/survey-studio/surveys/${d.survey_code}/versions/${previous.id}`}>Version {previous.label}</Link> (candidate C-{previous.candidate_n}). A changed question, wording or module is a new version of it; the earlier version is untouched.</p>
+      <p className="ss-muted">Compared with <Link to={`${base}/versions/${previous.id}`}>Version {previous.label}</Link> (candidate C-{previous.candidate_n}). A changed question, wording or module is a new version of it; the earlier version is untouched.</p>
       {lines.length ? <ul className="ss-changes">{lines.map((l) => <li key={l.k}><strong>{l.what}</strong>{l.detail ? <small> {l.detail}</small> : null}</li>)}</ul> : <p>Nothing differs from Version {previous.label}.</p>}
     </div>
   );
@@ -240,6 +245,7 @@ function CandidateView({ candidateId, crumb, version }: { candidateId: string; c
   const { can } = useAuth();
   const p = usePersistence()!;
   const nav = useNavigate();
+  const place = usePlace(p.code);
   const [d, setD] = useState<CandidateDocuments | null>(null);
   const [history, setHistory] = useState<SurveyHistory | null>(null);
   const [error, setError] = useState<{ code?: string; message: string } | null>(null);
@@ -259,7 +265,7 @@ function CandidateView({ candidateId, crumb, version }: { candidateId: string; c
   if (missing) return <Frame crumb="Not found"><div className="ss-empty page" data-testid="ss-candidate-missing"><p><strong>There is no such candidate that you can open.</strong></p></div></Frame>;
   if (!d) return <Frame crumb="Candidate">{error ? <p className="ss-note warn" role="alert"><Glyph name="alert" size={14} /><span>{error.message}</span></p> : <p className="ss-loading page" role="status" data-testid="ss-loading"><span className="ss-spinner" aria-hidden="true" /> Loading the frozen candidate…</p>}</Frame>;
   const r = d.restrictions;
-  const base = `/survey-studio/surveys/${d.survey_code}`;
+  const base = place.base;
   const tampered = !d.manifest_intact;
   return (
     <Frame crumb={crumb ?? `Candidate C-${d.n}`}>

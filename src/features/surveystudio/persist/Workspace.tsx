@@ -12,6 +12,8 @@ import { hasPersistedMemory } from '../store';
 import { Glyph, Tag, type GlyphName } from '../ui';
 import { listSurveys, type Component, type ComponentKind, type SurveySummary } from './api';
 import { InspectorDrawer, inspectParam, parseInspect, type Inspect } from './Inspector';
+import { listModules, type ModuleSummary } from './moduleApi';
+import { CreateModuleForm } from './ModuleStudio';
 import { STANDING_NOTE } from './standing';
 import { SurveyOverviewDrawer } from './SurveyOverview';
 import { MODULE_CATEGORY, allComponents, answerOf, assignmentPolicy, controlMappings, controlPolicies, getWorkspace, missing, requirementGroups, words, type Maybe, type WorkspaceSummary } from './workspaceApi';
@@ -58,13 +60,13 @@ function BlockCard({ c, onInspect }: { c: Component; onInspect: (c: Inspect) => 
       <button type="button" onClick={open} data-testid={`ss-ws-block-${kind}-${c.code}-${c.version}`} data-kind={kind} data-code={c.code} aria-label={`Inspect ${c.title}`}>
         <span className="ss-ws-card-top">
           <span className="ss-ws-card-kind">{kind === 'MODULE' ? (MODULE_CATEGORY[c.category] ?? words(c.category)) : kind === 'ITEM' ? <><Glyph name={a!.glyph} size={13} /> {a!.label}</> : kind === 'CONDITION' ? 'Condition' : plural(facts.options ?? 0, 'answer')}</span>
-          {c.used_by.surveys > 1 ? <Tag tone="shared">Reused · {c.used_by.surveys} surveys</Tag> : null}
+          {c.used_by.surveys > 1 ? <Tag tone="shared">Reused · {c.used_by.surveys} surveys</Tag> : kind === 'MODULE' && c.origin?.artifact_kind === 'MODULE' ? <Tag>Authored on its own</Tag> : null}
         </span>
         <strong className="ss-ws-card-title">{kind === 'ITEM' ? `“${c.title}”` : c.title}</strong>
         {kind === 'MODULE' ? <BlockStrip facts={facts} /> : null}
         {c.description ? <span className="ss-ws-card-text">{c.description}</span> : kind === 'CONDITION' ? <span className="ss-ws-card-text">Reads {((facts.fields ?? []) as string[]).join(', ') || 'no customer or policy information'}</span> : null}
         <span className="ss-ws-card-foot">
-          <span>{kind === 'MODULE' ? `${plural(facts.questions ?? 0, 'question')} · ${facts.branching ? 'branches' : 'no branching'} · ${plural(((facts.outcomes ?? []) as string[]).length, 'ending')}` : `In ${c.published_in.map((s) => s.survey_name).slice(0, 1).join('')}${c.published_in.length > 1 ? ` +${c.published_in.length - 1}` : ''}`}</span>
+          <span>{kind === 'MODULE' ? `${plural(facts.questions ?? 0, 'question')} · ${facts.branching ? 'branches' : 'no branching'} · ${plural(((facts.outcomes ?? []) as string[]).length, 'ending')}` : c.origin?.artifact_kind === 'MODULE' ? `In module ${c.origin.name}` : `In ${c.published_in.map((s) => s.survey_name).slice(0, 1).join('')}${c.published_in.length > 1 ? ` +${c.published_in.length - 1}` : ''}`}</span>
           <span className="ss-ws-card-version">Published · {kind === 'MODULE' ? 'revision' : 'version'} {c.version}{c.is_latest ? '' : ' · older'}</span>
         </span>
       </button>
@@ -108,37 +110,62 @@ function SurveyRow({ s, saved, onOverview }: { s: SurveySummary; saved?: string;
   );
 }
 
-/** Where each kind of building block is made. Blocks are not created on their own: each is authored inside a survey,
-    with the existing composer and module builder, and becomes reusable when that survey is published. This panel says
-    so and opens the survey to make it in. It creates nothing itself. */
+/** Where each kind of building block is made, said plainly — this panel explains; it creates nothing by itself.
+    With modules authored on their own (LIB-2), a module is created directly and needs no survey; a question, a
+    condition and an answer set are still written INSIDE a module (a standalone one, or a survey's) and become reusable
+    when that module is published. Without it, every block is written inside a survey. */
 const MAKE: Record<Tab, { where: string; steps: string[] }> = {
   MODULE: { where: 'in a survey’s composer', steps: ['Open the survey you are building (or start a new one).', 'In the composer, choose “New module”, or “Add a module here” between two modules.', 'Name it and build its questions and branches in the module builder.'] },
-  ITEM: { where: 'inside a module, in the module builder', steps: ['Open the survey, then open the module the question belongs to.', 'Add a question (or a statement) as a step, and write its exact wording and the kind of answer.', 'Set where each answer leads.'] },
-  CONDITION: { where: 'inside a module or on a module’s entry, where a decision is needed', steps: ['Open the survey, then the module that needs a decision — or the module’s entry rule in the composer.', 'Add a decision and write its condition: what it reads and the value it compares with.', 'Say what happens when it is met, not met, and cannot be decided.'] },
-  OPTION_SET: { where: 'with a question, in the module builder', steps: ['Open the survey and the module, and add or open a question that has a list of answers.', 'Write its answers. That list is the question’s answer set.', 'Another question can then use the same published set from the library.'] },
+  ITEM: { where: 'inside a module, in the module builder', steps: ['Open the module the question belongs to.', 'Add a question (or a statement) as a step, and write its exact wording and the kind of answer.', 'Set where each answer leads.'] },
+  CONDITION: { where: 'inside a module, where a decision is needed', steps: ['Open the module that needs a decision.', 'Add a decision and write its condition: what it reads and the value it compares with.', 'Say what happens when it is met, not met, and cannot be decided.'] },
+  OPTION_SET: { where: 'with a question, in the module builder', steps: ['Open a module, and add or open a question that has a list of answers.', 'Write its answers. That list is the question’s answer set.', 'Another question can then use the same published set from the library.'] },
 };
-function MakeBlock({ kind, surveys, canEdit, onKind, onClose, onNewSurvey }: { kind: Tab; surveys: SurveySummary[]; canEdit: boolean; onKind: (k: Tab) => void; onClose: () => void; onNewSurvey: () => void }) {
+function MakeBlock({ kind, surveys, modules, canEdit, onKind, onClose, onNewSurvey, onNewModule }: { kind: Tab; surveys: SurveySummary[]; /** null = this server does not offer modules authored on their own */ modules: ModuleSummary[] | null; canEdit: boolean; onKind: (k: Tab) => void; onClose: () => void; onNewSurvey: () => void; onNewModule: () => void }) {
   const t = TABS.find((x) => x.kind === kind)!;
   const open = surveys.filter((s) => !s.open_candidate_status);
+  const alone = modules !== null;
+  const drafts = (modules ?? []).filter((m) => !m.open_candidate);
   return (
-    <section className="ss-ws-make" aria-labelledby="ss-ws-make-h" data-testid="ss-ws-make" data-kind={kind}>
-      <header><h2 id="ss-ws-make-h">Create a building block</h2><button type="button" className="ss-icon-btn" onClick={onClose} aria-label="Close" data-testid="ss-ws-make-close"><Glyph name="close" /></button></header>
-      <div className="ss-ws-tabs" role="tablist" aria-label="Kind of building block to create">{TABS.map((x) => <button key={x.kind} type="button" role="tab" aria-selected={kind === x.kind} className={kind === x.kind ? 'on' : ''} onClick={() => onKind(x.kind)} data-testid={`ss-ws-make-${x.kind}`}><Glyph name={x.glyph} size={15} /> {x.one[0]!.toUpperCase() + x.one.slice(1)}</button>)}</div>
+    <section className="ss-ws-make" aria-labelledby="ss-ws-make-h" data-testid="ss-ws-make" data-kind={kind} data-standalone={String(alone)}>
+      <header><h2 id="ss-ws-make-h">How building blocks are made</h2><button type="button" className="ss-icon-btn" onClick={onClose} aria-label="Close" data-testid="ss-ws-make-close"><Glyph name="close" /></button></header>
+      <div className="ss-ws-tabs" role="tablist" aria-label="Kind of building block">{TABS.map((x) => <button key={x.kind} type="button" role="tab" aria-selected={kind === x.kind} className={kind === x.kind ? 'on' : ''} onClick={() => onKind(x.kind)} data-testid={`ss-ws-make-${x.kind}`}><Glyph name={x.glyph} size={15} /> {x.one[0]!.toUpperCase() + x.one.slice(1)}</button>)}</div>
       <div className="ss-ws-make-cols">
         <div>
-          <p className="ss-ws-make-lede">A {t.one} is made <strong>{MAKE[kind].where}</strong>. It is not created on its own: it is built as part of a survey, and becomes a reusable building block here once that survey is published.</p>
-          <ol className="ss-ws-make-steps">{MAKE[kind].steps.map((x) => <li key={x}>{x}</li>)}</ol>
+          {alone && kind === 'MODULE' ? <p className="ss-ws-make-lede">A module is created <strong>on its own</strong>. You build its questions and branches, test it and publish it here; no survey is needed. Once published it is a reusable building block that any survey can add.</p>
+            : alone ? <p className="ss-ws-make-lede">A {t.one} is written <strong>{MAKE[kind].where}</strong> — it cannot yet be created by itself. Create or open a module, write the {t.one} there, and it becomes a reusable building block when that module is published. No survey is needed.</p>
+              : <p className="ss-ws-make-lede">A {t.one} is made <strong>{MAKE[kind].where}</strong>. It is not created on its own: it is built as part of a survey, and becomes a reusable building block here once that survey is published.</p>}
+          {alone && kind === 'MODULE' ? null : <ol className="ss-ws-make-steps">{MAKE[kind].steps.map((x) => <li key={x}>{x}</li>)}</ol>}
         </div>
         <div>
-          <h3>Choose the survey to make it in</h3>
           {!canEdit ? <p className="ss-ws-quiet">Creating needs the “edit surveys” permission, which you do not hold.</p>
-            : (<>
+            : alone ? (<>
+              <h3>{kind === 'MODULE' ? 'Start here' : `Choose the module to write the ${t.one} in`}</h3>
+              <p><button type="button" className="ss-btn primary" onClick={onNewModule} data-testid="ss-ws-make-new-module"><Glyph name="plus" size={14} /> Create a module</button></p>
+              {drafts.length ? <ul className="ss-ws-rows">{drafts.slice(0, 6).map((m) => <li key={m.id}><Link to={`/survey-studio/modules/${m.code}`} data-testid={`ss-ws-make-in-${m.code}`}><span className="ss-ws-row-main"><strong>{m.name}</strong><small>{m.unpublished_changes ? `Draft revision ${m.working_revision}` : `Revision ${m.working_revision} published`}</small></span><span className="ss-btn small">Open its builder</span></Link></li>)}</ul> : null}
+              {kind !== 'MODULE' ? <p className="ss-ws-hint">A module inside a survey works the same way: open the survey, then the module.</p> : null}
+            </>) : (<>
+              <h3>Choose the survey to make it in</h3>
               {open.length ? <ul className="ss-ws-rows">{open.slice(0, 6).map((s) => <li key={s.id}><Link to={`/survey-studio/surveys/${s.code}`} data-testid={`ss-ws-make-in-${s.code}`}><span className="ss-ws-row-main"><strong>{s.name}</strong><small>Draft revision {s.draft_revision}</small></span><span className="ss-btn small">Open its composer</span></Link></li>)}</ul> : <p className="ss-ws-quiet">No survey is open for editing.</p>}
               <p className="ss-ws-hint">{open.length > 6 ? `${open.length - 6} more are under Surveys. ` : ''}<button type="button" className="ss-link" onClick={onNewSurvey} data-testid="ss-ws-make-new-survey">Or start a new survey</button></p>
             </>)}
         </div>
       </div>
     </section>
+  );
+}
+
+/** A module authored on its own that is not (or not only) a published block yet: where it stands and whose step it is. */
+function ModuleRow({ m }: { m: ModuleSummary }) {
+  const c = m.open_candidate;
+  const facts = m.facts as Any;
+  return (
+    <li data-testid={`ss-ws-module-${m.code}`} data-state={c ? c.status : m.unpublished_changes ? 'DRAFT' : 'PUBLISHED'}>
+      <Link to={c?.your_action ? `/survey-studio/modules/${m.code}/candidates/${c.id}` : `/survey-studio/modules/${m.code}`}>
+        <span className="ss-ws-row-main"><strong>{m.name}</strong><small>{plural(facts.questions ?? 0, 'question')} · {c ? `revision ${c.revision} submitted ${ago(c.submitted_at)}` : `draft revision ${m.working_revision} · saved ${ago(m.saved_at)}`}{m.latest_published_revision ? ` · revision ${m.latest_published_revision} is published` : ' · never published'}</small></span>
+        {c ? <Tag tone="warn">{c.status === 'IN_REVIEW' ? 'In review' : 'Approved'}</Tag> : <Tag tone="draft">Draft</Tag>}
+        <Glyph name="right" size={14} />
+      </Link>
+    </li>
   );
 }
 
@@ -183,6 +210,8 @@ export function WorkspacePage({ CreateForm }: { CreateForm: ComponentType<{ onCa
   const [creating, setCreating] = useState(false);
   const [showNotice, setShowNotice] = useState(false);
   const [making, setMaking] = useState<Tab | null>(null);
+  const [makingModule, setMakingModule] = useState(false);
+  const [mods, setMods] = useState<Maybe<ModuleSummary[]> | null>(null);
   const view = (['surveys', 'blocks'].includes(params.get('view') ?? '') ? params.get('view') : 'overview') as 'overview' | 'surveys' | 'blocks';
   const q = (params.get('q') ?? '').trim().toLowerCase();
   const tab = (TABS.find((t) => t.kind === params.get('blocks'))?.kind ?? 'MODULE') as Tab;
@@ -201,6 +230,7 @@ export function WorkspacePage({ CreateForm }: { CreateForm: ComponentType<{ onCa
     setError(null);
     listSurveys().then(setSurveys).catch((e) => setError(say(e)));
     getWorkspace().then(setSummary).catch(() => setSummary(null));
+    listModules().then(setMods);
     Promise.all(TABS.map((t) => allComponents(t.kind))).then(([m, i, c, o]) => setBlocks({ MODULE: m!, ITEM: i!, CONDITION: c!, OPTION_SET: o! }));
     Promise.all([controlPolicies(), controlMappings(), requirementGroups(), assignmentPolicy()]).then(([policies, mappings, groups, bindings]) => setOther(otherGovernance({ policies, mappings, groups, bindings }, meId, can)));
   }, [meId]); // eslint-disable-line react-hooks/exhaustive-deps -- `can` follows the signed-in person
@@ -208,11 +238,24 @@ export function WorkspacePage({ CreateForm }: { CreateForm: ComponentType<{ onCa
 
   const inv = summary?.inventory as Any;
   const kinds = inv?.components as Record<Tab, Any> | null | undefined;
-  const awaiting = [
+  const awaitingSurveys = [
     ...((summary?.awaiting_you ?? []) as Any[]).map((a) => ({ key: a.candidate_id, what: 'Survey', action: a.action, title: `${a.survey_name}, submission ${a.candidate_n}`, since: a.since, to: `/survey-studio/surveys/${a.survey_code}/candidates/${a.candidate_id}` })),
     ...other,
   ];
-  const waiting = (summary?.waiting_on_others ?? []) as Any[];
+  // LIB-2: modules authored on their own. `null` = this server does not offer them (the feature is off).
+  const standalone = mods !== null && !missing(mods) ? mods : null;
+  const moduleSteps = (standalone ?? []).filter((m) => m.open_candidate);
+  const awaiting = [
+    ...awaitingSurveys,
+    ...moduleSteps.filter((m) => m.open_candidate!.your_action).map((m) => ({ key: m.open_candidate!.id, what: 'Module', action: m.open_candidate!.your_action as string, title: `${m.name}, revision ${m.open_candidate!.revision}`, since: m.open_candidate!.submitted_at, to: `/survey-studio/modules/${m.code}/candidates/${m.open_candidate!.id}` })),
+  ];
+  // what the signed-in person SUBMITTED and someone else must now act on — never something they can do themselves
+  const waiting: Array<{ key: string; what: string; title: string; needs: string; since?: string; to: string }> = [
+    ...((summary?.waiting_on_others ?? []) as Any[]).map((w) => ({ key: w.candidate_id as string, what: 'Survey', title: `${w.survey_name}, submission ${w.candidate_n}`, needs: w.waiting_for === 'A_PUBLISHER' ? 'a publisher' : 'a reviewer', since: w.since as string | undefined, to: `/survey-studio/surveys/${w.survey_code}/candidates/${w.candidate_id}` })),
+    ...moduleSteps.filter((m) => m.open_candidate!.submitted_by_you && !m.open_candidate!.your_action).map((m) => ({ key: m.open_candidate!.id, what: 'Module', title: `${m.name}, revision ${m.open_candidate!.revision}`, needs: m.open_candidate!.waiting_for === 'A_PUBLISHER' ? 'a publisher' : 'a reviewer', since: m.open_candidate!.submitted_at, to: `/survey-studio/modules/${m.code}/candidates/${m.open_candidate!.id}` })),
+  ];
+  const inProgress = (standalone ?? []).filter((m) => m.unpublished_changes || m.open_candidate).sort((a, b) => b.saved_at.localeCompare(a.saved_at));
+  const newModule = () => { setCreating(false); setMaking(null); setMakingModule(true); };
 
   const shownSurveys = useMemo(() => (surveys ?? []).filter((s) => (!q || hit(q, s.name, s.code, s.purpose)) && (surveyFilter === 'all' || (surveyFilter === 'published' ? !!s.latest_version_label : surveyFilter === 'draft' ? !s.latest_version_label : !!s.open_candidate_status))), [surveys, q, surveyFilter]);
   const list = blocks?.[tab];
@@ -253,8 +296,10 @@ export function WorkspacePage({ CreateForm }: { CreateForm: ComponentType<{ onCa
           </div>
           <div className="ss-ws-head-actions">
             {can('survey.edit') ? (<>
-              <button type="button" className="ss-btn primary big" onClick={() => { setMaking(null); setCreating(true); }} data-testid="ss-create"><Glyph name="plus" /> Create survey</button>
-              <button type="button" className="ss-btn big" onClick={() => { setCreating(false); setMaking('MODULE'); }} aria-expanded={making !== null} data-testid="ss-ws-new-block"><Glyph name="plus" /> Create module</button>
+              <button type="button" className="ss-btn primary big" onClick={() => { setMaking(null); setMakingModule(false); setCreating(true); }} data-testid="ss-create"><Glyph name="plus" /> Create survey</button>
+              {/* "Create module" only where it creates one. Where modules are still made inside a survey, the button says so. */}
+              {standalone ? <button type="button" className="ss-btn big" onClick={newModule} aria-expanded={makingModule} data-testid="ss-ws-new-block" data-mode="create"><Glyph name="plus" /> Create module</button>
+                : <button type="button" className="ss-btn big" onClick={() => { setCreating(false); setMaking('MODULE'); }} aria-expanded={making !== null} data-testid="ss-ws-new-block" data-mode="explain"><Glyph name="info" /> How modules are made</button>}
             </>) : <span className="ss-save-note" data-testid="ss-read-only">Read only: you can open and inspect, but not change.</span>}
             <button type="button" className="ss-btn big" onClick={() => go('blocks')} data-testid="ss-ws-explore">Explore building blocks</button>
           </div>
@@ -281,7 +326,8 @@ export function WorkspacePage({ CreateForm }: { CreateForm: ComponentType<{ onCa
         </div>
 
         {creating ? <CreateForm onCancel={() => setCreating(false)} onMade={(s) => nav(`/survey-studio/surveys/${s.code}`)} /> : null}
-        {making ? <MakeBlock kind={making} surveys={surveys ?? []} canEdit={can('survey.edit')} onKind={setMaking} onClose={() => setMaking(null)} onNewSurvey={() => { setMaking(null); setCreating(true); }} /> : null}
+        {makingModule ? <CreateModuleForm onCancel={() => setMakingModule(false)} /> : null}
+        {making ? <MakeBlock kind={making} surveys={surveys ?? []} modules={standalone} canEdit={can('survey.edit')} onKind={setMaking} onClose={() => setMaking(null)} onNewSurvey={() => { setMaking(null); setCreating(true); }} onNewModule={newModule} /> : null}
 
         {found ? (
           <section className="ss-ws-section ss-ws-results" aria-label="Search results" data-testid="ss-ws-results" data-count={foundTotal}>
@@ -304,21 +350,30 @@ export function WorkspacePage({ CreateForm }: { CreateForm: ComponentType<{ onCa
                 );
               })}
               <li><button type="button" onClick={() => go('surveys', { surveys: 'draft' })} data-testid="ss-ws-count-drafts" data-count={inv?.surveys.never_published ?? ''}><Glyph name="text" size={18} /><strong>{inv ? inv.surveys.never_published : '–'}</strong><span>Drafts</span><small>{inv ? 'surveys never published' : 'Counting…'}</small></button></li>
-              <li><button type="button" onClick={() => go('surveys', { surveys: 'review' })} data-testid="ss-ws-count-review" data-count={inv ? inv.surveys.in_review + inv.surveys.approved_awaiting_publication : ''}><Glyph name="check" size={18} /><strong>{inv ? inv.surveys.in_review + inv.surveys.approved_awaiting_publication : '–'}</strong><span>Awaiting review</span><small>{inv ? `${inv.surveys.in_review} in review · ${inv.surveys.approved_awaiting_publication} approved, unpublished` : 'Counting…'}</small></button></li>
+              <li><button type="button" onClick={() => go('surveys', { surveys: 'review' })} data-testid="ss-ws-count-review" data-count={inv ? inv.surveys.in_review + inv.surveys.approved_awaiting_publication : ''}><Glyph name="check" size={18} /><strong>{inv ? inv.surveys.in_review + inv.surveys.approved_awaiting_publication : '–'}</strong><span>Surveys in review</span><small>{inv ? `${inv.surveys.in_review} awaiting a reviewer · ${inv.surveys.approved_awaiting_publication} awaiting a publisher` : 'Counting…'}</small></button></li>
             </ul>
 
             <div className="ss-ws-cols">
               <div className="ss-ws-main">
-                {awaiting.length || waiting.length ? (
-                  <Panel title="Awaiting you" testid="ss-ws-awaiting" hint="Reviews and publications the rules allow you to do now.">
-                    {awaiting.length ? (
-                      <ul className="ss-ws-rows">{awaiting.map((a) => (
-                        <li key={a.key} data-action={a.action}><Link to={a.to}><span className="ss-ws-row-main"><strong>{a.title}</strong><small>{a.what} · {a.action === 'PUBLISH' ? 'approved, waiting to be published' : 'submitted, waiting for a decision'} · {ago(a.since)}</small></span><span className="ss-btn small">{a.action === 'PUBLISH' ? 'Publish' : 'Review'}</span></Link></li>))}</ul>
-                    ) : null}
-                    {waiting.length ? <p className="ss-ws-hint" data-testid="ss-ws-waiting">Waiting on someone else: {waiting.map((w, i) => <span key={w.candidate_id}>{i ? '; ' : ''}<Link to={`/survey-studio/surveys/${w.survey_code}/candidates/${w.candidate_id}`}>{w.survey_name}</Link> ({w.waiting_for === 'A_PUBLISHER' ? 'needs a publisher' : 'needs a reviewer'})</span>)}.</p> : null}
+                {awaiting.length ? (
+                  <Panel title={`Waiting for you · ${awaiting.length}`} testid="ss-ws-awaiting" hint="Your step: a review or a publication that the rules and your permissions allow you to do now.">
+                    <ul className="ss-ws-rows">{awaiting.map((a) => (
+                      <li key={a.key} data-action={a.action} data-what={a.what}><Link to={a.to}><span className="ss-ws-row-main"><strong>{a.title}</strong><small>{a.what} · {a.action === 'PUBLISH' ? 'approved — you can publish it' : 'submitted — you can approve it or send it back'} · {ago(a.since)}</small></span><span className="ss-btn small primary">{a.action === 'PUBLISH' ? 'Publish' : 'Review'}</span></Link></li>))}</ul>
                   </Panel>
                 ) : null}
-                <Panel title="Your surveys" testid="ss-ws-surveys-panel" hint={awaiting.length || waiting.length ? undefined : 'Most recently saved first. Nothing is waiting for your review.'} action={surveys && surveys.length > 6 ? <button type="button" className="ss-link" onClick={() => go('surveys')} data-testid="ss-ws-all-surveys">See all {surveys.length} as cards</button> : undefined}>
+                {waiting.length ? (
+                  <Panel title={`Waiting for someone else · ${waiting.length}`} testid="ss-ws-waiting" hint="You submitted these. You cannot review or publish your own work, so the next step belongs to another person. Nothing is needed from you.">
+                    <ul className="ss-ws-rows quiet">{waiting.map((w) => (
+                      <li key={w.key} data-what={w.what}><Link to={w.to}><span className="ss-ws-row-main"><strong>{w.title}</strong><small>{w.what} · needs {w.needs}{w.since ? ` · submitted ${ago(w.since)}` : ''}</small></span><Tag>Not your step</Tag></Link></li>))}</ul>
+                  </Panel>
+                ) : null}
+                {inProgress.length ? (
+                  <Panel title="Modules in progress" testid="ss-ws-modules-panel" hint="Reusable modules being written on their own. A draft is not in the library until it is published.">
+                    <ul className="ss-ws-rows">{inProgress.slice(0, 6).map((m) => <ModuleRow key={m.id} m={m} />)}</ul>
+                    {inProgress.length > 6 ? <p className="ss-ws-hint"><button type="button" className="ss-link" onClick={() => go('blocks', { blocks: 'MODULE' })}>See all {inProgress.length} under Building blocks</button></p> : null}
+                  </Panel>
+                ) : null}
+                <Panel title="Your surveys" testid="ss-ws-surveys-panel" hint={awaiting.length ? undefined : 'Most recently saved first. Nothing is waiting for you.'} action={surveys && surveys.length > 6 ? <button type="button" className="ss-link" onClick={() => go('surveys')} data-testid="ss-ws-all-surveys">See all {surveys.length} as cards</button> : undefined}>
                   {error ? <div className="ss-empty" role="alert" data-testid="ss-list-error"><p><strong>The surveys could not be loaded.</strong> {error}</p><button type="button" className="ss-btn" onClick={fetchAll}>Try again</button></div>
                     : surveys === null ? <p className="ss-loading" role="status" data-testid="ss-loading"><span className="ss-spinner" aria-hidden="true" /> Loading surveys…</p>
                       : surveys.length === 0 ? <div className="ss-empty" data-testid="ss-no-surveys"><p><strong>No surveys yet.</strong> {can('survey.edit') ? 'Create the first one.' : 'Nobody has created one.'}</p></div>
@@ -337,7 +392,7 @@ export function WorkspacePage({ CreateForm }: { CreateForm: ComponentType<{ onCa
               <p className="ss-ws-hint">Published modules, most reused first. Select one to see every question and branch inside it.</p>
               {!blocks ? <p className="ss-loading" role="status"><span className="ss-spinner" aria-hidden="true" /> Loading the library…</p>
                 : preview.length ? <ul className="ss-ws-grid four">{preview.map((c) => <BlockCard key={`${c.code}@${c.version}`} c={c} onInspect={inspect} />)}</ul>
-                  : <p className="ss-ws-quiet" data-testid="ss-ws-preview-none">{libraryOff ? 'The component library is not switched on for this server.' : 'No module is published yet. A module becomes a reusable block when a survey that contains it is published.'}</p>}
+                  : <p className="ss-ws-quiet" data-testid="ss-ws-preview-none">{libraryOff ? 'The component library is not switched on for this server.' : (standalone ? 'No module is published yet. Create a module, build and test it, and publish it: it then appears here.' : 'No module is published yet. A module becomes a reusable block when a survey that contains it is published.')}</p>}
             </section>
           </>
         ) : view === 'surveys' ? (
@@ -363,8 +418,14 @@ export function WorkspacePage({ CreateForm }: { CreateForm: ComponentType<{ onCa
           <section className="ss-ws-section" id="ss-ws-blocks" aria-labelledby="ss-ws-blocks-h" data-testid="ss-ws-blocks">
             <header>
               <h2 id="ss-ws-blocks-h">Building blocks</h2>
-              {can('survey.edit') ? <button type="button" className="ss-btn small" onClick={() => { setCreating(false); setMaking(tab); }} data-testid="ss-ws-new-of-kind"><Glyph name="plus" size={14} /> New {one.one}</button> : null}
+              {!can('survey.edit') ? null : standalone && tab === 'MODULE' ? <button type="button" className="ss-btn small primary" onClick={newModule} data-testid="ss-ws-new-of-kind" data-mode="create"><Glyph name="plus" size={14} /> Create module</button>
+                : <button type="button" className="ss-btn small" onClick={() => { setCreating(false); setMakingModule(false); setMaking(tab); }} data-testid="ss-ws-new-of-kind" data-mode="explain"><Glyph name="info" size={14} /> How {one.one}s are made</button>}
             </header>
+            {tab === 'MODULE' && inProgress.length ? (
+              <div className="ss-ws-drafts" data-testid="ss-ws-module-drafts">
+                <h3>In progress <span className="ss-muted">— not in the library yet</span></h3>
+                <ul className="ss-ws-rows">{inProgress.map((m) => <ModuleRow key={m.id} m={m} />)}</ul>
+              </div>) : null}
             <div className="ss-ws-toolbar">
               <div className="ss-ws-tabs" role="tablist" aria-label="Kinds of building block">
                 {TABS.map((t) => <button key={t.kind} type="button" role="tab" aria-selected={tab === t.kind} className={tab === t.kind ? 'on' : ''} onClick={() => set({ blocks: t.kind })} data-testid={`ss-ws-tab-${t.kind}`}><Glyph name={t.glyph} size={15} /> {t.label}{blocks && !missing(blocks[t.kind]) ? <span>{(blocks[t.kind] as Component[]).filter((c) => c.is_latest).length}</span> : null}</button>)}
@@ -391,12 +452,12 @@ export function WorkspacePage({ CreateForm }: { CreateForm: ComponentType<{ onCa
                       </table></div>)}
                   {pages > 1 ? <nav className="ss-ws-pages" aria-label="Pages" data-testid="ss-ws-pages"><button type="button" className="ss-btn small" disabled={page <= 1} onClick={() => set({ page: String(page - 1) })}>Previous</button><span>Page {Math.min(page, pages)} of {pages} · {sorted.length} in all</span><button type="button" className="ss-btn small" disabled={page >= pages} onClick={() => set({ page: String(page + 1) })} data-testid="ss-ws-next-page">Next</button></nav> : null}
                 </>)
-                  : <div className="ss-empty" data-testid="ss-ws-blocks-none"><p><strong>No published {one.one} {filter === 'reused' ? 'is reused by more than one survey' : 'yet'}.</strong> A {one.one} is made {MAKE[tab].where}, and becomes reusable when that survey is published.</p>{can('survey.edit') ? <button type="button" className="ss-btn" onClick={() => setMaking(tab)}>How to create one</button> : null}</div>}
+                  : <div className="ss-empty" data-testid="ss-ws-blocks-none"><p><strong>No published {one.one} {filter === 'reused' ? 'is reused by more than one survey' : 'yet'}.</strong> {standalone && tab === 'MODULE' ? 'Create a module, build and test it, and publish it: it then appears here.' : `A ${one.one} is made ${MAKE[tab].where}, and becomes reusable when ${standalone ? 'that module' : 'that survey'} is published.`}</p>{can('survey.edit') ? (standalone && tab === 'MODULE' ? <button type="button" className="ss-btn primary" onClick={newModule}>Create module</button> : <button type="button" className="ss-btn" onClick={() => setMaking(tab)}>How one is made</button>) : null}</div>}
           </section>
         )}
       </div>
       {opened && !inspecting && surveys?.find((x) => x.code === opened) ? <SurveyOverviewDrawer survey={surveys.find((x) => x.code === opened)!} facts={factsOf.get(surveys.find((x) => x.code === opened)!.id) ?? null} published={blocks && !missing(blocks.MODULE) ? (blocks.MODULE as Component[]) : []} onInspect={inspect} onClose={() => set({ survey: null })} /> : null}
-      {inspecting ? <InspectorDrawer target={inspecting} surveys={can('survey.edit') ? surveys ?? [] : []} markets={summary?.markets ?? []} onInspect={inspect} onClose={() => set({ inspect: null })} /> : null}
+      {inspecting ? <InspectorDrawer target={inspecting} surveys={can('survey.edit') ? surveys ?? [] : []} markets={summary?.markets ?? []} standalone={standalone !== null} onInspect={inspect} onClose={() => set({ inspect: null })} /> : null}
     </>
   );
 }

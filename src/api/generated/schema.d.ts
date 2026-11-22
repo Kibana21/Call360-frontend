@@ -3931,6 +3931,71 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/survey-module-tests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Module Test
+         * @description Run ONE module with the Python engine, in a fixed one-module frame, for synthetic facts and an ordered list of
+         *     answers. Nothing is stored: the run is the replay of exactly the inputs given, so the same request gives the same
+         *     run and the same fingerprint. A module with a blocker is reported as not testable and is not executed.
+         */
+        post: operations["survey_module_test"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-modules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Survey Module List
+         * @description The standalone modules of the reader's markets — drafts included, which the published library never shows —
+         *     with where each stands and what, if anything, the reader may do next.
+         */
+        get: operations["survey_module_list"];
+        put?: never;
+        /**
+         * Survey Module Create
+         * @description Create a reusable module on its own: its permanent, server-issued code and an empty first draft revision. No
+         *     survey is created.
+         */
+        post: operations["survey_module_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-modules/{module_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Survey Module Get */
+        get: operations["survey_module_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/survey-runs/{survey_run_id}": {
         parameters: {
             query?: never;
@@ -13665,6 +13730,7 @@ export interface components {
              * @default Synthetic content, unapproved for operational use. No survey here is eligible for a live call.
              */
             note: string;
+            origin?: components["schemas"]["SurveyComponentOrigin"] | null;
             /** Published In */
             published_in: components["schemas"]["SurveyComponentSource"][];
             /** Requires */
@@ -13713,6 +13779,26 @@ export interface components {
              */
             note: string;
         };
+        /**
+         * SurveyComponentOrigin
+         * @description LIB-2 — where this version was written: the survey, or the standalone module, that owns it.
+         */
+        SurveyComponentOrigin: {
+            /**
+             * Artifact Kind
+             * @enum {string}
+             */
+            artifact_kind: "SURVEY" | "MODULE";
+            /** Code */
+            code: string;
+            /**
+             * Definition Id
+             * Format: uuid
+             */
+            definition_id: string;
+            /** Name */
+            name: string;
+        };
         /** SurveyComponentOut */
         SurveyComponentOut: {
             /** Category */
@@ -13734,6 +13820,7 @@ export interface components {
             kind: "MODULE" | "ITEM" | "CONDITION" | "OPTION_SET";
             /** Latest Published Version */
             latest_published_version: number;
+            origin?: components["schemas"]["SurveyComponentOrigin"] | null;
             /** Published In */
             published_in: components["schemas"]["SurveyComponentSource"][];
             /** Sha256 */
@@ -13760,6 +13847,13 @@ export interface components {
         };
         /** SurveyComponentSource */
         SurveyComponentSource: {
+            /**
+             * Artifact Kind
+             * @description SURVEY: a survey whose published version pins this. MODULE: the standalone module's own publication record (LIB-2) — not a survey, and not counted as a use.
+             * @default SURVEY
+             * @enum {string}
+             */
+            artifact_kind: "SURVEY" | "MODULE";
             /** Survey Code */
             survey_code: string;
             /**
@@ -15304,6 +15398,248 @@ export interface components {
             sha256: string;
             /** Version */
             version: number;
+        };
+        /** SurveyModuleCandidate */
+        SurveyModuleCandidate: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** N */
+            n: number;
+            /**
+             * Revision
+             * @description The module revision this candidate would publish.
+             */
+            revision: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "IN_REVIEW" | "APPROVED";
+            /**
+             * Submitted At
+             * Format: date-time
+             */
+            submitted_at: string;
+            /** Submitted By You */
+            submitted_by_you: boolean;
+            /**
+             * Waiting For
+             * @description Whose step is next, whoever the reader is: a reviewer while in review, a publisher once approved.
+             * @enum {string}
+             */
+            waiting_for: "A_REVIEWER" | "A_PUBLISHER";
+            /**
+             * Your Action
+             * @description What the identity rules AND the reader's permissions allow the reader to do with it now.
+             */
+            your_action: ("DECIDE" | "PUBLISH") | null;
+        };
+        /** SurveyModuleCreateIn */
+        SurveyModuleCreateIn: {
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /** Name */
+            name: string;
+        };
+        /** SurveyModuleList */
+        SurveyModuleList: {
+            /** Items */
+            items: components["schemas"]["SurveyModuleOut"][];
+            /**
+             * Note
+             * @default Synthetic content, unapproved for operational use. A standalone module is not a survey: it cannot be simulated, planned or assigned as one, and publishing it makes nothing eligible for a call.
+             */
+            note: string;
+        };
+        /** SurveyModuleOut */
+        SurveyModuleOut: {
+            /** Code */
+            code: string;
+            /** Description */
+            description: string;
+            /**
+             * Draft Revision
+             * @description The save counter of the working draft (the optimistic-concurrency token).
+             */
+            draft_revision: number;
+            /** Facts */
+            facts: {
+                [key: string]: unknown;
+            };
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Latest Published Revision */
+            latest_published_revision: number | null;
+            /** Market Code */
+            market_code: string;
+            /** Name */
+            name: string;
+            /**
+             * Note
+             * @default Synthetic content, unapproved for operational use. A standalone module is not a survey: it cannot be simulated, planned or assigned as one, and publishing it makes nothing eligible for a call.
+             */
+            note: string;
+            open_candidate: components["schemas"]["SurveyModuleCandidate"] | null;
+            /** Published */
+            published: components["schemas"]["SurveyModuleRevision"][];
+            /**
+             * Saved At
+             * Format: date-time
+             */
+            saved_at: string;
+            /** Saved By You */
+            saved_by_you: boolean;
+            /**
+             * Unpublished Changes
+             * @description The working revision is not a published one.
+             */
+            unpublished_changes: boolean;
+            /**
+             * Working Revision
+             * @description The module revision the working draft holds.
+             */
+            working_revision: number;
+            /**
+             * Working State
+             * @description DRAFT: it can still be changed. FROZEN: it was submitted; a change is a new revision.
+             * @enum {string}
+             */
+            working_state: "DRAFT" | "FROZEN";
+        };
+        /** SurveyModuleRevision */
+        SurveyModuleRevision: {
+            /**
+             * Published At
+             * Format: date-time
+             */
+            published_at: string;
+            /** Revision */
+            revision: number;
+            /** Status */
+            status: string;
+            /**
+             * Version Id
+             * Format: uuid
+             */
+            version_id: string;
+            /** Version Label */
+            version_label: string;
+        };
+        /** SurveyModuleTestIn */
+        SurveyModuleTestIn: {
+            /**
+             * Code
+             * @description Otherwise a PUBLISHED module, by code…
+             */
+            code?: string | null;
+            /** Facts */
+            facts?: {
+                [key: string]: unknown;
+            };
+            /** Inputs */
+            inputs?: components["schemas"]["SurveyModuleTestInput"][];
+            /**
+             * Module Id
+             * @description A standalone module: its working draft is tested, or `revision` of it.
+             */
+            module_id?: string | null;
+            /**
+             * Revision
+             * @description …and revision.
+             */
+            revision?: number | null;
+        };
+        /** SurveyModuleTestInput */
+        SurveyModuleTestInput: {
+            /** Answer */
+            answer?: {
+                [key: string]: unknown;
+            };
+            /** Key */
+            key: string;
+        };
+        /** SurveyModuleTestOut */
+        SurveyModuleTestOut: {
+            /** Engine Contract */
+            engine_contract: string;
+            /** Facts */
+            facts: {
+                [key: string]: unknown;
+            };
+            /** Facts Sha256 */
+            facts_sha256: string | null;
+            /**
+             * Fields
+             * @description The catalog definition of each fact the module's conditions read.
+             */
+            fields: {
+                [key: string]: unknown;
+            };
+            /** Findings */
+            findings: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Frame
+             * @description The fixed one-module content the engine was given. Not a survey.
+             */
+            frame: {
+                [key: string]: unknown;
+            };
+            /** Inputs */
+            inputs: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Manifest
+             * @description Every exact version the test ran on.
+             */
+            manifest: {
+                [key: string]: unknown;
+            }[];
+            /** Module */
+            module: {
+                [key: string]: unknown;
+            };
+            /** Note */
+            note: string;
+            /**
+             * Record Class
+             * @constant
+             */
+            record_class: "MODULE_TEST";
+            /** Requires */
+            requires: {
+                [key: string]: unknown;
+            };
+            /** Run */
+            run: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Run Sha256
+             * @description The fingerprint of the run: the same inputs always give the same one.
+             */
+            run_sha256: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "PENDING" | "POLICY_UNRESOLVED" | "TERMINAL" | "NOT_TESTABLE";
+            /**
+             * Testable
+             * @description False when the module has a blocker: it is then not executed at all.
+             */
+            testable: boolean;
         };
         /** SurveyOperationIn */
         SurveyOperationIn: {
@@ -33403,6 +33739,312 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SurveyLibraryOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_module_test: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyModuleTestIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyModuleTestOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_module_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyModuleList"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_module_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyModuleCreateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyModuleOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_module_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                module_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyModuleOut"];
                 };
             };
             /** @description Unauthorized */

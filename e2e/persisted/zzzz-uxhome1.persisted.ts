@@ -59,12 +59,18 @@ test('UX-HOME-1 + NAV-1 the workspace, the module inspector, the explorers and t
   await expect(page.getByTestId('app-crumb')).toContainText('Design & Govern');
   await page.screenshot({ path: `${SHOTS}/UXHOME01-workspace-and-consolidated-sidebar-1440.png`, fullPage: true });
 
-  // where a module is created: said plainly; nothing is created by asking
+  // "Create module" creates a module (LIB-2) — and only when the author says so: opening and cancelling the form
+  // creates nothing, neither a module nor a survey
+  const modulesBefore = (await get(author, '/api/v1/survey-modules')).items.length;
+  await expect(page.getByTestId('ss-ws-new-block')).toHaveAttribute('data-mode', 'create');
   await page.getByTestId('ss-ws-new-block').click();
-  await expect(page.getByTestId('ss-ws-make')).toContainText('A module is made in a survey’s composer');
-  await page.screenshot({ path: `${SHOTS}/UXHOME02-create-module-where-it-is-made.png` });
-  await page.getByTestId('ss-ws-make-close').click();
+  await expect(page.getByTestId('ss-module-create-form')).toContainText('No survey is needed to make one');
+  await expect(page.getByTestId('ss-module-create-go')).toBeDisabled(); // nothing to create until it has a name
+  await page.screenshot({ path: `${SHOTS}/UXHOME02-create-module-form.png` });
+  await page.getByTestId('ss-module-create-form').getByRole('button', { name: 'Cancel' }).click();
+  await expect(page.getByTestId('ss-module-create-form')).toHaveCount(0);
   expect((await get(author, '/api/v1/survey-definitions')).items.length).toBe(surveys.length);
+  expect((await get(author, '/api/v1/survey-modules')).items.length).toBe(modulesBefore);
 
   // ---- 3. the Modules gallery, from its count; filters, sorting, card and list layouts
   await page.getByTestId('ss-ws-count-MODULE').click();
@@ -183,7 +189,7 @@ test('UX-HOME-1 + NAV-1 the workspace, the module inspector, the explorers and t
 
   // the Test section: the existing simulator, on a survey that pins the module — the author here may not simulate
   await page.getByTestId('ss-in-tab-test').click();
-  await expect(page.getByTestId('ss-in-test')).toContainText('A module cannot be simulated on its own');
+  await expect(page.getByTestId('ss-in-test')).toContainText('This revision can be tested on its own');
   await expect(page.getByTestId('ss-in-test-denied')).toBeVisible();
 
   // a question of the module is inspected on its own; Escape closes; the reader is back where they were (15)

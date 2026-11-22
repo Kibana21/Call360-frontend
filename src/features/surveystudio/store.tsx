@@ -55,9 +55,12 @@ export const hasPersistedMemory = (key: string) => persistedMemory.has(key);
  * Without props: the in-memory prototype, exactly as before. With `memoryKey` and `initial` (FI-1): the workspace of one
  * saved survey, started from the documents the server returned.
  */
-export function StudioProvider({ children, memoryKey, initial }: { children: ReactNode; memoryKey?: string; initial?: () => Workspace }) {
+export function StudioProvider({ children, memoryKey, initial, normalize }: { children: ReactNode; memoryKey?: string; initial?: () => Workspace; /** LIB-2: applied to every workspace before it is held (a standalone module keeps its fixed frame). Must return its argument when nothing changes. */ normalize?: (ws: Workspace) => Workspace }) {
   const persisted = memoryKey !== undefined;
-  const [state, setState] = useState<State>(() => (persisted ? persistedMemory.get(memoryKey) ?? { ws: initial!(), past: [], future: [] } : load()));
+  const norm = useRef(normalize);
+  norm.current = normalize;
+  const tidy = useCallback((ws: Workspace) => (norm.current ? norm.current(ws) : ws), []);
+  const [state, setState] = useState<State>(() => (persisted ? persistedMemory.get(memoryKey) ?? { ws: tidy(initial!()), past: [], future: [] } : load()));
   const [notice, setNotice] = useState<Studio['notice']>(null);
   const [focus, setFocus] = useState<Studio['focus']>(null);
   const [gov, setGov] = useState<GovState>(() => (persisted ? emptyGov() : govMemory ?? emptyGov()));
@@ -77,14 +80,15 @@ export function StudioProvider({ children, memoryKey, initial }: { children: Rea
   const apply = useCallback<Studio['apply']>((label, op) => {
     const cur = ref.current;
     const result = op(cur.ws);
-    const [ws, value] = Array.isArray(result) ? result : [result, undefined];
-    if (ws === cur.ws) return value;
+    const [made, value] = Array.isArray(result) ? result : [result, undefined];
+    if (made === cur.ws) return value;
+    const ws = tidy(made);
     const next = { ws, past: [...cur.past, { ws: cur.ws, label }].slice(-LIMIT), future: [] };
     ref.current = next;
     setState(next);
     say(label);
     return value;
-  }, [say]);
+  }, [say, tidy]);
 
   const undo = useCallback(() => {
     const cur = ref.current;
@@ -106,12 +110,12 @@ export function StudioProvider({ children, memoryKey, initial }: { children: Rea
     say(`Redid: ${first.label}`);
   }, [say]);
 
-  const replace = useCallback<Studio['replace']>((ws, text) => {
-    const next = { ws, past: [], future: [] };
+  const replace = useCallback<Studio['replace']>((given, text) => {
+    const next = { ws: tidy(given), past: [], future: [] };
     ref.current = next;
     setState(next);
     say(text);
-  }, [say]);
+  }, [say, tidy]);
 
   const reset = useCallback(() => {
     if (persisted) return; // a saved survey is never "reset to the sample library"

@@ -10,7 +10,9 @@ import { useAuth } from '../../../auth/AuthContext';
 import { FIELDS } from '../model/sample';
 import { Glyph, Tag, type GlyphName } from '../ui';
 import { getComponent, type ComponentDetail, type ComponentKind, type SurveySummary } from './api';
+import { useDialogFocus } from './focus';
 import { differences } from './Library';
+import { getModule, type ModuleSummary } from './moduleApi';
 import { short } from './reviewApi';
 import { MODULE_CATEGORY, answerOf, branchLabel, candidateRecord, destination, missing, ruleInWords, versionContent, versionRecord, words } from './workspaceApi';
 
@@ -308,7 +310,7 @@ function ModuleLogic({ d, steps, arrows, outcomes, name, selected, pick, uses, o
 const GLYPH: Record<ComponentKind, GlyphName> = { MODULE: 'flow', ITEM: 'text', CONDITION: 'branch', OPTION_SET: 'list' };
 
 /** The drawer. `target` is what the address names; `onInspect` moves to another block; `onClose` closes it. */
-export function InspectorDrawer({ target, surveys, markets = [], onInspect, onClose }: { target: Inspect; surveys: SurveySummary[]; markets?: string[]; onInspect: (c: Inspect) => void; onClose: () => void }) {
+export function InspectorDrawer({ target, surveys, markets = [], standalone = false, onInspect, onClose }: { target: Inspect; surveys: SurveySummary[]; markets?: string[]; /** LIB-2: this server offers modules authored on their own, and the test of one module. */ standalone?: boolean; onInspect: (c: Inspect) => void; onClose: () => void }) {
   const { can } = useAuth();
   const [d, setD] = useState<ComponentDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -324,7 +326,7 @@ export function InspectorDrawer({ target, surveys, markets = [], onInspect, onCl
     getComponent(target.kind, target.code, target.version, target.wording ?? undefined).then((x) => { if (current) setD(x); }).catch((e) => { if (current) setError(say(e)); });
     return () => { current = false; };
   }, [key]); // eslint-disable-line react-hooks/exhaustive-deps -- the block is identified by key
-  useEffect(() => { panel.current?.focus(); const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); }; window.addEventListener('keydown', esc); return () => window.removeEventListener('keydown', esc); }, [onClose]);
+  useDialogFocus(panel, onClose);
   const uses = useUses(d);
   const module = useMemo(() => (d && target.kind === 'MODULE' ? read(d) : null), [d, target.kind]);
   const showCompare = (v: number) => { if (d) getComponent(d.kind as ComponentKind, d.code, v).then((other) => setCompare({ with: v, lines: differences(d, other) })).catch((e) => setError(say(e))); };
@@ -333,7 +335,22 @@ export function InspectorDrawer({ target, surveys, markets = [], onInspect, onCl
   const editable = surveys.filter((s) => !s.open_candidate_status);
   const facts = (d?.facts ?? {}) as Any;
   const unit = target.kind === 'MODULE' ? 'Revision' : 'Version';
-  const first = d?.published_in[0];
+  // LIB-2: a module published on its own has a publication record of its own, which is not a survey that uses it
+  const own = d?.published_in.find((u) => u.artifact_kind === 'MODULE');
+  const consumers = (d?.published_in ?? []).filter((u) => u.artifact_kind !== 'MODULE');
+  const first = own ?? consumers[0];
+  const firstSurvey = consumers[0];
+  const origin = d?.origin ?? null;
+  const alone = origin?.artifact_kind === 'MODULE';
+  const [working, setWorking] = useState<ModuleSummary | null>(null);
+  const originId = alone && target.kind === 'MODULE' ? origin!.definition_id : null;
+  useEffect(() => {
+    setWorking(null);
+    if (!originId) return undefined;
+    let current = true;
+    getModule(originId).then((m) => { if (current && !missing(m)) setWorking(m); });
+    return () => { current = false; };
+  }, [originId]);
   const doc = (d?.document ?? {}) as Any;
   const conditions = (d?.dependencies ?? []).filter((x) => x.kind === 'CONDITION');
   const needs = ((d?.requires?.fields ?? []) as string[]);
@@ -360,8 +377,10 @@ export function InspectorDrawer({ target, surveys, markets = [], onInspect, onCl
           <>
             <div className="ss-in-actions" data-testid="ss-in-actions">
               {can('survey.edit') ? <button type="button" className="ss-btn primary" onClick={() => setReuse((v) => !v)} aria-expanded={reuse} data-testid="ss-in-reuse"><Glyph name="plus" size={14} /> Reuse in a survey</button> : <span className="ss-save-note" data-testid="ss-in-read-only">You can inspect this. Reusing or changing it needs the “edit surveys” permission.</span>}
-              {target.kind === 'MODULE' && first ? (can('survey.simulate') ? <Link className="ss-btn" to={`/survey-studio/surveys/${first.survey_code}/simulate`} data-testid="ss-in-test-action"><Glyph name="next" size={14} /> Test in a survey</Link> : null) : null}
-              {target.kind === 'MODULE' && first && can('survey.edit') && instancesOf(uses[first.version_id], d)[0] ? <Link className="ss-btn" to={`/survey-studio/surveys/${first.survey_code}/modules/${instancesOf(uses[first.version_id], d)[0].instance}`} data-testid="ss-in-open-builder">Open in the builder</Link> : null}
+              {target.kind === 'MODULE' && can('survey.simulate') ? (standalone ? <Link className="ss-btn" to={`/survey-studio/module-tests/${d.code}/${d.version}`} data-testid="ss-in-test-action" data-mode="module"><Glyph name="next" size={14} /> Test this module</Link>
+                : firstSurvey ? <Link className="ss-btn" to={`/survey-studio/surveys/${firstSurvey.survey_code}/simulate`} data-testid="ss-in-test-action" data-mode="survey"><Glyph name="next" size={14} /> Test in a survey</Link> : null) : null}
+              {target.kind === 'MODULE' && alone && can('survey.edit') ? <Link className="ss-btn" to={`/survey-studio/modules/${origin!.code}`} data-testid="ss-in-open-builder" data-mode="module">{working?.unpublished_changes ? `Continue draft revision ${working.working_revision}` : 'Open in the Module Builder'}</Link>
+                : target.kind === 'MODULE' && firstSurvey && can('survey.edit') && instancesOf(uses[firstSurvey.version_id], d)[0] ? <Link className="ss-btn" to={`/survey-studio/surveys/${firstSurvey.survey_code}/modules/${instancesOf(uses[firstSurvey.version_id], d)[0].instance}`} data-testid="ss-in-open-builder">Open in the builder</Link> : null}
             </div>
             {reuse ? (
               <div className="ss-in-reuse" data-testid="ss-in-reuse-panel">
@@ -376,10 +395,12 @@ export function InspectorDrawer({ target, surveys, markets = [], onInspect, onCl
                 <dl className="ss-in-facts">
                   <div><dt>Market</dt><dd>{markets.length ? markets.join(', ') : 'the markets you can read'}</dd></div>
                   <div><dt>Status</dt><dd>Published — {unit.toLowerCase()} {d.version}{d.is_latest ? ', the latest' : `; ${unit.toLowerCase()} ${d.latest_published_version} is newer`}. A published {unit.toLowerCase()} is never changed.</dd></div>
-                  <div><dt>Provenance</dt><dd>{first ? <>Published as part of {first.survey_name}, version {first.version_label}.</> : 'Not known.'}{d.derived_from ? <> Made from <span className="ss-code">{String((d.derived_from as Any).code)}</span> version {String((d.derived_from as Any).version)}.</> : null} No owner is recorded for a block on its own.</dd></div>
+                  <div><dt>Provenance</dt><dd data-testid="ss-in-provenance" data-origin={origin?.artifact_kind ?? ''}>{alone && target.kind === 'MODULE' ? <>Authored on its own as a reusable module (<span className="ss-code">{origin!.code}</span>){own ? <>, and published on its own as release {own.version_label}</> : null}. It was not written inside a survey.</>
+                    : alone ? <>Written inside the reusable module {origin!.name} (<span className="ss-code">{origin!.code}</span>), which was authored on its own{own ? <>, and published with its release {own.version_label}</> : null}.</>
+                      : first ? <>Published as part of {first.survey_name}, version {first.version_label}.</> : 'Not known.'}{d.derived_from ? <> Made from <span className="ss-code">{String((d.derived_from as Any).code)}</span> version {String((d.derived_from as Any).version)}.</> : null} No owner is recorded for a block on its own.</dd></div>
                   <div><dt>Used by</dt><dd>{plural(d.used_by.surveys, 'survey')} · {plural(d.used_by.versions, 'published version')}</dd></div>
                 </dl>
-                <h4>Governance of the version that published it</h4>
+                <h4>{own ? 'Governance of its own publication' : 'Governance of the version that published it'}</h4>
                 {first ? <Governance use={uses[first.version_id]} /> : <p className="ss-muted">No publishing version can be read.</p>}
               </Section>
               {module ? (
@@ -444,24 +465,31 @@ export function InspectorDrawer({ target, surveys, markets = [], onInspect, onCl
               </Section>
               <Section id="where-used" title="Where used" count={plural(d.used_by.surveys, 'survey')}>
                 <p className="ss-muted">Each survey pins this exact {unit.toLowerCase()}. Publishing a newer one changes none of them: a survey moves only when its own author pins the newer one and the survey is published again.</p>
-                <WhereUsed d={d} uses={uses} unit={unit} onInspect={onInspect} />
+                <WhereUsed d={{ ...d, published_in: consumers }} uses={uses} unit={unit} onInspect={onInspect} />
               </Section>
               <Section id="versions" title="Versions" count={plural(d.revisions.length, `published ${unit.toLowerCase()}`)}>
                 <ul className="ss-in-revisions">{d.revisions.map((r) => (
                   <li key={r.version} className={r.version === d.version ? 'on' : ''}>
                     <strong>{unit} {r.version}</strong>{r.version === d.version ? <Tag tone="ok">shown</Tag> : null}
-                    <span className="ss-muted"> published in {r.published_in.map((x) => `${x.survey_name} ${x.version_label}`).join('; ') || 'no version you can read'}</span>
+                    <span className="ss-muted"> published {r.published_in.map((x) => (x.artifact_kind === 'MODULE' ? `on its own, release ${x.version_label}` : `in ${x.survey_name} ${x.version_label}`)).join('; ') || 'in no version you can read'}</span>
                     {r.version !== d.version ? <span className="ss-in-row-actions"><button type="button" className="ss-link" onClick={() => showCompare(r.version)} data-testid={`ss-in-compare-${r.version}`}>Compare with this one</button><button type="button" className="ss-link" onClick={() => onInspect({ kind: target.kind, code: d.code, version: r.version })}>Inspect it</button></span> : null}
                   </li>))}</ul>
+                {working ? <p className="ss-in-working" data-testid="ss-in-working" data-revision={working.working_revision} data-unpublished={String(working.unpublished_changes)}>
+                  {working.open_candidate ? <>Revision {working.open_candidate.revision} is {working.open_candidate.status === 'IN_REVIEW' ? 'in review, waiting for a reviewer' : 'approved, waiting for a publisher'}. It is not in the library until it is published. </>
+                    : working.unpublished_changes ? <>Draft revision {working.working_revision} is being written. It is not in the library, and no survey can use it, until it is published. </>
+                      : <>No newer revision is being drafted. </>}
+                  {can('survey.edit') ? <Link to={`/survey-studio/modules/${working.code}`}>Open the Module Builder</Link> : null}</p> : null}
                 {d.revisions.length < 2 ? <p className="ss-muted" data-testid="ss-in-one-revision">Only one {unit.toLowerCase()} is published, so there is nothing to compare yet.</p> : null}
                 {compare ? <div className="ss-in-compare" data-testid="ss-in-compare"><strong>{unit} {d.version} compared with {compare.with}</strong>{compare.lines.length ? <ul>{compare.lines.map((l) => <li key={l}>{l}</li>)}</ul> : <p>Nothing differs in what a customer hears or where they are routed.</p>}</div> : null}
               </Section>
               {target.kind === 'MODULE' ? (
                 <Section id="test" title="Test">
-                  <p>A module cannot be simulated on its own: the existing simulator runs a published <em>survey</em> version, by the authoritative execution engine, with this exact revision pinned. Choose a survey that uses it.</p>
+                  {standalone ? <p data-testid="ss-in-test-alone">This revision can be tested on its own: the Call360 engine runs just this module, with invented facts and the answers you give, and records nothing. {can('survey.simulate') ? <Link className="ss-btn small" to={`/survey-studio/module-tests/${d.code}/${d.version}`} data-testid="ss-in-test-module">Test revision {d.version} on its own</Link> : null}</p>
+                    : <p>A module cannot be simulated on its own on this server: the existing simulator runs a published <em>survey</em> version, by the authoritative execution engine, with this exact revision pinned. Choose a survey that uses it.</p>}
+                  {consumers.length ? <p className="ss-muted">Inside a survey, with that survey’s own entry and exit routes:</p> : null}
                   {!can('survey.simulate') ? <p className="ss-muted" data-testid="ss-in-test-denied">Simulating needs the “simulate surveys” permission.</p>
-                    : d.published_in.length ? <ul className="ss-in-used">{d.published_in.map((u) => <li key={u.version_id}><Link className="ss-btn small" to={`/survey-studio/surveys/${u.survey_code}/simulate`} data-testid={`ss-in-test-${u.survey_code}`}>Simulate {u.survey_name}</Link><span className="ss-muted"> version {u.version_label}</span></li>)}</ul>
-                      : <p className="ss-muted">No published survey pins this revision.</p>}
+                    : consumers.length ? <ul className="ss-in-used">{consumers.map((u) => <li key={u.version_id}><Link className="ss-btn small" to={`/survey-studio/surveys/${u.survey_code}/simulate`} data-testid={`ss-in-test-${u.survey_code}`}>Simulate {u.survey_name}</Link><span className="ss-muted"> version {u.version_label}</span></li>)}</ul>
+                      : <p className="ss-muted">No published survey pins this revision yet.</p>}
                 </Section>
               ) : null}
             </div>

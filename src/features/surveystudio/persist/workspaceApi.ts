@@ -17,6 +17,7 @@ const soft = async <T,>(work: () => Promise<T>): Promise<Maybe<T>> => {
     return { unavailable: e instanceof ApiFailure ? (e.status === 404 ? 'OFF' : e.status === 403 ? 'NO_PERMISSION' : 'FAILED') : 'FAILED' };
   }
 };
+export const softly = soft;
 export const getWorkspace = async (): Promise<WorkspaceSummary> => unwrap(await api.GET('/api/v1/survey-definitions/workspace'));
 export const allComponents = (kind: ComponentKind): Promise<Maybe<Component[]>> =>
   soft(async () => unwrap(await api.GET('/api/v1/survey-components', { params: { query: { kind, q: '' } } })).items);

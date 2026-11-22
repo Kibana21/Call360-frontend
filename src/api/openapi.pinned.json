@@ -25307,6 +25307,16 @@
             "title": "Note",
             "type": "string"
           },
+          "origin": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SurveyComponentOrigin"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "published_in": {
             "items": {
               "$ref": "#/components/schemas/SurveyComponentSource"
@@ -25438,6 +25448,40 @@
         "title": "SurveyComponentList",
         "type": "object"
       },
+      "SurveyComponentOrigin": {
+        "description": "LIB-2 — where this version was written: the survey, or the standalone module, that owns it.",
+        "properties": {
+          "artifact_kind": {
+            "enum": [
+              "SURVEY",
+              "MODULE"
+            ],
+            "title": "Artifact Kind",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "definition_id": {
+            "format": "uuid",
+            "title": "Definition Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "definition_id",
+          "code",
+          "name",
+          "artifact_kind"
+        ],
+        "title": "SurveyComponentOrigin",
+        "type": "object"
+      },
       "SurveyComponentOut": {
         "properties": {
           "category": {
@@ -25474,6 +25518,16 @@
           "latest_published_version": {
             "title": "Latest Published Version",
             "type": "integer"
+          },
+          "origin": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SurveyComponentOrigin"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "published_in": {
             "items": {
@@ -25556,6 +25610,16 @@
       },
       "SurveyComponentSource": {
         "properties": {
+          "artifact_kind": {
+            "default": "SURVEY",
+            "description": "SURVEY: a survey whose published version pins this. MODULE: the standalone module's own publication record (LIB-2) — not a survey, and not counted as a use.",
+            "enum": [
+              "SURVEY",
+              "MODULE"
+            ],
+            "title": "Artifact Kind",
+            "type": "string"
+          },
           "survey_code": {
             "title": "Survey Code",
             "type": "string"
@@ -28968,6 +29032,487 @@
           "sha256"
         ],
         "title": "SurveyManifestEntry",
+        "type": "object"
+      },
+      "SurveyModuleCandidate": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "revision": {
+            "description": "The module revision this candidate would publish.",
+            "title": "Revision",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "IN_REVIEW",
+              "APPROVED"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "submitted_at": {
+            "format": "date-time",
+            "title": "Submitted At",
+            "type": "string"
+          },
+          "submitted_by_you": {
+            "title": "Submitted By You",
+            "type": "boolean"
+          },
+          "waiting_for": {
+            "description": "Whose step is next, whoever the reader is: a reviewer while in review, a publisher once approved.",
+            "enum": [
+              "A_REVIEWER",
+              "A_PUBLISHER"
+            ],
+            "title": "Waiting For",
+            "type": "string"
+          },
+          "your_action": {
+            "anyOf": [
+              {
+                "enum": [
+                  "DECIDE",
+                  "PUBLISH"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the identity rules AND the reader's permissions allow the reader to do with it now.",
+            "title": "Your Action"
+          }
+        },
+        "required": [
+          "id",
+          "n",
+          "status",
+          "revision",
+          "submitted_at",
+          "submitted_by_you",
+          "your_action",
+          "waiting_for"
+        ],
+        "title": "SurveyModuleCandidate",
+        "type": "object"
+      },
+      "SurveyModuleCreateIn": {
+        "properties": {
+          "description": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 160,
+            "minLength": 3,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "SurveyModuleCreateIn",
+        "type": "object"
+      },
+      "SurveyModuleList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SurveyModuleOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "note": {
+            "default": "Synthetic content, unapproved for operational use. A standalone module is not a survey: it cannot be simulated, planned or assigned as one, and publishing it makes nothing eligible for a call.",
+            "title": "Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "SurveyModuleList",
+        "type": "object"
+      },
+      "SurveyModuleOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "draft_revision": {
+            "description": "The save counter of the working draft (the optimistic-concurrency token).",
+            "title": "Draft Revision",
+            "type": "integer"
+          },
+          "facts": {
+            "additionalProperties": true,
+            "title": "Facts",
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "latest_published_revision": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Published Revision"
+          },
+          "market_code": {
+            "title": "Market Code",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "note": {
+            "default": "Synthetic content, unapproved for operational use. A standalone module is not a survey: it cannot be simulated, planned or assigned as one, and publishing it makes nothing eligible for a call.",
+            "title": "Note",
+            "type": "string"
+          },
+          "open_candidate": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SurveyModuleCandidate"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "published": {
+            "items": {
+              "$ref": "#/components/schemas/SurveyModuleRevision"
+            },
+            "title": "Published",
+            "type": "array"
+          },
+          "saved_at": {
+            "format": "date-time",
+            "title": "Saved At",
+            "type": "string"
+          },
+          "saved_by_you": {
+            "title": "Saved By You",
+            "type": "boolean"
+          },
+          "unpublished_changes": {
+            "description": "The working revision is not a published one.",
+            "title": "Unpublished Changes",
+            "type": "boolean"
+          },
+          "working_revision": {
+            "description": "The module revision the working draft holds.",
+            "title": "Working Revision",
+            "type": "integer"
+          },
+          "working_state": {
+            "description": "DRAFT: it can still be changed. FROZEN: it was submitted; a change is a new revision.",
+            "enum": [
+              "DRAFT",
+              "FROZEN"
+            ],
+            "title": "Working State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "description",
+          "market_code",
+          "draft_revision",
+          "saved_at",
+          "saved_by_you",
+          "working_revision",
+          "working_state",
+          "unpublished_changes",
+          "facts",
+          "open_candidate",
+          "published",
+          "latest_published_revision"
+        ],
+        "title": "SurveyModuleOut",
+        "type": "object"
+      },
+      "SurveyModuleRevision": {
+        "properties": {
+          "published_at": {
+            "format": "date-time",
+            "title": "Published At",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "version_id": {
+            "format": "uuid",
+            "title": "Version Id",
+            "type": "string"
+          },
+          "version_label": {
+            "title": "Version Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "revision",
+          "version_id",
+          "version_label",
+          "status",
+          "published_at"
+        ],
+        "title": "SurveyModuleRevision",
+        "type": "object"
+      },
+      "SurveyModuleTestIn": {
+        "properties": {
+          "code": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Otherwise a PUBLISHED module, by code…",
+            "title": "Code"
+          },
+          "facts": {
+            "additionalProperties": true,
+            "title": "Facts",
+            "type": "object"
+          },
+          "inputs": {
+            "items": {
+              "$ref": "#/components/schemas/SurveyModuleTestInput"
+            },
+            "maxItems": 200,
+            "title": "Inputs",
+            "type": "array"
+          },
+          "module_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A standalone module: its working draft is tested, or `revision` of it.",
+            "title": "Module Id"
+          },
+          "revision": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "…and revision.",
+            "title": "Revision"
+          }
+        },
+        "title": "SurveyModuleTestIn",
+        "type": "object"
+      },
+      "SurveyModuleTestInput": {
+        "properties": {
+          "answer": {
+            "additionalProperties": true,
+            "title": "Answer",
+            "type": "object"
+          },
+          "key": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key"
+        ],
+        "title": "SurveyModuleTestInput",
+        "type": "object"
+      },
+      "SurveyModuleTestOut": {
+        "properties": {
+          "engine_contract": {
+            "title": "Engine Contract",
+            "type": "string"
+          },
+          "facts": {
+            "additionalProperties": true,
+            "title": "Facts",
+            "type": "object"
+          },
+          "facts_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Facts Sha256"
+          },
+          "fields": {
+            "additionalProperties": true,
+            "description": "The catalog definition of each fact the module's conditions read.",
+            "title": "Fields",
+            "type": "object"
+          },
+          "findings": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Findings",
+            "type": "array"
+          },
+          "frame": {
+            "additionalProperties": true,
+            "description": "The fixed one-module content the engine was given. Not a survey.",
+            "title": "Frame",
+            "type": "object"
+          },
+          "inputs": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Inputs",
+            "type": "array"
+          },
+          "manifest": {
+            "description": "Every exact version the test ran on.",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Manifest",
+            "type": "array"
+          },
+          "module": {
+            "additionalProperties": true,
+            "title": "Module",
+            "type": "object"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "record_class": {
+            "const": "MODULE_TEST",
+            "title": "Record Class",
+            "type": "string"
+          },
+          "requires": {
+            "additionalProperties": true,
+            "title": "Requires",
+            "type": "object"
+          },
+          "run": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run"
+          },
+          "run_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The fingerprint of the run: the same inputs always give the same one.",
+            "title": "Run Sha256"
+          },
+          "status": {
+            "enum": [
+              "PENDING",
+              "POLICY_UNRESOLVED",
+              "TERMINAL",
+              "NOT_TESTABLE"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "testable": {
+            "description": "False when the module has a blocker: it is then not executed at all.",
+            "title": "Testable",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "record_class",
+          "note",
+          "module",
+          "engine_contract",
+          "frame",
+          "manifest",
+          "requires",
+          "fields",
+          "findings",
+          "testable",
+          "facts",
+          "facts_sha256",
+          "inputs",
+          "status",
+          "run",
+          "run_sha256"
+        ],
+        "title": "SurveyModuleTestOut",
         "type": "object"
       },
       "SurveyOperationIn": {
@@ -54378,6 +54923,363 @@
         "summary": "Survey Library List",
         "tags": [
           "survey-definitions"
+        ]
+      }
+    },
+    "/api/v1/survey-module-tests": {
+      "post": {
+        "description": "Run ONE module with the Python engine, in a fixed one-module frame, for synthetic facts and an ordered list of\nanswers. Nothing is stored: the run is the replay of exactly the inputs given, so the same request gives the same\nrun and the same fingerprint. A module with a blocker is reported as not testable and is not executed.",
+        "operationId": "survey_module_test",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SurveyModuleTestIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurveyModuleTestOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Survey Module Test",
+        "tags": [
+          "survey-modules"
+        ]
+      }
+    },
+    "/api/v1/survey-modules": {
+      "get": {
+        "description": "The standalone modules of the reader's markets — drafts included, which the published library never shows —\nwith where each stands and what, if anything, the reader may do next.",
+        "operationId": "survey_module_list",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurveyModuleList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Survey Module List",
+        "tags": [
+          "survey-modules"
+        ]
+      },
+      "post": {
+        "description": "Create a reusable module on its own: its permanent, server-issued code and an empty first draft revision. No\nsurvey is created.",
+        "operationId": "survey_module_create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SurveyModuleCreateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurveyModuleOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Survey Module Create",
+        "tags": [
+          "survey-modules"
+        ]
+      }
+    },
+    "/api/v1/survey-modules/{module_id}": {
+      "get": {
+        "operationId": "survey_module_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "module_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Module Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurveyModuleOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Survey Module Get",
+        "tags": [
+          "survey-modules"
         ]
       }
     },

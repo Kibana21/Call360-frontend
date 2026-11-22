@@ -13,6 +13,7 @@ import { mKey } from '../model/types';
 import { useStudio } from '../store';
 import { Glyph, Tag } from '../ui';
 import { getComponent, listComponents, type Component, type ComponentDetail, type ComponentKind } from './api';
+import { usePlace } from '../place';
 import { usePersistence } from './Persistence';
 import { short } from './reviewApi';
 
@@ -29,7 +30,7 @@ const TABS: Array<{ kind: ComponentKind; label: string; one: string }> = [
 const CATEGORY: Record<string, string> = { OPENING: 'Opening', COMMON: 'General', PRODUCT: 'Product', RISK: 'Risk', EXCEPTION: 'Exception', CLOSING: 'Closing', YES_NO: 'Yes / No', SINGLE_SELECT: 'One answer', MULTI_SELECT: 'Several answers', FREE_TEXT: 'Free text', NUMERIC: 'Number', ACKNOWLEDGEMENT: 'Acknowledgement', STATEMENT: 'Statement', CONDITION: 'Condition', OPTION_SET: 'Answers' };
 const say = (e: unknown) => (e instanceof ApiFailure ? e.message : 'The library could not be reached.');
 const target = (t: Any): string => (t == null ? 'not decided' : t.node ? `step ${t.node}` : t.outcome ? `ends the module: ${String(t.outcome).replace(/_/g, ' ').toLowerCase()}` : t.return ? 'back to the question that asked' : JSON.stringify(t));
-const where = (c: Component) => c.published_in.map((s) => `${s.survey_name} · version ${s.version_label}`).join('; ');
+const where = (c: Component) => c.published_in.map((s) => (s.artifact_kind === 'MODULE' ? `${s.survey_name} · published on its own, release ${s.version_label}` : `${s.survey_name} · version ${s.version_label}`)).join('; ');
 const assetsOf = (d: ComponentDetail): AssetDoc[] => [
   ...(d.kind === 'OPTION_SET' ? [] : [{ kind: d.kind as AssetKind, code: d.code, version: d.version, document: d.document as Doc }]),
   ...d.dependencies.map((x): AssetDoc => ({ kind: x.kind as AssetKind, code: x.code, version: x.version, document: x.document as Doc })),
@@ -98,6 +99,8 @@ function Drawer({ initial, focus, onClose }: { initial: ComponentKind; focus?: F
   const [target_, setTarget] = useState('');
   const search = useRef<HTMLInputElement | null>(null);
   const survey = ws.surveys[0]!;
+  // LIB-2: a module authored on its own holds one module — itself. Another module cannot be placed in it.
+  const tabs = usePlace(survey.id).mode === 'module' ? TABS.filter((t) => t.kind !== 'MODULE') : TABS;
 
   // focus goes to the search box on opening, and back to whatever opened the library on closing
   useEffect(() => {
@@ -175,7 +178,7 @@ function Drawer({ initial, focus, onClose }: { initial: ComponentKind; focus?: F
         </header>
         <div className="ss-drawer-tools">
           <div className="ss-seg" role="tablist" aria-label="Kind of component">
-            {TABS.map((t) => <button key={t.kind} type="button" role="tab" aria-selected={kind === t.kind} className={kind === t.kind ? 'on' : ''} onClick={() => { setKind(t.kind); setPicked(null); setDone(null); }} data-testid={`ss-library-tab-${t.kind}`}>{t.label}</button>)}
+            {tabs.map((t) => <button key={t.kind} type="button" role="tab" aria-selected={kind === t.kind} className={kind === t.kind ? 'on' : ''} onClick={() => { setKind(t.kind); setPicked(null); setDone(null); }} data-testid={`ss-library-tab-${t.kind}`}>{t.label}</button>)}
           </div>
           <input ref={search} value={query} onChange={(e) => setQuery(e.target.value)} placeholder={`Search ${tab.label.toLowerCase()} by name, description or the survey that published them`} aria-label={`Search ${tab.label.toLowerCase()}`} data-testid="ss-library-search" />
         </div>
