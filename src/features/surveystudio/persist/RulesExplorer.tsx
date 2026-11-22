@@ -9,14 +9,16 @@ import { FIELDS } from '../model/sample';
 import { Glyph, Tag, type GlyphName } from '../ui';
 import { getComponent, listSurveys, type Component, type SurveySummary } from './api';
 import { InspectorDrawer, inspectParam, parseInspect, type Inspect } from './Inspector';
-import { allComponents, assignmentPolicy, controlPolicies, findingRuleSets, missing, requirementGroups, ruleInWords, words, type Maybe, type Unavailable } from './workspaceApi';
+import { allComponents, assignmentPolicy, controlMappings, controlPolicies, findingRuleSets, missing, requirementGroups, ruleInWords, words, type Maybe, type Unavailable } from './workspaceApi';
 
 type Any = any; // eslint-disable-line @typescript-eslint/no-explicit-any -- other modules' lists are read as JSON
-type Family = 'assignment' | 'logic' | 'applicability' | 'findings';
+type Family = 'assignment' | 'groups' | 'logic' | 'applicability' | 'mappings' | 'findings';
 const FAMILIES: Array<{ key: Family; label: string; glyph: GlyphName; owns: string; what: string }> = [
   { key: 'assignment', label: 'Assignment rules', glyph: 'branch', owns: 'Assignment Rules, and Survey assignment', what: 'Which survey an application gets. A published rule is bound to one published survey version, and rules are arranged in requirement groups.' },
+  { key: 'groups', label: 'Requirement groups', glyph: 'list', owns: 'Survey assignment', what: 'How assignment rules are arranged: which rules decide the primary survey, which add a required survey, which are alternatives, and in what order the selected surveys run.' },
   { key: 'logic', label: 'Survey logic', glyph: 'flow', owns: 'Survey Studio (the module and its conditions)', what: 'Which question comes next inside a survey: the branches of each published module, and the reusable conditions they and the surveys use.' },
   { key: 'applicability', label: 'Control applicability', glyph: 'check', owns: 'Control policies and evidence', what: 'When a control obligation applies to an application, as written in a published control policy.' },
+  { key: 'mappings', label: 'Evidence mappings', glyph: 'link', owns: 'Control policies and evidence', what: 'Which published survey questions and statements are the evidence for a control, and the rule each answer is judged by. Applied by the existing answer-evaluation engine.' },
   { key: 'findings', label: 'Finding rules', glyph: 'alert', owns: 'Finding Rules', what: 'Which evaluated discrepancy becomes a finding, and with what severity, in a published finding rule set.' },
 ];
 const why = (u: Unavailable, owner: string) => (u.unavailable === 'OFF' ? `${owner} is not switched on for this server.` : u.unavailable === 'NO_PERMISSION' ? `Reading these needs a permission of ${owner} that you do not hold.` : 'They could not be reached.');
@@ -36,12 +38,12 @@ export function RulesExplorerPage() {
   const inspecting = parseInspect(params.get('inspect'));
   const set = (changes: Record<string, string | null>) => { const next = new URLSearchParams(window.location.search); for (const [k, v] of Object.entries(changes)) { if (!v) next.delete(k); else next.set(k, v); } setParams(next, { replace: true }); };
   const inspect = (c: Inspect) => set({ inspect: inspectParam(c) });
-  const [data, setData] = useState<{ policy: Maybe<Any>; groups: Maybe<Any>; conditions: Maybe<Component[]>; modules: Maybe<Component[]>; policies: Maybe<Any[]>; findings: Maybe<Any> } | null>(null);
+  const [data, setData] = useState<{ policy: Maybe<Any>; groups: Maybe<Any>; conditions: Maybe<Component[]>; modules: Maybe<Component[]>; policies: Maybe<Any[]>; mappings: Maybe<Any[]>; findings: Maybe<Any> } | null>(null);
   const [docs, setDocs] = useState<Record<string, Any>>({});
   const [surveys, setSurveys] = useState<SurveySummary[]>([]);
   useEffect(() => {
     let current = true;
-    Promise.all([assignmentPolicy(), requirementGroups(), allComponents('CONDITION'), allComponents('MODULE'), controlPolicies(), findingRuleSets()]).then(([policy, groups, conditions, modules, policies, findings]) => { if (current) setData({ policy, groups, conditions, modules, policies, findings }); });
+    Promise.all([assignmentPolicy(), requirementGroups(), allComponents('CONDITION'), allComponents('MODULE'), controlPolicies(), controlMappings(), findingRuleSets()]).then(([policy, groups, conditions, modules, policies, mappings, findings]) => { if (current) setData({ policy, groups, conditions, modules, policies, mappings, findings }); });
     listSurveys().then((s) => { if (current) setSurveys(s); }).catch(() => undefined);
     return () => { current = false; };
   }, []);
@@ -58,6 +60,8 @@ export function RulesExplorerPage() {
     assignment: data && !missing(data.policy) ? (data.policy.rules as Any[]).length : null,
     logic: data && !missing(data.conditions) && !missing(data.modules) ? data.conditions.filter((c) => c.is_latest).length + data.modules.filter((c) => c.is_latest).length : null,
     applicability: data && !missing(data.policies) ? data.policies.reduce((n, p) => n + (p.controls as Any[]).reduce((m, c) => m + (c.obligations as Any[]).length, 0), 0) : null,
+    groups: data && !missing(data.groups) ? ((data.groups.groups ?? []) as Any[]).filter((g) => g.status === 'PUBLISHED').length : null,
+    mappings: data && !missing(data.mappings) ? data.mappings.filter((m) => m.status === 'PUBLISHED').length : null,
     findings: data && !missing(data.findings) ? ((data.findings.items ?? data.findings.versions ?? []) as Any[]).length : null,
   }), [data]);
   const f = FAMILIES.find((x) => x.key === family)!;
@@ -137,6 +141,43 @@ export function RulesExplorerPage() {
               <p className="ss-muted">Needs {(o.evidence as Any[]).map((e) => `${e.description || e.key} (${e.evidence_type === 'DELIVERY' ? 'a delivery' : 'an answer'}${e.required ? '' : ', optional'})`).join('; ')}. Synthetic; not an approved compliance obligation.</p>
             </Rule>))}
           {!rows.length ? <li className="ss-ws-quiet">No control obligation matches.</li> : null}
+        </ul>
+      );
+    }
+  }
+  if (data && family === 'groups') {
+    if (missing(data.groups)) body = <div className="ss-empty" data-testid="ss-rx-unavailable"><p><strong>Requirement groups cannot be shown.</strong> {why(data.groups, 'Survey assignment')}</p></div>;
+    else {
+      const KIND: Record<string, string> = { PRIMARY: 'Primary: exactly one survey is selected', ADD_REQUIRED: 'Additional: its survey is also required when a rule matches', ALTERNATIVE: 'Alternative: one of its rules’ surveys is selected' };
+      const rows = ((data.groups.groups ?? []) as Any[]).filter((g) => (status === 'ALL' || (status === 'PUBLISHED' ? g.status === 'PUBLISHED' : g.status !== 'PUBLISHED')) && match(g.name, g.code, g.purpose, ...(g.members as Any[]).map((m) => m.rule_code)));
+      body = (
+        <ul className="ss-rx-list" data-testid="ss-rx-groups">
+          {rows.sort((a, b) => (a.sequence ?? 99) - (b.sequence ?? 99)).map((g) => (
+            <Rule key={g.id} testid={`ss-rx-group-${g.code}`} title={<>{g.name} <span className="ss-code">{g.code}</span></>} tags={<><Tag tone={STATUS[g.status] ?? 'plain'}>{words(g.status)}</Tag><Tag>{g.market_code}</Tag><Tag>Version {g.version}</Tag>{g.sequence != null ? <Tag>Order {g.sequence}</Tag> : null}</>}
+              link={<Link to="/survey-studio/assignment">Open it in Survey assignment</Link>}>
+              <p><span className="ss-rx-when">Does</span> {KIND[g.kind] ?? words(g.kind)}.</p>
+              <p><span className="ss-rx-when">Rules</span> {(g.members as Any[]).map((m) => `${m.rule_code} v${m.rule_version}${m.rule_status && m.rule_status !== 'PUBLISHED' ? ` (${words(m.rule_status)})` : ''}`).join(', ') || 'none'}</p>
+              {g.purpose ? <p className="ss-muted">{g.purpose}</p> : null}
+            </Rule>))}
+          {!rows.length ? <li className="ss-ws-quiet">No requirement group matches.</li> : null}
+        </ul>
+      );
+    }
+  }
+  if (data && family === 'mappings') {
+    if (missing(data.mappings)) body = <div className="ss-empty" data-testid="ss-rx-unavailable"><p><strong>Evidence mappings cannot be shown.</strong> {why(data.mappings, 'Control policies and evidence')}</p></div>;
+    else {
+      const rows = data.mappings.filter((m) => (status === 'ALL' || (status === 'PUBLISHED' ? m.status === 'PUBLISHED' : m.status !== 'PUBLISHED')) && match(m.control_code, m.control_name, m.source, ...(m.entries as Any[]).map((e) => e.item?.code)));
+      body = (
+        <ul className="ss-rx-list" data-testid="ss-rx-mappings">
+          {rows.map((m) => (
+            <Rule key={m.id} testid={`ss-rx-mapping-${m.control_code}-${m.revision}`} title={<>{m.control_name ?? m.control_code} <span className="ss-code">{m.control_code}</span></>} tags={<><Tag tone={STATUS[m.status] ?? 'plain'}>{words(m.status)}</Tag><Tag>{m.market_code}</Tag><Tag>Revision {m.revision}</Tag></>}
+              link={<Link to={`/survey-studio/controls?view=map&control=${m.control_code}`}>Open it in Control policies and evidence</Link>}>
+              {(m.entries as Any[]).map((e, i) => (
+                <p key={i}><span className="ss-rx-when">Evidence</span> {e.evidence_type === 'DELIVERY' ? 'the delivery of' : 'the answer to'} <button type="button" className="ss-link" onClick={() => inspect({ kind: 'ITEM', code: e.item.code, version: e.item.version })}>{e.item.code} version {e.item.version}</button>{e.rule ? `, judged by ${words(e.rule.method)}` : ''}{e.obligation ? ` — for obligation ${e.obligation}${e.requirement ? ` / ${e.requirement}` : ''}` : ''}{e.required === false ? ' (optional)' : ''}</p>))}
+              <p className="ss-muted">Combined as {words(m.combination)}. Synthetic; not an approved compliance mapping.</p>
+            </Rule>))}
+          {!rows.length ? <li className="ss-ws-quiet">No evidence mapping matches.</li> : null}
         </ul>
       );
     }

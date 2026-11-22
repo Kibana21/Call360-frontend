@@ -13,6 +13,7 @@ import { Glyph, Tag, type GlyphName } from '../ui';
 import { listSurveys, type Component, type ComponentKind, type SurveySummary } from './api';
 import { InspectorDrawer, inspectParam, parseInspect, type Inspect } from './Inspector';
 import { STANDING_NOTE } from './standing';
+import { SurveyOverviewDrawer } from './SurveyOverview';
 import { MODULE_CATEGORY, allComponents, answerOf, assignmentPolicy, controlMappings, controlPolicies, getWorkspace, missing, requirementGroups, words, type Maybe, type WorkspaceSummary } from './workspaceApi';
 
 type Any = any; // eslint-disable-line @typescript-eslint/no-explicit-any -- the summary's lists are read as JSON
@@ -63,35 +64,36 @@ function BlockCard({ c, onInspect }: { c: Component; onInspect: (c: Inspect) => 
         {kind === 'MODULE' ? <BlockStrip facts={facts} /> : null}
         {c.description ? <span className="ss-ws-card-text">{c.description}</span> : kind === 'CONDITION' ? <span className="ss-ws-card-text">Reads {((facts.fields ?? []) as string[]).join(', ') || 'no customer or policy information'}</span> : null}
         <span className="ss-ws-card-foot">
-          <span>{kind === 'MODULE' ? `${plural(facts.questions ?? 0, 'question')} · ${plural(facts.decisions ?? 0, 'decision')} · ${plural(((facts.outcomes ?? []) as string[]).length, 'ending')}` : `In ${c.published_in.map((s) => s.survey_name).slice(0, 1).join('')}${c.published_in.length > 1 ? ` +${c.published_in.length - 1}` : ''}`}</span>
-          <span className="ss-ws-card-version">{kind === 'MODULE' ? 'Revision' : 'Version'} {c.version}{c.is_latest ? '' : ' · older'}</span>
+          <span>{kind === 'MODULE' ? `${plural(facts.questions ?? 0, 'question')} · ${facts.branching ? 'branches' : 'no branching'} · ${plural(((facts.outcomes ?? []) as string[]).length, 'ending')}` : `In ${c.published_in.map((s) => s.survey_name).slice(0, 1).join('')}${c.published_in.length > 1 ? ` +${c.published_in.length - 1}` : ''}`}</span>
+          <span className="ss-ws-card-version">Published · {kind === 'MODULE' ? 'revision' : 'version'} {c.version}{c.is_latest ? '' : ' · older'}</span>
         </span>
       </button>
     </li>
   );
 }
 
-function SurveyCard({ s }: { s: SurveySummary }) {
+function SurveyCard({ s, facts, onOpen }: { s: SurveySummary; facts?: Any; onOpen: (code: string) => void }) {
   const review = s.open_candidate_status ? words(s.open_candidate_status) : null;
   return (
-    <li className="ss-ws-card survey" data-testid={`ss-survey-${s.code}`} data-status={s.open_candidate_status ?? (s.latest_version_label ? 'PUBLISHED' : 'DRAFT')}>
-      <Link to={`/survey-studio/surveys/${s.code}`} data-testid={`ss-open-${s.code}`}>
+    <li className="ss-ws-card survey" data-status={s.open_candidate_status ?? (s.latest_version_label ? 'PUBLISHED' : 'DRAFT')}>
+      <button type="button" onClick={() => onOpen(s.code)} data-testid={`ss-ws-survey-${s.code}`} aria-label={`Overview of ${s.name}`}>
         <span className="ss-ws-card-top">
           <span className="ss-ws-card-kind">{s.market_code} · Survey</span>
-          {review ? <Tag tone="warn">{review}</Tag> : s.latest_version_label ? <Tag tone="ok">Published</Tag> : <Tag tone="draft">Draft only</Tag>}
+          {review ? <Tag tone="warn">{review}</Tag> : s.latest_version_label ? <Tag tone="ok">Published · {s.latest_version_label}</Tag> : <Tag tone="draft">Draft only</Tag>}
         </span>
         <strong className="ss-ws-card-title">{s.name}</strong>
         {s.purpose ? <span className="ss-ws-card-text">{s.purpose}</span> : null}
+        {facts ? <span className="ss-ws-card-facts">{plural(facts.modules, 'module')} · {plural(facts.questions, 'question')}{facts.branching ? ' · branches' : ' · no branching'}</span> : null}
         <span className="ss-ws-card-foot">
-          <span>Revision {s.draft_revision}{s.latest_version_label ? ` · Version ${s.latest_version_label} published` : ' · never published'}</span>
+          <span>Draft revision {s.draft_revision}{facts?.saved_at ? ` · saved ${ago(facts.saved_at)}` : ''}</span>
           {hasPersistedMemory(s.code) ? <Tag tone="draft">Open in this tab</Tag> : null}
         </span>
-      </Link>
+      </button>
     </li>
   );
 }
 
-function SurveyRow({ s, saved }: { s: SurveySummary; saved?: string }) {
+function SurveyRow({ s, saved, onOverview }: { s: SurveySummary; saved?: string; onOverview: (code: string) => void }) {
   const review = s.open_candidate_status ? words(s.open_candidate_status) : null;
   return (
     <li data-testid={`ss-survey-${s.code}`} data-status={s.open_candidate_status ?? (s.latest_version_label ? 'PUBLISHED' : 'DRAFT')}>
@@ -101,6 +103,7 @@ function SurveyRow({ s, saved }: { s: SurveySummary; saved?: string }) {
         {review ? <Tag tone="warn">{review}</Tag> : s.latest_version_label ? <Tag tone="ok">Published</Tag> : <Tag tone="draft">Draft only</Tag>}
         <Glyph name="right" size={14} />
       </Link>
+      <button type="button" className="ss-btn small" onClick={() => onOverview(s.code)} data-testid={`ss-ws-overview-${s.code}`} aria-label={`Overview of ${s.name}`}>Overview</button>
     </li>
   );
 }
@@ -186,6 +189,10 @@ export function WorkspacePage({ CreateForm }: { CreateForm: ComponentType<{ onCa
   const filter = params.get('show') ?? 'latest';
   const surveyFilter = params.get('surveys') ?? 'all';
   const inspecting = parseInspect(params.get('inspect'));
+  const opened = params.get('survey');
+  const layout = params.get('layout') === 'list' ? 'list' : 'grid';
+  const sort = params.get('sort') ?? 'name';
+  const page = Math.max(1, Number(params.get('page') ?? '1') || 1);
   const set = useCallback((changes: Record<string, string | null>) => { const next = new URLSearchParams(window.location.search); /* the address as it is NOW: two quick changes must not lose one */ for (const [k, v] of Object.entries(changes)) { if (v === null || v === '') next.delete(k); else next.set(k, v); } setParams(next, { replace: true }); }, [setParams]);
   const inspect = useCallback((c: Inspect) => set({ inspect: inspectParam(c) }), [set]);
   const meId = String(((me?.principal ?? {}) as Any).id ?? '');
@@ -210,7 +217,10 @@ export function WorkspacePage({ CreateForm }: { CreateForm: ComponentType<{ onCa
   const shownSurveys = useMemo(() => (surveys ?? []).filter((s) => (!q || hit(q, s.name, s.code, s.purpose)) && (surveyFilter === 'all' || (surveyFilter === 'published' ? !!s.latest_version_label : surveyFilter === 'draft' ? !s.latest_version_label : !!s.open_candidate_status))), [surveys, q, surveyFilter]);
   const list = blocks?.[tab];
   const filterBlock = (c: Component) => (filter === 'all' || (filter === 'reused' ? c.used_by.surveys > 1 && c.is_latest : c.is_latest)) && (!q || hit(q, c.title, c.code, c.description, c.category, ...c.published_in.map((s) => s.survey_name)));
-  const shownBlocks = list && !missing(list) ? list.filter(filterBlock) : [];
+  const PAGE = 24;
+  const sorted = list && !missing(list) ? [...list.filter(filterBlock)].sort((a, b) => (sort === 'reuse' ? b.used_by.surveys - a.used_by.surveys : sort === 'version' ? b.version - a.version : 0) || a.title.localeCompare(b.title)) : [];
+  const pages = Math.max(1, Math.ceil(sorted.length / PAGE));
+  const shownBlocks = sorted.slice((Math.min(page, pages) - 1) * PAGE, Math.min(page, pages) * PAGE);
   const found = q && blocks ? TABS.map((t) => ({ t, rows: missing(blocks[t.kind]) ? [] : (blocks[t.kind] as Component[]).filter((c) => c.is_latest && hit(q, c.title, c.code, c.description, c.category, ...c.published_in.map((s) => s.survey_name))) })) : null;
   const foundTotal = (found?.reduce((n, f) => n + f.rows.length, 0) ?? 0) + (q ? shownSurveys.length : 0);
   const libraryOff = summary ? !summary.library_enabled : !!list && missing(list);
@@ -218,10 +228,13 @@ export function WorkspacePage({ CreateForm }: { CreateForm: ComponentType<{ onCa
   const ways: Array<{ to: string; testid: string; glyph: GlyphName; title: string; text: string; show: boolean }> = [
     { to: '/survey-studio/assignment', testid: 'ss-open-assignment', glyph: 'branch', title: 'Survey assignment', text: 'Which surveys an application gets, and in what order.', show: can('survey.assignment.read') },
     { to: '/survey-studio/controls', testid: 'ss-open-controls', glyph: 'check', title: 'Control policies and evidence', text: 'Which controls are assessed, and which questions evidence them.', show: can('survey.evaluation.read') },
-    { to: '/survey-studio/journeys', testid: 'ss-open-journeys', glyph: 'next', title: 'Journeys and evaluation', text: 'Follow one application through to its evaluation and assurance.', show: can('survey.evaluation.read') },
+    { to: '/survey-studio/journeys', testid: 'ss-open-journeys', glyph: 'list', title: 'Application journeys', text: 'Follow one invented application from what was required to its assurance.', show: can('survey.evaluation.read') },
+    { to: '/survey-studio/simulation', testid: 'ss-open-simulation', glyph: 'next', title: 'Simulation & Evaluation', text: 'Every simulator and evaluation screen, and what each is for.', show: true },
     { to: '/survey-studio/rules', testid: 'ss-open-rules', glyph: 'merge', title: 'Rules explorer', text: 'Every kind of rule, with the screen that owns it.', show: true },
   ];
   // most recently saved first (the server's times), then the rest by name
+  const factsOf = new Map(((summary?.surveys ?? []) as Any[]).map((x) => [x.survey_id as string, x]));
+  const openSurvey = (code: string) => set({ survey: code });
   const savedAt = new Map(((summary?.recent_drafts ?? []) as Any[]).map((d) => [d.survey_id as string, d.saved_at as string]));
   const ordered = [...(surveys ?? [])].sort((a, b) => (savedAt.get(b.id) ?? '').localeCompare(savedAt.get(a.id) ?? '') || a.name.localeCompare(b.name));
   const modules = blocks && !missing(blocks.MODULE) ? (blocks.MODULE as Component[]).filter((c) => c.is_latest) : [];
@@ -236,13 +249,14 @@ export function WorkspacePage({ CreateForm }: { CreateForm: ComponentType<{ onCa
         <header className="ss-ws-head">
           <div className="ss-ws-head-text">
             <h1 className="ss-title">Survey Studio</h1>
-            <p>Callback surveys, built from reusable published blocks.</p>
+            <p>Design, reuse and govern customer journeys.</p>
           </div>
           <div className="ss-ws-head-actions">
             {can('survey.edit') ? (<>
-              <button type="button" className="ss-btn primary big" onClick={() => { setMaking(null); setCreating(true); }} data-testid="ss-create"><Glyph name="plus" /> New survey</button>
-              <button type="button" className="ss-btn big" onClick={() => { setCreating(false); setMaking(tab); }} aria-expanded={making !== null} data-testid="ss-ws-new-block"><Glyph name="plus" /> New building block</button>
+              <button type="button" className="ss-btn primary big" onClick={() => { setMaking(null); setCreating(true); }} data-testid="ss-create"><Glyph name="plus" /> Create survey</button>
+              <button type="button" className="ss-btn big" onClick={() => { setCreating(false); setMaking('MODULE'); }} aria-expanded={making !== null} data-testid="ss-ws-new-block"><Glyph name="plus" /> Create module</button>
             </>) : <span className="ss-save-note" data-testid="ss-read-only">Read only: you can open and inspect, but not change.</span>}
+            <button type="button" className="ss-btn big" onClick={() => go('blocks')} data-testid="ss-ws-explore">Explore building blocks</button>
           </div>
           <div className="ss-ws-search" role="search">
             <Glyph name="search" size={18} />
@@ -272,7 +286,7 @@ export function WorkspacePage({ CreateForm }: { CreateForm: ComponentType<{ onCa
         {found ? (
           <section className="ss-ws-section ss-ws-results" aria-label="Search results" data-testid="ss-ws-results" data-count={foundTotal}>
             <header><h2>{foundTotal ? `${plural(foundTotal, 'result')} for “${params.get('q')}”` : `Nothing matches “${params.get('q')}”`}</h2><span className="ss-muted">Published blocks show their latest revision.</span></header>
-            {shownSurveys.length ? <><h3>Surveys</h3><ul className="ss-ws-grid">{shownSurveys.map((s) => <SurveyCard key={s.id} s={s} />)}</ul></> : null}
+            {shownSurveys.length ? <><h3>Surveys</h3><ul className="ss-ws-grid">{shownSurveys.map((s) => <SurveyCard key={s.id} s={s} facts={factsOf.get(s.id)} onOpen={openSurvey} />)}</ul></> : null}
             {found.filter((f) => f.rows.length).map((f) => <div key={f.t.kind}><h3>{f.t.label}</h3><ul className="ss-ws-grid">{f.rows.map((c) => <BlockCard key={`${c.code}@${c.version}@${c.wording_version ?? ''}`} c={c} onInspect={inspect} />)}</ul></div>)}
             {!foundTotal ? <p className="ss-muted">Search looks at names, wording, descriptions, codes and the surveys a block is published in. Only published blocks are reusable, so a draft module or question is found inside its survey.</p> : null}
           </section>
@@ -289,6 +303,8 @@ export function WorkspacePage({ CreateForm }: { CreateForm: ComponentType<{ onCa
                   </button></li>
                 );
               })}
+              <li><button type="button" onClick={() => go('surveys', { surveys: 'draft' })} data-testid="ss-ws-count-drafts" data-count={inv?.surveys.never_published ?? ''}><Glyph name="text" size={18} /><strong>{inv ? inv.surveys.never_published : '–'}</strong><span>Drafts</span><small>{inv ? 'surveys never published' : 'Counting…'}</small></button></li>
+              <li><button type="button" onClick={() => go('surveys', { surveys: 'review' })} data-testid="ss-ws-count-review" data-count={inv ? inv.surveys.in_review + inv.surveys.approved_awaiting_publication : ''}><Glyph name="check" size={18} /><strong>{inv ? inv.surveys.in_review + inv.surveys.approved_awaiting_publication : '–'}</strong><span>Awaiting review</span><small>{inv ? `${inv.surveys.in_review} in review · ${inv.surveys.approved_awaiting_publication} approved, unpublished` : 'Counting…'}</small></button></li>
             </ul>
 
             <div className="ss-ws-cols">
@@ -306,7 +322,7 @@ export function WorkspacePage({ CreateForm }: { CreateForm: ComponentType<{ onCa
                   {error ? <div className="ss-empty" role="alert" data-testid="ss-list-error"><p><strong>The surveys could not be loaded.</strong> {error}</p><button type="button" className="ss-btn" onClick={fetchAll}>Try again</button></div>
                     : surveys === null ? <p className="ss-loading" role="status" data-testid="ss-loading"><span className="ss-spinner" aria-hidden="true" /> Loading surveys…</p>
                       : surveys.length === 0 ? <div className="ss-empty" data-testid="ss-no-surveys"><p><strong>No surveys yet.</strong> {can('survey.edit') ? 'Create the first one.' : 'Nobody has created one.'}</p></div>
-                        : <ul className="ss-ws-rows scroll" data-testid="ss-surveys">{ordered.map((s) => <SurveyRow key={s.id} s={s} saved={savedAt.get(s.id)} />)}</ul>}
+                        : <ul className="ss-ws-rows scroll" data-testid="ss-surveys">{ordered.map((s) => <SurveyRow key={s.id} s={s} saved={savedAt.get(s.id)} onOverview={openSurvey} />)}</ul>}
                 </Panel>
               </div>
               <nav className="ss-ws-ways" aria-label="Where surveys go next" data-testid="ss-ws-ways">
@@ -328,12 +344,19 @@ export function WorkspacePage({ CreateForm }: { CreateForm: ComponentType<{ onCa
           <section className="ss-ws-section" aria-labelledby="ss-ws-surveys-h" data-testid="ss-ws-surveys-view">
             <header>
               <h2 id="ss-ws-surveys-h">Surveys</h2>
+              <div className="ss-ws-view-tools"><div className="ss-ws-tabs small" role="group" aria-label="Layout">{[['grid', 'Cards'], ['list', 'Table']].map(([k, label]) => <button key={k} type="button" aria-pressed={layout === k} className={layout === k ? 'on' : ''} onClick={() => set({ layout: k === 'grid' ? null : k! })} data-testid={`ss-ws-layout-${k}`}>{label}</button>)}</div>
               <div className="ss-ws-tabs small" role="tablist" aria-label="Surveys by status">
                 {[['all', 'All'], ['published', 'Published'], ['draft', 'Draft only'], ['review', 'In review']].map(([k, label]) => <button key={k} type="button" role="tab" aria-selected={surveyFilter === k} className={surveyFilter === k ? 'on' : ''} onClick={() => set({ surveys: k === 'all' ? null : k! })} data-testid={`ss-ws-surveys-${k}`}>{label}</button>)}
-              </div>
+              </div></div>
             </header>
             {surveys === null ? <p className="ss-loading" role="status"><span className="ss-spinner" aria-hidden="true" /> Loading surveys…</p>
-              : shownSurveys.length ? <ul className="ss-ws-grid">{shownSurveys.map((s) => <SurveyCard key={s.id} s={s} />)}</ul>
+              : shownSurveys.length ? (layout === 'grid' ? <ul className="ss-ws-grid">{shownSurveys.map((s) => <SurveyCard key={s.id} s={s} facts={factsOf.get(s.id)} onOpen={openSurvey} />)}</ul>
+                : (
+                  <div className="ss-ws-tablewrap"><table className="ss-table" data-testid="ss-ws-surveys-table">
+                    <thead><tr><th scope="col">Survey</th><th scope="col">Code</th><th scope="col">Market</th><th scope="col">Status</th><th scope="col">Draft</th><th scope="col">Published</th><th scope="col">Modules</th><th scope="col">Questions</th><th scope="col">Last saved</th></tr></thead>
+                    <tbody>{shownSurveys.map((s) => { const f = factsOf.get(s.id); return (
+                      <tr key={s.id}><th scope="row"><button type="button" className="ss-link" onClick={() => openSurvey(s.code)}>{s.name}</button></th><td><span className="ss-code">{s.code}</span></td><td>{s.market_code}</td><td>{s.open_candidate_status ? words(s.open_candidate_status) : s.latest_version_label ? 'published' : 'draft only'}</td><td>Revision {s.draft_revision}</td><td>{s.latest_version_label ? `Version ${s.latest_version_label}` : '—'}</td><td>{f?.modules ?? '—'}</td><td>{f?.questions ?? '—'}</td><td>{f?.saved_at ? new Date(f.saved_at).toLocaleString() : '—'}</td></tr>); })}</tbody>
+                  </table></div>))
                 : <p className="ss-ws-quiet">{surveys.length ? `No survey is ${surveyFilter === 'review' ? 'in review' : surveyFilter === 'draft' ? 'a draft only' : 'published'}.` : 'No surveys yet.'}</p>}
           </section>
         ) : (
@@ -346,21 +369,34 @@ export function WorkspacePage({ CreateForm }: { CreateForm: ComponentType<{ onCa
               <div className="ss-ws-tabs" role="tablist" aria-label="Kinds of building block">
                 {TABS.map((t) => <button key={t.kind} type="button" role="tab" aria-selected={tab === t.kind} className={tab === t.kind ? 'on' : ''} onClick={() => set({ blocks: t.kind })} data-testid={`ss-ws-tab-${t.kind}`}><Glyph name={t.glyph} size={15} /> {t.label}{blocks && !missing(blocks[t.kind]) ? <span>{(blocks[t.kind] as Component[]).filter((c) => c.is_latest).length}</span> : null}</button>)}
               </div>
+              <div className="ss-ws-view-tools">
+              <div className="ss-ws-tabs small" role="group" aria-label="Layout">{[['grid', 'Cards'], ['list', 'List']].map(([k, label]) => <button key={k} type="button" aria-pressed={layout === k} className={layout === k ? 'on' : ''} onClick={() => set({ layout: k === 'grid' ? null : k! })} data-testid={`ss-ws-blocks-layout-${k}`}>{label}</button>)}</div>
+              <label className="ss-ws-filter">Sort <select value={sort} onChange={(e) => set({ sort: e.target.value === 'name' ? null : e.target.value, page: null })} data-testid="ss-ws-sort"><option value="name">By name</option><option value="reuse">Most reused first</option><option value="version">Highest version first</option></select></label>
               <label className="ss-ws-filter">Show
                 <select value={filter} onChange={(e) => set({ show: e.target.value === 'latest' ? null : e.target.value })} data-testid="ss-ws-filter">
                   <option value="latest">Latest published revision of each</option><option value="reused">Reused by more than one survey</option><option value="all">Every published revision</option>
                 </select>
               </label>
+              </div>
             </div>
-            <p className="ss-ws-hint">{one.blurb} Published and reusable; select one to inspect it.{tab === 'MODULE' ? <span className="ss-ws-legend" aria-hidden="true"> <i className="question" /> question <i className="statement" /> statement <i className="decision" /> decision <i className="end ok" /> ending</span> : null}</p>
+            <p className="ss-ws-hint">{one.blurb} Only published {one.label.toLowerCase()} are listed — that is what makes them reusable — in market {summary?.markets.join(', ') ?? '…'}. Select one to inspect it.{tab === 'MODULE' ? <span className="ss-ws-legend" aria-hidden="true"> <i className="question" /> question <i className="statement" /> statement <i className="decision" /> decision <i className="end ok" /> ending</span> : null}</p>
             {!blocks ? <p className="ss-loading" role="status"><span className="ss-spinner" aria-hidden="true" /> Loading the library…</p>
               : missing(list!) ? <div className="ss-empty" data-testid="ss-ws-blocks-unavailable"><p><strong>The library cannot be shown.</strong> {list!.unavailable === 'OFF' ? 'The component library is not switched on for this server.' : list!.unavailable === 'NO_PERMISSION' ? 'You do not have permission to read it.' : 'It could not be reached.'}</p></div>
-                : shownBlocks.length ? <ul className="ss-ws-grid" data-testid={`ss-ws-grid-${tab}`}>{shownBlocks.map((c) => <BlockCard key={`${c.code}@${c.version}@${c.wording_version ?? ''}`} c={c} onInspect={inspect} />)}</ul>
+                : shownBlocks.length ? (<>
+                  {layout === 'grid' ? <ul className="ss-ws-grid" data-testid={`ss-ws-grid-${tab}`}>{shownBlocks.map((c) => <BlockCard key={`${c.code}@${c.version}@${c.wording_version ?? ''}`} c={c} onInspect={inspect} />)}</ul>
+                    : (
+                      <div className="ss-ws-tablewrap"><table className="ss-table" data-testid={`ss-ws-list-${tab}`}>
+                        <thead><tr><th scope="col">{one.label}</th><th scope="col">Kind</th><th scope="col">{tab === 'MODULE' ? 'Revision' : 'Version'}</th><th scope="col">Status</th><th scope="col">Used by</th><th scope="col">Published in</th><th scope="col">Code</th></tr></thead>
+                        <tbody>{shownBlocks.map((c) => <tr key={`${c.code}@${c.version}@${c.wording_version ?? ''}`}><th scope="row"><button type="button" className="ss-link" onClick={() => inspect({ kind: c.kind as ComponentKind, code: c.code, version: c.version, wording: c.wording_version ?? null })} data-testid={`ss-ws-row-${c.kind}-${c.code}-${c.version}`}>{tab === 'ITEM' ? `“${c.title}”` : c.title}</button></th><td>{tab === 'MODULE' ? `${MODULE_CATEGORY[c.category] ?? words(c.category)}${(c.facts as Any).branching ? ' · branches' : ''}` : tab === 'ITEM' ? answerOf((c.facts as Any).answer_type).label : tab === 'CONDITION' ? 'Condition' : `${(c.facts as Any).options ?? 0} answers`}</td><td>{c.version}{c.is_latest ? '' : ' (older)'}</td><td>Published</td><td>{plural(c.used_by.surveys, 'survey')}</td><td>{c.published_in.map((x) => `${x.survey_name} ${x.version_label}`).join('; ')}</td><td><span className="ss-code">{c.code}</span></td></tr>)}</tbody>
+                      </table></div>)}
+                  {pages > 1 ? <nav className="ss-ws-pages" aria-label="Pages" data-testid="ss-ws-pages"><button type="button" className="ss-btn small" disabled={page <= 1} onClick={() => set({ page: String(page - 1) })}>Previous</button><span>Page {Math.min(page, pages)} of {pages} · {sorted.length} in all</span><button type="button" className="ss-btn small" disabled={page >= pages} onClick={() => set({ page: String(page + 1) })} data-testid="ss-ws-next-page">Next</button></nav> : null}
+                </>)
                   : <div className="ss-empty" data-testid="ss-ws-blocks-none"><p><strong>No published {one.one} {filter === 'reused' ? 'is reused by more than one survey' : 'yet'}.</strong> A {one.one} is made {MAKE[tab].where}, and becomes reusable when that survey is published.</p>{can('survey.edit') ? <button type="button" className="ss-btn" onClick={() => setMaking(tab)}>How to create one</button> : null}</div>}
           </section>
         )}
       </div>
-      {inspecting ? <InspectorDrawer target={inspecting} surveys={can('survey.edit') ? surveys ?? [] : []} onInspect={inspect} onClose={() => set({ inspect: null })} /> : null}
+      {opened && !inspecting && surveys?.find((x) => x.code === opened) ? <SurveyOverviewDrawer survey={surveys.find((x) => x.code === opened)!} facts={factsOf.get(surveys.find((x) => x.code === opened)!.id) ?? null} published={blocks && !missing(blocks.MODULE) ? (blocks.MODULE as Component[]) : []} onInspect={inspect} onClose={() => set({ survey: null })} /> : null}
+      {inspecting ? <InspectorDrawer target={inspecting} surveys={can('survey.edit') ? surveys ?? [] : []} markets={summary?.markets ?? []} onInspect={inspect} onClose={() => set({ inspect: null })} /> : null}
     </>
   );
 }

@@ -51,7 +51,7 @@ describe('application shell', () => {
     renderAt(<App />, '/');
     expect(await screen.findByRole('heading', { name: 'Command Centre' })).toBeInTheDocument();
     const nav = screen.getByRole('navigation', { name: 'Main navigation' });
-    for (const g of ['Workspace', 'Governance', 'Intelligence', 'Platform']) expect(within(nav).getByText(g)).toBeInTheDocument();
+    for (const g of ['Workspace', 'Design & Govern', 'Simulate & Analyze', 'Operations', 'Legacy & Administration']) expect(within(nav).getByText(g)).toBeInTheDocument(); // NAV-1
     const disabled = nav.querySelectorAll('[aria-disabled="true"]');
     expect(disabled.length).toBe(3); // Live Monitor, Campaigns (S4) + Analytics (S4); every Stage 0 screen is enabled after F7
     for (const label of ['Call Explorer', 'Work Queues', 'Search']) expect(within(nav).getByRole('link', { name: label })).toBeInTheDocument();

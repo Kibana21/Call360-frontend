@@ -29726,6 +29726,15 @@
             "title": "Reused Modules",
             "type": "array"
           },
+          "surveys": {
+            "description": "Every survey of the reader's markets with what its current draft holds — modules, questions, statements, decisions, conditional entries, whether anything branches — and when it was last saved and last published. Counted from the draft's own documents; nothing is executed.",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Surveys",
+            "type": "array"
+          },
           "waiting_on_others": {
             "description": "Open candidates the reader submitted, which someone else must decide or publish.",
             "items": {
@@ -29740,6 +29749,7 @@
           "markets",
           "library_enabled",
           "inventory",
+          "surveys",
           "recent_drafts",
           "recent_published",
           "awaiting_you",

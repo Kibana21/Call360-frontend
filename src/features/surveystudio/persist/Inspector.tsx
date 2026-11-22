@@ -12,7 +12,7 @@ import { Glyph, Tag, type GlyphName } from '../ui';
 import { getComponent, type ComponentDetail, type ComponentKind, type SurveySummary } from './api';
 import { differences } from './Library';
 import { short } from './reviewApi';
-import { MODULE_CATEGORY, answerOf, branchLabel, destination, missing, ruleInWords, versionContent, versionRecord, words } from './workspaceApi';
+import { MODULE_CATEGORY, answerOf, branchLabel, candidateRecord, destination, missing, ruleInWords, versionContent, versionRecord, words } from './workspaceApi';
 
 type Any = any; // eslint-disable-line @typescript-eslint/no-explicit-any -- published documents are read as JSON
 export type Inspect = { kind: ComponentKind; code: string; version: number; wording?: number | null };
@@ -28,7 +28,7 @@ const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? o
 
 // ---- a published module as steps and links ----------------------------------------------------------------------------
 interface Step { node: string; n: number; type: 'QUESTION' | 'STATEMENT' | 'DECISION'; title: string; item: Any; wording: Any; options: Any[]; condition: Any; binding: Any; routing: Any; entry: boolean; ref: Any }
-interface Arrow { from: string; to: Any; label: string; soft?: boolean }
+interface Arrow { from: string; to: Any; label: string; soft?: boolean; /** what in the published document makes this branch */ why: string }
 export function read(d: ComponentDetail): { steps: Step[]; arrows: Arrow[]; outcomes: string[]; name: (node: string) => string } {
   const doc = d.document as Any;
   const dep = (kind: string, code: string, version: number) => d.dependencies.find((x) => x.kind === kind && x.code === code && x.version === version)?.document as Any;
@@ -46,21 +46,27 @@ export function read(d: ComponentDetail): { steps: Step[]; arrows: Arrow[]; outc
   const arrows: Arrow[] = [];
   for (const s of steps) {
     const label = (code: string) => s.options.find((o) => o.code === code)?.label ?? words(code);
-    for (const e of ((doc.edges ?? []) as Any[]).filter((x) => x.from === s.node)) arrows.push({ from: s.node, to: e.to, label: branchLabel(String(e.on), label) });
+    for (const e of ((doc.edges ?? []) as Any[]).filter((x) => x.from === s.node)) {
+      const on = String(e.on);
+      const why = on === 'ANY' || on === 'AFTER_CAPTURE' ? `Link ${e.edge ?? ''}: taken whatever is answered or said at this step.`
+        : ['MATCH', 'NO_MATCH', 'UNKNOWN'].includes(on) ? `Link ${e.edge ?? ''}: the result “${on === 'MATCH' ? 'met' : on === 'NO_MATCH' ? 'not met' : 'cannot be decided'}” of the condition ${s.condition?.name ?? s.binding?.condition?.code ?? ''}${s.binding?.condition ? ` (${s.binding.condition.code} version ${s.binding.condition.version})` : ''}.`
+          : `Link ${e.edge ?? ''}: the answer “${label(on)}” (option ${on}) of this question’s answer set${s.item?.option_set ? ` ${s.item.option_set.code} version ${s.item.option_set.version}` : ''}.`;
+      arrows.push({ from: s.node, to: e.to, label: branchLabel(on, label), why });
+    }
     const r = s.routing ?? {};
-    ((r.rules ?? []) as Any[]).forEach((rule, i) => arrows.push({ from: s.node, to: rule.to, label: `Rule ${i + 1}: ${rule.when?.kind === 'ALL' ? 'all of' : 'any of'} ${((rule.when?.options ?? []) as string[]).map((o) => `“${label(o)}”`).join(', ')} chosen` }));
-    if (r.fallback) arrows.push({ from: s.node, to: r.fallback, label: 'Otherwise' });
-    for (const f of (r.followups ?? []) as Any[]) for (const node of (f.nodes ?? []) as string[]) arrows.push({ from: s.node, to: { node }, label: `Follow-up if “${label(f.option)}”`, soft: true });
-    for (const x of (r.interrupts ?? []) as Any[]) arrows.push({ from: s.node, to: x.outcome ? { outcome: x.outcome } : x.to, label: `Stops if “${label(x.option)}”` });
-    if (r.rejoin) arrows.push({ from: s.node, to: r.rejoin, label: 'After the follow-ups' });
-    if (r.empty_fallback && JSON.stringify(r.empty_fallback) !== JSON.stringify(r.rejoin)) arrows.push({ from: s.node, to: r.empty_fallback, label: 'If no follow-up applies' });
+    ((r.rules ?? []) as Any[]).forEach((rule, i) => arrows.push({ from: s.node, to: rule.to, label: `Rule ${i + 1}: ${rule.when?.kind === 'ALL' ? 'all of' : 'any of'} ${((rule.when?.options ?? []) as string[]).map((o) => `“${label(o)}”`).join(', ')} chosen`, why: `Routing rule ${rule.rule ?? i + 1} of this question, tried in order: the first rule that holds is taken.` }));
+    if (r.fallback) arrows.push({ from: s.node, to: r.fallback, label: 'Otherwise', why: 'The fallback of this question’s ordered routing: taken when no rule holds.' });
+    for (const f of (r.followups ?? []) as Any[]) for (const node of (f.nodes ?? []) as string[]) arrows.push({ from: s.node, to: { node }, label: `Follow-up if “${label(f.option)}”`, soft: true, why: `A follow-up question queued when “${label(f.option)}” (option ${f.option}) is among the answers${f.priority !== undefined ? `, priority ${f.priority}` : ''}. Follow-ups are asked one after another, then the survey rejoins.` });
+    for (const x of (r.interrupts ?? []) as Any[]) arrows.push({ from: s.node, to: x.outcome ? { outcome: x.outcome } : x.to, label: `Stops if “${label(x.option)}”`, why: `An interruption: when “${label(x.option)}” (option ${x.option}) is among the answers, no follow-up is asked.` });
+    if (r.rejoin) arrows.push({ from: s.node, to: r.rejoin, label: 'After the follow-ups', why: 'The rejoin point of this question’s follow-ups.' });
+    if (r.empty_fallback && JSON.stringify(r.empty_fallback) !== JSON.stringify(r.rejoin)) arrows.push({ from: s.node, to: r.empty_fallback, label: 'If no follow-up applies', why: 'Where this question leads when none of its follow-ups applies.' });
   }
   return { steps, arrows, outcomes: (doc.outcomes ?? []) as string[], name };
 }
 
 // ---- the execution graph ----------------------------------------------------------------------------------------------
 const W = 216, H = 74, GX = 36, GY = 60;
-function Graph({ steps, arrows, outcomes, selected, onSelect }: { steps: Step[]; arrows: Arrow[]; outcomes: string[]; selected: string | null; onSelect: (node: string) => void }) {
+function Graph({ steps, arrows, outcomes, selected, onSelect, branch, onBranch }: { steps: Step[]; arrows: Arrow[]; outcomes: string[]; selected: string | null; onSelect: (node: string) => void; branch: string | null; onBranch: (key: string) => void }) {
   const g = useMemo(() => {
     const entry = steps.find((s) => s.entry) ?? steps[0];
     const level = new Map<string, number>();
@@ -91,7 +97,7 @@ function Graph({ steps, arrows, outcomes, selected, onSelect }: { steps: Step[];
     const edges = [...merged.values()].map((e) => { const a = at.get(e.from)!, b = at.get(e.to)!; const direct = b.y - a.y === H + GY; return { ...e, lane: direct ? -1 : lanes++ }; });
     return { at, ends, width, lanes, full: width + (lanes ? 36 + lanes * 22 : 0), height: rows.length * (H + GY) - GY, edges };
   }, [steps, arrows, outcomes]);
-  const hot = (e: { from: string; to: string }) => selected !== null && (e.from === selected || e.to === selected);
+  const hot = (e: { from: string; to: string }) => branch === `${e.from}>${e.to}` || (branch === null && selected !== null && (e.from === selected || e.to === selected));
   return (
     <div className="ss-in-graph-scroll" data-testid="ss-in-graph">
       <div className="ss-in-graph" style={{ width: g.full, height: g.height }} data-lanes={g.lanes}>
@@ -114,7 +120,7 @@ function Graph({ steps, arrows, outcomes, selected, onSelect }: { steps: Step[];
           const a = g.at.get(e.from), b = g.at.get(e.to);
           if (!a || !b) return null;
           const x = e.lane < 0 ? (a.x + b.x) / 2 + W / 2 : a.x + W + 46, y = e.lane < 0 ? (a.y + H + b.y) / 2 : a.y + H / 2 - 11;
-          return <span key={`l${e.from}>${e.to}`} className={`ss-in-edge-label ${hot(e) ? 'hot' : ''}`} style={{ left: x, top: y }} title={e.labels.join(' · ')}>{e.labels.length > 2 ? `${e.labels[0]} +${e.labels.length - 1}` : e.labels.join(' · ')}</span>;
+          return <button type="button" key={`l${e.from}>${e.to}`} className={`ss-in-edge-label ${hot(e) ? 'hot' : ''}`} style={{ left: x, top: y }} title={e.labels.join(' · ')} onClick={() => onBranch(`${e.from}>${e.to}`)} aria-pressed={branch === `${e.from}>${e.to}`} data-testid={`ss-in-branch-${e.from}-${e.to.replace(':', '-')}`}>{e.labels.length > 2 ? `${e.labels[0]} +${e.labels.length - 1}` : e.labels.join(' · ')}</button>;
         })}
         {steps.map((s) => {
           const p = g.at.get(s.node) as { x: number; y: number };
@@ -171,46 +177,89 @@ function ConditionCard({ doc, binding }: { doc: Any; binding?: Any }) {
   );
 }
 
-// ---- how each consuming survey enters and leaves the module -----------------------------------------------------------
-function Consumers({ d, onInspect }: { d: ComponentDetail; onInspect: (c: Inspect) => void }) {
-  const { can } = useAuth();
-  const [rows, setRows] = useState<Record<string, { content: Any; record: Any } | null>>({});
-  const uses = d.published_in;
-  const key = uses.map((u) => u.version_id).join(',');
+function ItemBody({ d, onInspect }: { d: ComponentDetail; onInspect: (c: Inspect) => void }) {
+  const doc = d.document as Any;
+  const wording = d.dependencies.find((x) => x.kind === 'WORDING')?.document as Any;
+  const os = d.dependencies.find((x) => x.kind === 'OPTION_SET');
+  return (
+    <>
+      <blockquote className="ss-in-quote">“{String(wording?.text ?? d.title)}”</blockquote>
+      <dl className="ss-in-facts"><div><dt>Kind of answer</dt><dd>{answerOf(doc.answer_type).label}</dd></div><div><dt>Wording</dt><dd>version {d.wording_version} · {words(wording?.delivery_mode)} · synthetic, unapproved</dd></div></dl>
+      <Validation item={doc} options={((os?.document as Any)?.options ?? []) as Any[]} />
+      {os ? <p><button type="button" className="ss-link" onClick={() => onInspect({ kind: 'OPTION_SET', code: os.code, version: os.version })}>Inspect its answer set</button></p> : null}
+    </>
+  );
+}
+
+function ConditionBody({ d }: { d: ComponentDetail }) {
+  const reads = (((d.facts as Any).fields ?? []) as string[]);
+  return <><ConditionCard doc={d.document} /><dl className="ss-in-facts"><div><dt>Reads</dt><dd>{reads.map(fieldLabel).join(' · ') || 'no customer or policy information'}</dd></div></dl></>;
+}
+
+function OptionSetBody({ d }: { d: ComponentDetail }) {
+  return (
+    <>
+      <ul className="ss-in-options">{(((d.document as Any).options ?? []) as Any[]).map((o) => <li key={o.code}><strong>{o.label}</strong>{[o.exclusive ? 'cannot be combined' : '', o.is_other ? 'other, with text' : '', o.interrupt ? `stops the question: ${words(o.interrupt)}` : ''].filter(Boolean).map((t) => <Tag key={t}>{t}</Tag>)}</li>)}</ul>
+    </>
+  );
+}
+
+// ---- what the consuming surveys say about a block: how each enters and leaves it, and who governed its publication ----
+interface Use { content: Any; record: Any; candidate: Any }
+function useUses(d: ComponentDetail | null): Record<string, Use> {
+  const [rows, setRows] = useState<Record<string, Use>>({});
+  const key = (d?.published_in ?? []).map((u) => u.version_id).join(',');
   useEffect(() => {
     let current = true;
-    Promise.all(uses.map(async (u) => [u.version_id, { content: await versionContent(u.version_id), record: await versionRecord(u.version_id) }] as const)).then((all) => { if (current) setRows(Object.fromEntries(all)); });
+    setRows({});
+    Promise.all((d?.published_in ?? []).map(async (u) => {
+      const [content, record] = await Promise.all([versionContent(u.version_id), versionRecord(u.version_id)]);
+      const candidate = !missing(record) && record.candidate_id ? await candidateRecord(String(record.candidate_id)) : null;
+      return [u.version_id, { content: missing(content) ? null : content.content, record: missing(record) ? null : record, candidate: candidate && !missing(candidate) ? candidate : null }] as const;
+    })).then((all) => { if (current) setRows(Object.fromEntries(all)); });
     return () => { current = false; };
   }, [key]); // eslint-disable-line react-hooks/exhaustive-deps -- the versions are identified by key
-  if (!uses.length) return <p className="ss-muted">No published survey version pins this revision.</p>;
+  return rows;
+}
+const instancesOf = (use: Use | undefined, d: ComponentDetail) => (((use?.content?.sequence ?? []) as Any[]).filter((i) => i.module?.code === d.code && Number(i.module?.revision) === d.version));
+const EVENT: Record<string, string> = { SUBMITTED: 'Submitted for review', APPROVED: 'Approved', REJECTED: 'Rejected', WITHDRAWN: 'Withdrawn', PUBLISHED: 'Published', SUPERSEDED: 'Superseded by a newer version' };
+
+function Governance({ use }: { use: Use | undefined }) {
+  if (!use) return <p className="ss-muted">Loading its governance history…</p>;
+  const events = [...(((use.candidate?.history ?? []) as Any[])), ...(((use.record?.history ?? []) as Any[]))].filter((e, i, all) => all.findIndex((x) => x.event === e.event && x.occurred_at === e.occurred_at) === i).sort((a, b) => String(a.occurred_at).localeCompare(String(b.occurred_at)));
+  if (!events.length) return <p className="ss-muted">Its governance history could not be read.</p>;
+  return <ol className="ss-in-timeline" data-testid="ss-in-governance">{events.map((e, i) => <li key={i} data-event={e.event}><strong>{EVENT[e.event] ?? words(e.event)}</strong> by {e.actor_name ?? 'someone'}<span className="ss-muted"> · {new Date(e.occurred_at).toLocaleString()}{e.reason ? ` · “${e.reason}”` : ''}</span></li>)}</ol>;
+}
+
+function WhereUsed({ d, uses, unit, onInspect }: { d: ComponentDetail; uses: Record<string, Use>; unit: string; onInspect: (c: Inspect) => void }) {
+  const { can } = useAuth();
+  if (!d.published_in.length) return <p className="ss-muted">No published survey version pins this {unit.toLowerCase()}.</p>;
   return (
     <ul className="ss-in-consumers">
-      {uses.map((u) => {
-        const r = rows[u.version_id];
-        const content = r && !missing(r.content) ? r.content.content : null;
-        const published = r && !missing(r.record) ? ((r.record.history ?? []) as Any[]).find((h) => h.event === 'PUBLISHED') : null;
-        const instances = ((content?.sequence ?? []) as Any[]).filter((i) => i.module?.code === d.code && Number(i.module?.revision) === d.version);
+      {d.published_in.map((u) => {
+        const use = uses[u.version_id];
+        const instances = d.kind === 'MODULE' ? instancesOf(use, d) : [];
         return (
           <li key={u.version_id} data-testid={`ss-in-consumer-${u.survey_code}`} data-version={u.version_id}>
             <header>
-              <div><strong>{u.survey_name}</strong><span className="ss-muted"> pins revision {d.version} in its version {u.version_label}{u.version_status !== 'PUBLISHED' ? ` (${words(u.version_status)})` : ''}</span></div>
+              <div><strong>{u.survey_name}</strong><span className="ss-muted"> · version {u.version_label} · {words(u.version_status)} · pins {unit.toLowerCase()} {d.version}</span></div>
               <span className="ss-in-row-actions">
                 <Link className="ss-btn small" to={`/survey-studio/surveys/${u.survey_code}/versions/${u.version_id}`}>Open the version</Link>
-                {can('survey.simulate') ? <Link className="ss-btn small" to={`/survey-studio/surveys/${u.survey_code}/simulate`} data-testid={`ss-in-test-${u.survey_code}`}>Test it here</Link> : null}
+                <Link className="ss-btn small" to={`/survey-studio/surveys/${u.survey_code}`}>Open the survey</Link>
               </span>
             </header>
-            {published ? <p className="ss-muted">Published by {published.actor_name ?? 'someone'} on {new Date(published.occurred_at).toLocaleDateString()}.</p> : null}
             {instances.map((i) => {
               const routes = (Array.isArray(i.routes) ? i.routes.map((x: Any) => [x.on, x.to]) : Object.entries(i.routes ?? {})) as Array<[string, Any]>;
               const cond = i.entry?.binding?.condition;
               return (
                 <dl className="ss-in-facts" key={i.instance}>
-                  <div><dt>Entered</dt><dd>{cond ? <>only when the condition <button type="button" className="ss-link" onClick={() => onInspect({ kind: 'CONDITION', code: cond.code, version: cond.version })}>{cond.code} v{cond.version}</button> is met{Object.keys(i.entry.binding.params ?? {}).length ? ` (${Object.entries(i.entry.binding.params).map(([k, v]) => `${k} = ${String(v)}`).join(', ')})` : ''}; if that cannot be decided: {words(i.entry.binding.unknown_policy)}</> : 'always, in its place in the survey'}</dd></div>
+                  <div><dt>Entered</dt><dd>{cond ? <>only when the condition <button type="button" className="ss-link" onClick={() => onInspect({ kind: 'CONDITION', code: cond.code, version: cond.version })}>{cond.code} version {cond.version}</button> is met{Object.keys(i.entry.binding.params ?? {}).length ? ` (${Object.entries(i.entry.binding.params).map(([k, v]) => `${k} = ${String(v)}`).join(', ')})` : ''}; if that cannot be decided: {words(i.entry.binding.unknown_policy)}</> : 'always, in its place in the survey'}</dd></div>
                   <div><dt>Left</dt><dd>{routes.map(([on, to]) => `${words(on)} → ${to === '@CONTINUE' ? 'the next module' : to?.survey_outcome ? `the survey ends: ${words(to.survey_outcome)}` : to?.instance ? `module ${to.instance}` : JSON.stringify(to)}`).join(' · ') || 'not stated'}</dd></div>
+                  {can('survey.edit') ? <div><dt>Builder</dt><dd><Link to={`/survey-studio/surveys/${u.survey_code}/modules/${i.instance}`} data-testid={`ss-in-builder-${u.survey_code}`}>Open this module in the survey’s builder</Link><span className="ss-muted"> (the survey’s current draft)</span></dd></div> : null}
                 </dl>
               );
             })}
-            {r && !content ? <p className="ss-muted">How this survey enters and leaves the module could not be read.</p> : null}
+            {use && d.kind === 'MODULE' && !use.content ? <p className="ss-muted">How this survey enters and leaves the module could not be read.</p> : null}
           </li>
         );
       })}
@@ -218,110 +267,76 @@ function Consumers({ d, onInspect }: { d: ComponentDetail; onInspect: (c: Inspec
   );
 }
 
-function ModuleBody({ d, onInspect }: { d: ComponentDetail; onInspect: (c: Inspect) => void }) {
-  const { steps, arrows, outcomes, name } = useMemo(() => read(d), [d]);
-  const [selected, setSelected] = useState<string | null>(null);
-  const list = useRef<HTMLOListElement>(null);
-  const pick = (node: string) => { setSelected(node); list.current?.querySelector(`[data-node="${CSS.escape(node)}"]`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); };
-  const conditions = d.dependencies.filter((x) => x.kind === 'CONDITION');
-  const needs = ((d.requires?.fields ?? []) as string[]);
-  const entry = steps.find((s) => s.entry);
+const SECTIONS: Record<ComponentKind, Array<[string, string]>> = {
+  MODULE: [['overview', 'Overview'], ['questions', 'Questions'], ['logic', 'Logic'], ['rules', 'Rules'], ['dependencies', 'Dependencies'], ['where-used', 'Where used'], ['versions', 'Versions'], ['test', 'Test']],
+  ITEM: [['overview', 'Overview'], ['content', 'Wording and answers'], ['dependencies', 'Dependencies'], ['where-used', 'Where used'], ['versions', 'Versions']],
+  CONDITION: [['overview', 'Overview'], ['content', 'What it evaluates'], ['dependencies', 'Dependencies'], ['where-used', 'Where used'], ['versions', 'Versions']],
+  OPTION_SET: [['overview', 'Overview'], ['content', 'Answers'], ['dependencies', 'Dependencies'], ['where-used', 'Where used'], ['versions', 'Versions']],
+};
+
+function ModuleLogic({ d, steps, arrows, outcomes, name, selected, pick, uses, onInspect }: { d: ComponentDetail; steps: Step[]; arrows: Arrow[]; outcomes: string[]; name: (n: string) => string; selected: string | null; pick: (n: string) => void; uses: Record<string, Use>; onInspect: (c: Inspect) => void }) {
+  const [branch, setBranch] = useState<string | null>(null);
+  const node = steps.find((s) => s.node === selected) ?? null;
+  const picked = branch ? arrows.filter((a) => `${a.from}>${a.to?.node ? a.to.node : a.to?.outcome ? `end:${a.to.outcome}` : ''}` === branch) : [];
+  const entries = d.published_in.flatMap((u) => instancesOf(uses[u.version_id], d).map((i) => ({ u, i }))).filter((x) => x.i.entry?.binding?.condition);
   return (
     <>
-      <Section id="flow" title="How it runs" count={`${plural(steps.length, 'step')} · ${plural(arrows.length, 'branch', 'branches')}`}>
-        <p className="ss-muted">Select a step to see what is asked there and where each answer leads. Solid lines are branches; dashed lines are follow-up questions.</p>
-        <Graph steps={steps} arrows={arrows} outcomes={outcomes} selected={selected} onSelect={pick} />
-      </Section>
-      <Section id="steps" title="Every step" count={steps.length}>
-        <ol className="ss-in-steps" ref={list}>
-          {steps.map((s) => {
-            const mine = arrows.filter((a) => a.from === s.node);
-            const a = answerOf(s.item?.answer_type);
-            return (
-              <li key={s.node} className={selected === s.node ? 'on' : ''} data-node={s.node} data-testid={`ss-in-step-${s.node}`} data-type={s.type}>
-                <button type="button" className="ss-in-step-head" onClick={() => setSelected(selected === s.node ? null : s.node)} aria-expanded={selected === s.node}>
-                  <span className={`ss-in-step-n ${s.type.toLowerCase()}`}>{s.n}</span>
-                  <span className="ss-in-step-title">{s.type === 'DECISION' ? <>Decision: {s.title}</> : <>“{s.title}”</>}</span>
-                  <Tag tone={s.type === 'DECISION' ? 'warn' : s.type === 'STATEMENT' ? 'plain' : 'shared'}>{s.type === 'DECISION' ? 'Decision' : s.type === 'STATEMENT' ? 'Statement' : a.label}</Tag>
-                </button>
-                <div className="ss-in-step-body">
-                  {s.type === 'DECISION' ? <ConditionCard doc={s.condition} binding={s.binding} /> : <Validation item={s.item} options={s.options} />}
-                  <ul className="ss-in-branches" aria-label="Where it leads">
-                    {mine.length ? mine.map((x, i) => <li key={i} className={x.soft ? 'soft' : ''}><span>{x.label}</span><Glyph name="right" size={13} /><strong>{x.to?.node ? <button type="button" className="ss-link" onClick={() => pick(x.to.node)}>{destination(x.to, name)}</button> : destination(x.to, name)}</strong></li>) : <li><span>No branch is written for this step.</span></li>}
-                    {s.routing?.no_followup?.length ? <li className="soft"><span>No follow-up after: {(s.routing.no_followup as string[]).map((o) => `“${s.options.find((q) => q.code === o)?.label ?? words(o)}”`).join(', ')}</span></li> : null}
-                  </ul>
-                  {s.ref ? <p className="ss-in-step-ref"><button type="button" className="ss-link" onClick={() => onInspect({ kind: 'ITEM', code: s.ref.code, version: s.ref.version, wording: s.ref.wording_version })} data-testid={`ss-in-open-item-${s.node}`}>Inspect this {s.type === 'STATEMENT' ? 'statement' : 'question'} on its own</button><span className="ss-muted"> · wording version {s.ref.wording_version} · {words(s.wording?.delivery_mode)}</span></p> : null}
-                </div>
-              </li>
-            );
-          })}
-        </ol>
-      </Section>
-      <Section id="conditions" title="Conditions it uses" count={conditions.length}>
-        {conditions.length ? conditions.map((c) => <div key={`${c.code}@${c.version}`} className="ss-in-dep-row"><ConditionCard doc={c.document} /><button type="button" className="ss-link" onClick={() => onInspect({ kind: 'CONDITION', code: c.code, version: c.version })}>Inspect the condition and where else it is used</button></div>) : <p className="ss-muted">This module uses no reusable condition. Its branches depend only on the answers given.</p>}
-        {needs.length ? <p data-testid="ss-in-requires">It needs this customer or policy information: <strong>{needs.map(fieldLabel).join(', ')}</strong>.</p> : null}
-      </Section>
-      <Section id="entry-exit" title="How it is entered and left" count={`${plural(outcomes.length, 'ending')}`}>
-        <dl className="ss-in-facts">
-          <div><dt>Starts at</dt><dd>{entry ? <button type="button" className="ss-link" onClick={() => pick(entry.node)}>step {entry.n}: {entry.type === 'DECISION' ? entry.title : `“${entry.title}”`}</button> : 'no first step is stated'}</dd></div>
-          <div><dt>Can end as</dt><dd>{outcomes.map(words).join(' · ') || 'no ending is stated'}</dd></div>
-        </dl>
-        <p className="ss-muted">When it is entered, and where each ending leads, is set by each survey that uses it:</p>
-        <Consumers d={d} onInspect={onInspect} />
-      </Section>
+      <p className="ss-muted">Drawn from revision {d.version} as published. Select a step or a branch label to see exactly what makes it. Solid lines are branches; dashed lines are follow-up questions.</p>
+      <dl className="ss-in-facts ss-in-entry" data-testid="ss-in-entry">
+        <div><dt>Entry</dt><dd>{steps.find((s) => s.entry) ? <button type="button" className="ss-link" onClick={() => { setBranch(null); pick(steps.find((s) => s.entry)!.node); }}>step {steps.find((s) => s.entry)!.n}</button> : 'no first step is stated'}. A module has no entry condition of its own: each survey that uses it sets one, or none.</dd></div>
+        {entries.length ? <div><dt>Entry conditions set by surveys</dt><dd>{entries.map(({ u, i }) => <span key={`${u.version_id}-${i.instance}`}>{u.survey_name}: <button type="button" className="ss-link" onClick={() => onInspect({ kind: 'CONDITION', code: i.entry.binding.condition.code, version: i.entry.binding.condition.version })}>{i.entry.binding.condition.code} version {i.entry.binding.condition.version}</button>. </span>)}</dd></div> : null}
+        <div><dt>Exits</dt><dd>{outcomes.map(words).join(' · ') || 'no ending is stated'}. Where each ending leads is set by each survey (see “Where used”).</dd></div>
+      </dl>
+      <Graph steps={steps} arrows={arrows} outcomes={outcomes} selected={selected} onSelect={(n) => { setBranch(null); pick(n); }} branch={branch} onBranch={(k) => setBranch(branch === k ? null : k)} />
+      {picked.length ? (
+        <div className="ss-in-detail" data-testid="ss-in-branch-detail" role="status">
+          <h4>Branch from {name(picked[0]!.from)} to {destination(picked[0]!.to, name)}</h4>
+          <ul>{picked.map((a, i) => <li key={i}><strong>{a.label}.</strong> {a.why}</li>)}</ul>
+          <p className="ss-muted">From “{steps.find((s) => s.node === picked[0]!.from)?.title}”.</p>
+        </div>
+      ) : node ? (
+        <div className="ss-in-detail" data-testid="ss-in-node-detail" role="status">
+          <h4>Step {node.n}: {node.type === 'DECISION' ? `Decision — ${node.title}` : `“${node.title}”`}</h4>
+          {node.type === 'DECISION' ? <ConditionCard doc={node.condition} binding={node.binding} /> : <Validation item={node.item} options={node.options} />}
+          <ul>{arrows.filter((a) => a.from === node.node).map((a, i) => <li key={i}><strong>{a.label}</strong> → {destination(a.to, name)}</li>)}</ul>
+        </div>
+      ) : null}
     </>
-  );
-}
-
-function ItemBody({ d, onInspect }: { d: ComponentDetail; onInspect: (c: Inspect) => void }) {
-  const doc = d.document as Any;
-  const wording = d.dependencies.find((x) => x.kind === 'WORDING')?.document as Any;
-  const os = d.dependencies.find((x) => x.kind === 'OPTION_SET');
-  return (
-    <Section id="item" title={doc.answer_type === 'STATEMENT' ? 'What is said' : 'What is asked'}>
-      <blockquote className="ss-in-quote">“{String(wording?.text ?? d.title)}”</blockquote>
-      <dl className="ss-in-facts"><div><dt>Kind of answer</dt><dd>{answerOf(doc.answer_type).label}</dd></div><div><dt>Wording</dt><dd>version {d.wording_version} · {words(wording?.delivery_mode)} · synthetic, unapproved</dd></div></dl>
-      <Validation item={doc} options={((os?.document as Any)?.options ?? []) as Any[]} />
-      {os ? <p><button type="button" className="ss-link" onClick={() => onInspect({ kind: 'OPTION_SET', code: os.code, version: os.version })}>Inspect its answer set</button></p> : null}
-    </Section>
-  );
-}
-
-function ConditionBody({ d }: { d: ComponentDetail }) {
-  const reads = (((d.facts as Any).fields ?? []) as string[]);
-  return <Section id="condition" title="What it evaluates"><ConditionCard doc={d.document} /><dl className="ss-in-facts"><div><dt>Reads</dt><dd>{reads.map(fieldLabel).join(' · ') || 'no customer or policy information'}</dd></div></dl></Section>;
-}
-
-function OptionSetBody({ d }: { d: ComponentDetail }) {
-  return (
-    <Section id="options" title="Answers" count={(((d.document as Any).options ?? []) as Any[]).length}>
-      <ul className="ss-in-options">{(((d.document as Any).options ?? []) as Any[]).map((o) => <li key={o.code}><strong>{o.label}</strong>{[o.exclusive ? 'cannot be combined' : '', o.is_other ? 'other, with text' : '', o.interrupt ? `stops the question: ${words(o.interrupt)}` : ''].filter(Boolean).map((t) => <Tag key={t}>{t}</Tag>)}</li>)}</ul>
-    </Section>
   );
 }
 
 const GLYPH: Record<ComponentKind, GlyphName> = { MODULE: 'flow', ITEM: 'text', CONDITION: 'branch', OPTION_SET: 'list' };
 
-/** The drawer. `target` is what the address bar names; `onInspect` moves to another block; `onClose` closes it. */
-export function InspectorDrawer({ target, surveys, onInspect, onClose }: { target: Inspect; surveys: SurveySummary[]; onInspect: (c: Inspect) => void; onClose: () => void }) {
+/** The drawer. `target` is what the address names; `onInspect` moves to another block; `onClose` closes it. */
+export function InspectorDrawer({ target, surveys, markets = [], onInspect, onClose }: { target: Inspect; surveys: SurveySummary[]; markets?: string[]; onInspect: (c: Inspect) => void; onClose: () => void }) {
   const { can } = useAuth();
   const [d, setD] = useState<ComponentDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [compare, setCompare] = useState<{ with: number; lines: string[] } | null>(null);
   const [reuse, setReuse] = useState(false);
+  const [selected, setSelected] = useState<string | null>(null);
   const panel = useRef<HTMLElement>(null);
+  const list = useRef<HTMLOListElement>(null);
   const key = inspectParam(target);
   useEffect(() => {
     let current = true;
-    setD(null); setError(null); setCompare(null); setReuse(false);
+    setD(null); setError(null); setCompare(null); setReuse(false); setSelected(null);
     getComponent(target.kind, target.code, target.version, target.wording ?? undefined).then((x) => { if (current) setD(x); }).catch((e) => { if (current) setError(say(e)); });
     return () => { current = false; };
   }, [key]); // eslint-disable-line react-hooks/exhaustive-deps -- the block is identified by key
   useEffect(() => { panel.current?.focus(); const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); }; window.addEventListener('keydown', esc); return () => window.removeEventListener('keydown', esc); }, [onClose]);
+  const uses = useUses(d);
+  const module = useMemo(() => (d && target.kind === 'MODULE' ? read(d) : null), [d, target.kind]);
   const showCompare = (v: number) => { if (d) getComponent(d.kind as ComponentKind, d.code, v).then((other) => setCompare({ with: v, lines: differences(d, other) })).catch((e) => setError(say(e))); };
+  const jump = (id: string) => { const el = panel.current?.querySelector(`#ss-in-${id}`) as HTMLDetailsElement | null; if (el) { el.open = true; el.scrollIntoView({ block: 'start', behavior: 'smooth' }); } };
+  const pick = (node: string) => { setSelected(node); list.current?.querySelector(`[data-node="${CSS.escape(node)}"]`)?.scrollIntoView({ block: 'nearest' }); };
   const editable = surveys.filter((s) => !s.open_candidate_status);
   const facts = (d?.facts ?? {}) as Any;
   const unit = target.kind === 'MODULE' ? 'Revision' : 'Version';
+  const first = d?.published_in[0];
+  const doc = (d?.document ?? {}) as Any;
+  const conditions = (d?.dependencies ?? []).filter((x) => x.kind === 'CONDITION');
+  const needs = ((d?.requires?.fields ?? []) as string[]);
   return (
     <div className="ss-in-scrim" data-testid="ss-in-scrim" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <aside className="ss-in" role="dialog" aria-modal="true" aria-labelledby="ss-in-title" tabIndex={-1} ref={panel} data-testid="ss-inspector" data-kind={target.kind} data-code={target.code} data-version={target.version} data-loaded={String(!!d)}>
@@ -329,12 +344,11 @@ export function InspectorDrawer({ target, surveys, onInspect, onClose }: { targe
           <div className="ss-in-head-main">
             <p className="ss-in-kind"><Glyph name={GLYPH[target.kind]} size={14} /> Published {KIND[target.kind].toLowerCase()}{d && target.kind === 'MODULE' ? ` · ${MODULE_CATEGORY[d.category] ?? words(d.category)}` : ''}</p>
             <h2 id="ss-in-title" className="ss-title">{d ? (target.kind === 'ITEM' ? `“${d.title}”` : d.title) : error ? 'Not available' : 'Loading…'}</h2>
-            {d?.description ? <p className="ss-in-lede">{d.description}</p> : null}
             {d ? (
               <p className="ss-in-meta" data-testid="ss-in-meta">
-                <Tag tone={d.is_latest ? 'ok' : 'draft'}>{unit} {d.version}{d.is_latest ? ' · latest published' : ` · revision ${d.latest_published_version} is newer`}</Tag>
+                <Tag tone={d.is_latest ? 'ok' : 'draft'}>{unit} {d.version}{d.is_latest ? ' · latest published' : ` · ${unit.toLowerCase()} ${d.latest_published_version} is newer`}</Tag>
                 <Tag tone={d.used_by.surveys > 1 ? 'shared' : 'plain'}>Used by {plural(d.used_by.surveys, 'survey')}</Tag>
-                {target.kind === 'MODULE' ? <span className="ss-muted">{plural(facts.questions ?? 0, 'question')} · {plural(facts.statements ?? 0, 'statement')} · {plural(facts.decisions ?? 0, 'decision')}</span> : null}
+                {target.kind === 'MODULE' ? <><span className="ss-muted">{plural(facts.questions ?? 0, 'question')} · {plural(facts.statements ?? 0, 'statement')} · {plural(facts.decisions ?? 0, 'decision')}</span>{facts.branching ? <Tag tone="warn">Branches</Tag> : <Tag>No branching</Tag>}</> : null}
               </p>
             ) : null}
           </div>
@@ -345,43 +359,111 @@ export function InspectorDrawer({ target, surveys, onInspect, onClose }: { targe
         {d ? (
           <>
             <div className="ss-in-actions" data-testid="ss-in-actions">
-              {can('survey.edit') ? <button type="button" className="ss-btn primary" onClick={() => setReuse((v) => !v)} aria-expanded={reuse} data-testid="ss-in-reuse"><Glyph name="plus" size={14} /> Use in a survey</button> : <span className="ss-save-note" data-testid="ss-in-read-only">You can inspect this. Using it in a survey needs the “edit surveys” permission.</span>}
-              {target.kind === 'MODULE' && d.published_in[0] ? (can('survey.simulate') ? <Link className="ss-btn" to={`/survey-studio/surveys/${d.published_in[0].survey_code}/simulate`} data-testid="ss-in-test"><Glyph name="next" size={14} /> Test in {d.published_in[0].survey_name}</Link> : <span className="ss-save-note">Testing needs the “simulate surveys” permission.</span>) : null}
-              <a className="ss-btn" href="#ss-in-used">Where it is used</a>
+              {can('survey.edit') ? <button type="button" className="ss-btn primary" onClick={() => setReuse((v) => !v)} aria-expanded={reuse} data-testid="ss-in-reuse"><Glyph name="plus" size={14} /> Reuse in a survey</button> : <span className="ss-save-note" data-testid="ss-in-read-only">You can inspect this. Reusing or changing it needs the “edit surveys” permission.</span>}
+              {target.kind === 'MODULE' && first ? (can('survey.simulate') ? <Link className="ss-btn" to={`/survey-studio/surveys/${first.survey_code}/simulate`} data-testid="ss-in-test-action"><Glyph name="next" size={14} /> Test in a survey</Link> : null) : null}
+              {target.kind === 'MODULE' && first && can('survey.edit') && instancesOf(uses[first.version_id], d)[0] ? <Link className="ss-btn" to={`/survey-studio/surveys/${first.survey_code}/modules/${instancesOf(uses[first.version_id], d)[0].instance}`} data-testid="ss-in-open-builder">Open in the builder</Link> : null}
             </div>
-            {target.kind === 'MODULE' ? <p className="ss-muted ss-in-test-note">A module is tested inside a published survey that uses it: the simulator runs the survey’s exact pinned revision.</p> : null}
             {reuse ? (
               <div className="ss-in-reuse" data-testid="ss-in-reuse-panel">
-                <p><strong>Choose the survey to open.</strong> Its library opens on this block, where you add the exact published {unit.toLowerCase()} (locked){target.kind === 'MODULE' ? ' or make an editable copy for that survey' : ''}. Nothing is changed until you save there.</p>
+                <p><strong>Choose the survey to open.</strong> Its library opens on this block. There you add the exact published {unit.toLowerCase()} (pinned and locked){target.kind === 'MODULE' ? ', or choose “Edit a copy for this survey” to start a new draft from it' : ''}. This published {unit.toLowerCase()} is never changed, and nothing is saved until you save there.</p>
                 {editable.length ? <ul>{editable.map((s) => <li key={s.id}><Link to={`/survey-studio/surveys/${s.code}?library=${encodeURIComponent(inspectParam({ kind: target.kind, code: d.code, version: d.version }))}`} data-testid={`ss-in-reuse-${s.code}`}>{s.name}</Link><span className="ss-muted"> · draft revision {s.draft_revision}</span></li>)}</ul> : <p className="ss-muted">No survey of yours is open for editing. Create one first.</p>}
               </div>
             ) : null}
+            <nav className="ss-in-tabs" aria-label="Sections of this block" data-testid="ss-in-tabs">{SECTIONS[target.kind].map(([id, label]) => <button key={id} type="button" onClick={() => jump(id)} data-testid={`ss-in-tab-${id}`}>{label}</button>)}</nav>
             <div className="ss-in-body">
-              {target.kind === 'MODULE' ? <ModuleBody d={d} onInspect={onInspect} /> : target.kind === 'ITEM' ? <ItemBody d={d} onInspect={onInspect} /> : target.kind === 'CONDITION' ? <ConditionBody d={d} /> : <OptionSetBody d={d} />}
-              <Section id="used" title="Where it is used" count={plural(d.used_by.surveys, 'survey')}>
-                {target.kind === 'MODULE' ? <p className="ss-muted">Listed with how each survey enters and leaves it under “How it is entered and left”.</p> : null}
-                <ul className="ss-in-used">{d.published_in.map((u) => <li key={u.version_id}><Link to={`/survey-studio/surveys/${u.survey_code}/versions/${u.version_id}`}>{u.survey_name}</Link><span className="ss-muted"> · version {u.version_label} · pins {unit.toLowerCase()} {d.version}</span></li>)}</ul>
-                {d.used_by.versions > d.published_in.length ? <p className="ss-muted">{d.used_by.versions} published versions pin it in all.</p> : null}
+              <Section id="overview" title="Overview">
+                {d.description ? <p className="ss-in-lede">{d.description}</p> : <p className="ss-muted">No purpose or description was written for this {KIND[target.kind].toLowerCase()}.</p>}
+                <dl className="ss-in-facts">
+                  <div><dt>Market</dt><dd>{markets.length ? markets.join(', ') : 'the markets you can read'}</dd></div>
+                  <div><dt>Status</dt><dd>Published — {unit.toLowerCase()} {d.version}{d.is_latest ? ', the latest' : `; ${unit.toLowerCase()} ${d.latest_published_version} is newer`}. A published {unit.toLowerCase()} is never changed.</dd></div>
+                  <div><dt>Provenance</dt><dd>{first ? <>Published as part of {first.survey_name}, version {first.version_label}.</> : 'Not known.'}{d.derived_from ? <> Made from <span className="ss-code">{String((d.derived_from as Any).code)}</span> version {String((d.derived_from as Any).version)}.</> : null} No owner is recorded for a block on its own.</dd></div>
+                  <div><dt>Used by</dt><dd>{plural(d.used_by.surveys, 'survey')} · {plural(d.used_by.versions, 'published version')}</dd></div>
+                </dl>
+                <h4>Governance of the version that published it</h4>
+                {first ? <Governance use={uses[first.version_id]} /> : <p className="ss-muted">No publishing version can be read.</p>}
               </Section>
-              <Section id="history" title="Versions and governance" count={plural(d.revisions.length, 'published revision')}>
-                <p className="ss-muted">A block is published as part of a survey version, which three different people submit, approve and publish. A published {unit.toLowerCase()} is never changed: a change is a new one.</p>
+              {module ? (
+                <>
+                  <Section id="questions" title="Questions" count={`${module.steps.length} steps`}>
+                    <ol className="ss-in-steps" ref={list} data-testid="ss-in-steps">
+                      {module.steps.map((s) => {
+                        const mine = module.arrows.filter((a) => a.from === s.node);
+                        const a = answerOf(s.item?.answer_type);
+                        return (
+                          <li key={s.node} className={selected === s.node ? 'on' : ''} data-node={s.node} data-testid={`ss-in-step-${s.node}`} data-type={s.type}>
+                            <button type="button" className="ss-in-step-head" onClick={() => setSelected(selected === s.node ? null : s.node)} aria-pressed={selected === s.node}>
+                              <span className={`ss-in-step-n ${s.type.toLowerCase()}`}>{s.n}</span>
+                              <span className="ss-in-step-title">{s.type === 'DECISION' ? <>Decision: {s.title}</> : <>“{s.title}”</>}</span>
+                              <Tag tone={s.type === 'DECISION' ? 'warn' : s.type === 'STATEMENT' ? 'plain' : 'shared'}>{s.type === 'DECISION' ? 'Decision' : s.type === 'STATEMENT' ? 'Statement' : a.label}</Tag>
+                            </button>
+                            <div className="ss-in-step-body">
+                              {s.type === 'DECISION' ? <ConditionCard doc={s.condition} binding={s.binding} /> : <Validation item={s.item} options={s.options} />}
+                              <ul className="ss-in-branches" aria-label="Where it leads">
+                                {mine.length ? mine.map((x, i) => <li key={i} className={x.soft ? 'soft' : ''}><span>{x.label}</span><Glyph name="right" size={13} /><strong>{x.to?.node ? <button type="button" className="ss-link" onClick={() => pick(x.to.node)}>{destination(x.to, module.name)}</button> : destination(x.to, module.name)}</strong></li>) : <li><span>No branch is written for this step.</span></li>}
+                                {s.routing?.no_followup?.length ? <li className="soft"><span>No follow-up after: {(s.routing.no_followup as string[]).map((o) => `“${s.options.find((q) => q.code === o)?.label ?? words(o)}”`).join(', ')}</span></li> : null}
+                              </ul>
+                              {s.ref ? <p className="ss-in-step-ref"><button type="button" className="ss-link" onClick={() => onInspect({ kind: 'ITEM', code: s.ref.code, version: s.ref.version, wording: s.ref.wording_version })} data-testid={`ss-in-open-item-${s.node}`}>Inspect this {s.type === 'STATEMENT' ? 'statement' : 'question'} on its own</button><span className="ss-muted"> · version {s.ref.version}, wording version {s.ref.wording_version} · {words(s.wording?.delivery_mode)}{s.type === 'QUESTION' ? ' · an answer that is not valid is refused, recorded as refused, and the question stays current' : ''}</span></p> : null}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  </Section>
+                  <Section id="logic" title="Logic" count={`${plural(module.arrows.length, 'branch', 'branches')} · ${plural(module.outcomes.length, 'exit')}`}>
+                    <ModuleLogic d={d} steps={module.steps} arrows={module.arrows} outcomes={module.outcomes} name={module.name} selected={selected} pick={pick} uses={uses} onInspect={onInspect} />
+                  </Section>
+                  <Section id="rules" title="Rules" count={plural(conditions.length, 'condition')}>
+                    {conditions.length ? conditions.map((c) => {
+                      const at = module.steps.filter((s) => s.binding?.condition?.code === c.code && s.binding?.condition?.version === c.version);
+                      return (
+                        <div key={`${c.code}@${c.version}`} className="ss-in-dep-row">
+                          <ConditionCard doc={c.document} binding={at[0]?.binding} />
+                          <p className="ss-muted">{(c.document as Any).name}, version {c.version}. Used at {at.length ? at.map((s) => `step ${s.n}`).join(', ') : 'no step of this module'}. Met, not met and “cannot be decided” each follow their own branch (see the step). <button type="button" className="ss-link" onClick={() => onInspect({ kind: 'CONDITION', code: c.code, version: c.version })}>Inspect the condition and where else it is used</button></p>
+                        </div>
+                      );
+                    }) : <p className="ss-muted" data-testid="ss-in-no-conditions">This module uses no reusable condition. Its branches depend only on the answers given.</p>}
+                    {needs.length ? <p data-testid="ss-in-requires">It needs this customer or policy information: <strong>{needs.map(fieldLabel).join(', ')}</strong>.</p> : null}
+                  </Section>
+                </>
+              ) : (
+                <Section id="content" title={target.kind === 'ITEM' ? (doc.answer_type === 'STATEMENT' ? 'What is said' : 'Wording and answers') : target.kind === 'CONDITION' ? 'What it evaluates' : 'Answers'}>
+                  {target.kind === 'ITEM' ? <ItemBody d={d} onInspect={onInspect} /> : target.kind === 'CONDITION' ? <ConditionBody d={d} /> : <OptionSetBody d={d} />}
+                </Section>
+              )}
+              <Section id="dependencies" title="Dependencies" count={d.dependencies.length}>
+                <p className="ss-muted">Every document this {unit.toLowerCase()} pins, by its exact version. Nothing is “the latest”.</p>
+                {d.missing_dependencies.length ? <p className="ss-note warn" role="alert"><Glyph name="alert" size={14} /><span>{d.missing_dependencies.length} document(s) it pins could not be read.</span></p> : null}
+                <table className="ss-table"><thead><tr><th scope="col">Kind</th><th scope="col">What</th><th scope="col">Version</th><th scope="col">Fingerprint</th></tr></thead>
+                  <tbody>
+                    <tr><td>{KIND[target.kind]} (this one)</td><td>{d.title} <span className="ss-code">{d.code}</span></td><td>{d.version}</td><td><span className="ss-code" title={d.sha256}>{short(d.sha256)}</span></td></tr>
+                    {d.dependencies.map((x) => { const xd = x.document as Any; const k = x.kind as ComponentKind; return (
+                      <tr key={`${x.kind}-${x.code}-${x.version}`}><td>{x.kind === 'WORDING' ? 'Wording' : KIND[k] ?? words(x.kind)}</td>
+                        <td>{x.kind === 'WORDING' ? `“${String(xd.text ?? '')}”` : x.kind === 'ITEM' ? (xd.intent || words(xd.answer_type)) : x.kind === 'CONDITION' ? xd.name : `${((xd.options ?? []) as Any[]).length} answers`} {x.kind !== 'WORDING' ? <button type="button" className="ss-link" onClick={() => onInspect({ kind: k, code: x.code, version: x.version })}><span className="ss-code">{x.code}</span></button> : <span className="ss-code">{x.code}</span>}</td>
+                        <td>{x.version}</td><td><span className="ss-code" title={x.sha256}>{short(x.sha256)}</span></td></tr>); })}
+                  </tbody></table>
+              </Section>
+              <Section id="where-used" title="Where used" count={plural(d.used_by.surveys, 'survey')}>
+                <p className="ss-muted">Each survey pins this exact {unit.toLowerCase()}. Publishing a newer one changes none of them: a survey moves only when its own author pins the newer one and the survey is published again.</p>
+                <WhereUsed d={d} uses={uses} unit={unit} onInspect={onInspect} />
+              </Section>
+              <Section id="versions" title="Versions" count={plural(d.revisions.length, `published ${unit.toLowerCase()}`)}>
                 <ul className="ss-in-revisions">{d.revisions.map((r) => (
                   <li key={r.version} className={r.version === d.version ? 'on' : ''}>
                     <strong>{unit} {r.version}</strong>{r.version === d.version ? <Tag tone="ok">shown</Tag> : null}
-                    <span className="ss-muted"> published in {r.published_in.map((s) => `${s.survey_name} ${s.version_label}`).join('; ') || 'no version you can read'}</span>
-                    {r.version !== d.version ? <span className="ss-in-row-actions"><button type="button" className="ss-link" onClick={() => showCompare(r.version)} data-testid={`ss-in-compare-${r.version}`}>What differs</button><button type="button" className="ss-link" onClick={() => onInspect({ kind: target.kind, code: d.code, version: r.version })}>Inspect it</button></span> : null}
+                    <span className="ss-muted"> published in {r.published_in.map((x) => `${x.survey_name} ${x.version_label}`).join('; ') || 'no version you can read'}</span>
+                    {r.version !== d.version ? <span className="ss-in-row-actions"><button type="button" className="ss-link" onClick={() => showCompare(r.version)} data-testid={`ss-in-compare-${r.version}`}>Compare with this one</button><button type="button" className="ss-link" onClick={() => onInspect({ kind: target.kind, code: d.code, version: r.version })}>Inspect it</button></span> : null}
                   </li>))}</ul>
+                {d.revisions.length < 2 ? <p className="ss-muted" data-testid="ss-in-one-revision">Only one {unit.toLowerCase()} is published, so there is nothing to compare yet.</p> : null}
                 {compare ? <div className="ss-in-compare" data-testid="ss-in-compare"><strong>{unit} {d.version} compared with {compare.with}</strong>{compare.lines.length ? <ul>{compare.lines.map((l) => <li key={l}>{l}</li>)}</ul> : <p>Nothing differs in what a customer hears or where they are routed.</p>}</div> : null}
-                {d.derived_from ? <p className="ss-muted">Made from <span className="ss-code">{String((d.derived_from as Any).code)}</span> version {String((d.derived_from as Any).version)}.</p> : null}
               </Section>
-              <Section id="dependencies" title="Exact versions it depends on" count={d.dependencies.length} open={false}>
-                {d.missing_dependencies.length ? <p className="ss-note warn" role="alert"><Glyph name="alert" size={14} /><span>{d.missing_dependencies.length} document(s) it pins could not be read.</span></p> : null}
-                <table className="ss-table"><thead><tr><th scope="col">Kind</th><th scope="col">Code</th><th scope="col">Version</th><th scope="col">Fingerprint</th></tr></thead>
-                  <tbody>
-                    <tr><td>{KIND[target.kind]} (this one)</td><td><span className="ss-code">{d.code}</span></td><td>{d.version}</td><td><span className="ss-code" title={d.sha256}>{short(d.sha256)}</span></td></tr>
-                    {d.dependencies.map((x) => <tr key={`${x.kind}-${x.code}-${x.version}`}><td>{x.kind === 'WORDING' ? 'Wording' : KIND[x.kind as ComponentKind] ?? words(x.kind)}</td><td><span className="ss-code">{x.code}</span></td><td>{x.version}</td><td><span className="ss-code" title={x.sha256}>{short(x.sha256)}</span></td></tr>)}
-                  </tbody></table>
-              </Section>
+              {target.kind === 'MODULE' ? (
+                <Section id="test" title="Test">
+                  <p>A module cannot be simulated on its own: the existing simulator runs a published <em>survey</em> version, by the authoritative execution engine, with this exact revision pinned. Choose a survey that uses it.</p>
+                  {!can('survey.simulate') ? <p className="ss-muted" data-testid="ss-in-test-denied">Simulating needs the “simulate surveys” permission.</p>
+                    : d.published_in.length ? <ul className="ss-in-used">{d.published_in.map((u) => <li key={u.version_id}><Link className="ss-btn small" to={`/survey-studio/surveys/${u.survey_code}/simulate`} data-testid={`ss-in-test-${u.survey_code}`}>Simulate {u.survey_name}</Link><span className="ss-muted"> version {u.version_label}</span></li>)}</ul>
+                      : <p className="ss-muted">No published survey pins this revision.</p>}
+                </Section>
+              ) : null}
             </div>
           </>
         ) : null}

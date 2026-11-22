@@ -24,6 +24,9 @@ export const versionContent = (versionId: string): Promise<Maybe<Any>> =>
   soft(async () => unwrap(await api.GET('/api/v1/survey-versions/{version_id}/content', { params: { path: { version_id: versionId } } })));
 export const versionRecord = (versionId: string): Promise<Maybe<Any>> =>
   soft(async () => unwrap(await api.GET('/api/v1/survey-versions/{version_id}', { params: { path: { version_id: versionId } } })));
+/** A candidate with its lifecycle events — who submitted, approved and published it. */
+export const candidateRecord = (candidateId: string): Promise<Maybe<Any>> =>
+  soft(async () => unwrap(await api.GET('/api/v1/survey-candidates/{candidate_id}', { params: { path: { candidate_id: candidateId } } })));
 // ---- the four families of rules, each from the module that owns it ---------------------------------------------------
 export const assignmentPolicy = (): Promise<Maybe<Any>> => soft(async () => unwrap(await api.GET('/api/v1/survey-assignment/policy')));
 export const requirementGroups = (): Promise<Maybe<Any>> => soft(async () => unwrap(await api.GET('/api/v1/survey-assignment/groups')));

@@ -20,7 +20,7 @@ describe('Survey Studio prototype setting', () => {
     expect(document.body.textContent).not.toMatch(/Survey Studio/);
   });
 
-  it('appears under Governance when the setting is on, labelled as a prototype', async () => {
+  it('appears under Design & Govern when the setting is on, labelled as a prototype', async () => {
     vi.stubEnv('VITE_SURVEY_STUDIO_PROTOTYPE', '1');
     renderAt(<App />, '/survey-studio');
     const nav = await screen.findByRole('navigation', { name: 'Main navigation' });

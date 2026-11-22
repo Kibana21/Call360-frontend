@@ -57,7 +57,7 @@ for (const width of [1280, 1440]) {
     await signIn(page, admin, '/admin/users');
     // UI-1: 20px above every section heading except the first (mockup .nav-section rules).
     const paddings = await page.locator('.nav-section').evaluateAll((els) => els.map((e) => getComputedStyle(e).paddingTop));
-    expect(paddings).toEqual(['6px', '20px', '20px', '20px']);
+    expect(paddings).toEqual(['6px', '20px', '20px', '20px', '20px']); // NAV-1: five groups
     // UI-2: no navigation label is truncated.
     const clipped = await page.locator('.navitem > span:nth-child(2)').evaluateAll((els) =>
       els.filter((e) => e.scrollWidth > e.clientWidth + 1 || e.getBoundingClientRect().right > (e.closest('.navitem') as HTMLElement).getBoundingClientRect().right)

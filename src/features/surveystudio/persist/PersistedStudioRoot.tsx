@@ -25,6 +25,7 @@ import { LibraryProvider } from './Library';
 import { PersistenceProvider, open, versionLabelOf, type Baseline } from './Persistence';
 import { CandidatePage, ReviewPage, VersionPage } from './ReviewPages';
 import { RulesExplorerPage } from './RulesExplorer';
+import { SimulationHubPage } from './SimulationHub';
 import { WorkspacePage } from './Workspace';
 
 
@@ -39,6 +40,7 @@ export function PersistedStudioRoot() {
       <Routes>
         <Route index element={<><Bar crumbs={['Survey Studio']} /><WorkspacePage CreateForm={CreateForm} /></>} />
         <Route path="rules" element={<RulesExplorerPage />} />
+        <Route path="simulation" element={<SimulationHubPage />} />
         <Route path="assignment" element={<AssignmentPage />} />
         <Route path="coordinated-simulations/:coordinatedId" element={<CoordinatedSimulationPage />} />
         <Route path="evaluations/:evaluationId" element={<EvaluationWorkbenchPage />} />

@@ -15678,6 +15678,13 @@ export interface components {
                 [key: string]: unknown;
             }[];
             /**
+             * Surveys
+             * @description Every survey of the reader's markets with what its current draft holds — modules, questions, statements, decisions, conditional entries, whether anything branches — and when it was last saved and last published. Counted from the draft's own documents; nothing is executed.
+             */
+            surveys: {
+                [key: string]: unknown;
+            }[];
+            /**
              * Waiting On Others
              * @description Open candidates the reader submitted, which someone else must decide or publish.
              */
