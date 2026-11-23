@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api, unwrap } from '../../api/client';
 import { useAuth } from '../../auth/AuthContext';
+import { capability } from '../../auth/capability';
 import { Icon } from '../../components/Icon';
 import { Empty } from '../../components/StateView';
 import { Badge, Button, Card, PageHead } from '../../components/ui';
@@ -14,7 +15,7 @@ import { ErrorBox, errorText, Field } from '../scripts/ScriptEditor';
 import { scriptHref, short, SyntheticBanner } from '../scripts/shared';
 import { RuleBuilder, SubmitPanel, useRuleChange } from './RuleBuilder';
 import { RuleSimulation } from './RuleSimulation';
-import { ConditionChips, IssueList, people, ruleHref, RuleStatus, useRuleOptions, valueLabel, type RuleDraft, type RuleOptions, type RuleVersion } from './shared';
+import { BINDINGS_HREF, ConditionChips, isSurveyOnly, IssueList, people, ruleHref, RuleStatus, TargetKind, useRuleOptions, valueLabel, type RuleDraft, type RuleOptions, type RuleVersion } from './shared';
 
 type Tab = 'rule' | 'simulate' | 'review' | 'compare' | 'history';
 
@@ -22,6 +23,7 @@ export function RuleDetailPage() {
   const { ruleCode = '' } = useParams();
   const [params, setParams] = useSearchParams();
   const { can } = useAuth();
+  const rule = capability(can, 'assignment_rule');
   const nav = useNavigate();
   const opts = useRuleOptions();
   const history = useQuery({ queryKey: ['rule-history', ruleCode], queryFn: async () => unwrap(await api.GET('/api/v1/assignment-rules/{rule_code}/history', { params: { path: { rule_code: ruleCode } } })) });
@@ -48,9 +50,9 @@ export function RuleDetailPage() {
       <PageHead eyebrow="Policy-to-script mapping" title="Rule Detail" description={`${ruleCode} · ${name}`}
         actions={<>
           <Link className="btn" to="/assignment-rules">Back to Assignment Rules</Link>
-          {can('script.edit') && live ? <Button icon="plus" onClick={() => void newVersion()} disabled={!!openDraft} data-testid="rule-new-version"
+          {rule('edit') && live ? <Button icon="plus" onClick={() => void newVersion()} disabled={!!openDraft} data-testid="rule-new-version"
             title={openDraft ? `v${openDraft.planned_version} is still open` : 'New draft version from the live version'}>New version</Button> : null}
-          {can('script.edit') && version ? <Button icon="copy" onClick={() => nav(`/assignment-rules?new=1&copy=${version.id}`)} data-testid="rule-copy">Copy as new rule</Button> : null}
+          {rule('edit') && version ? <Button icon="copy" onClick={() => nav(`/assignment-rules?new=1&copy=${version.id}`)} data-testid="rule-copy">Copy as new rule</Button> : null}
         </>} />
       <SyntheticBanner />
       {newErr ? <div className="field-error" role="alert">{newErr}</div> : null}
@@ -98,6 +100,24 @@ function Tabs({ tab, setTab, tabs }: { tab: Tab; setTab: (t: Tab) => void; tabs:
   );
 }
 
+/** SHARED-1: said wherever a rule that names no script is shown — it is not, and cannot become, operationally eligible. */
+function SurveyOnlyNote() {
+  const { can } = useAuth();
+  return (
+    <span>A survey, through a survey binding. <span className="muted">This rule names no script and can never assign one to a callback case.</span>{' '}
+      {can('survey.assignment.read') ? <Link className="link" to={BINDINGS_HREF} data-testid="rule-to-bindings">Survey bindings and groups</Link> : null}</span>
+  );
+}
+function NotOnCases() {
+  return (
+    <Card><div className="stack" style={{ gap: 6 }} data-testid="rule-not-on-cases">
+      <strong className="small">This simulation is not available here</strong>
+      <p className="small muted" style={{ margin: 0 }}>It assigns scripts to synthetic cases, with the script permission. A rule that selects a survey is tried in Survey bindings and groups, against a synthetic application: there it is evaluated by the same rule engine.</p>
+      <p style={{ margin: 0 }}><Link className="btn tiny" to={BINDINGS_HREF}>Survey bindings and groups</Link></p>
+    </div></Card>
+  );
+}
+
 function VersionWorkspace({ v, o, tab, setTab, ruleCode }: { v: RuleVersion; o: RuleOptions | undefined; tab: Tab; setTab: (t: Tab) => void; ruleCode: string }) {
   const tabs: Array<[Tab, string]> = [['rule', 'Rule'], ['simulate', 'Simulate'], ['compare', 'Compare versions'], ['history', 'Change history']];
   const t = tab === 'review' ? 'rule' : tab;
@@ -105,7 +125,7 @@ function VersionWorkspace({ v, o, tab, setTab, ruleCode }: { v: RuleVersion; o: 
     <>
       <section className="card card-pad" data-testid="rule-version-header">
         <div className="row wrap"><RuleStatus status={v.status} /><Badge tone="blue">{v.rule_code}</Badge><Badge tone="gray">{`v${v.version}`}</Badge>
-          {v.is_fallback ? <Badge tone="blue">Default fallback</Badge> : null}<Badge tone="amber">Synthetic · not production-approved</Badge></div>
+          {v.is_fallback ? <Badge tone="blue">Default fallback</Badge> : null}<TargetKind kind={v.target_kind} /><Badge tone="amber">Synthetic · not production-approved</Badge></div>
         <h2 style={{ fontSize: 22, margin: '13px 0 6px' }}>{v.name}</h2>
         <div className="explain" data-testid="rule-explanation">{v.explanation}</div>
         <div className="topnotice" role="note" style={{ margin: '14px 0 0' }}><div className="row"><Icon name="lock" size="sm" />
@@ -114,7 +134,7 @@ function VersionWorkspace({ v, o, tab, setTab, ruleCode }: { v: RuleVersion; o: 
       <Tabs tab={t} setTab={setTab} tabs={tabs} />
       <div id="rule-panel" role="tabpanel" aria-labelledby={`rule-tab-${t}`} className="stack" style={{ gap: 16 }}>
         {t === 'rule' ? <VersionFacts v={v} o={o} /> : null}
-        {t === 'simulate' ? <RuleSimulation draftIds={[]} o={o} title="Simulate the live rules" /> : null}
+        {t === 'simulate' ? (isSurveyOnly(v) ? <NotOnCases /> : <RuleSimulation draftIds={[]} o={o} title="Simulate the live rules" />) : null}
         {t === 'compare' ? <Compare ruleCode={ruleCode} current={`version:${v.id}`} /> : null}
         {t === 'history' ? <History ruleCode={ruleCode} /> : null}
       </div>
@@ -124,7 +144,10 @@ function VersionWorkspace({ v, o, tab, setTab, ruleCode }: { v: RuleVersion; o: 
 
 function VersionFacts({ v, o }: { v: RuleVersion; o: RuleOptions | undefined }) {
   // Recorded assignments of this version (API-064): the traceability rule → case → pinned script (F6).
-  const recorded = useQuery({ queryKey: ['assignment-rules'], queryFn: async () => unwrap(await api.GET('/api/v1/script-assignment-rules')) });
+  // the script-side record of which cases a rule assigned: script-backed rules only, with the script permission
+  const { can } = useAuth();
+  const scriptSide = can('script.read') && !isSurveyOnly(v);
+  const recorded = useQuery({ queryKey: ['assignment-rules'], enabled: scriptSide, queryFn: async () => unwrap(await api.GET('/api/v1/script-assignment-rules')) });
   const mine = recorded.data?.items.find((r) => r.id === v.id);
   return (
     <>
@@ -132,11 +155,12 @@ function VersionFacts({ v, o }: { v: RuleVersion; o: RuleOptions | undefined }) 
       <dl className="kv">
         <dt>Applies when</dt><dd><ConditionChips conditions={v.conditions} o={o} /></dd>
         <dt>Priority / specificity</dt><dd>{v.priority} (1 is highest) / {v.specificity} (calculated)</dd>
-        <dt>Assigns</dt><dd>{v.target.script_family_id ? <Link className="link" to={scriptHref(v.target.script_family_id, v.target.id ?? undefined)}>{v.target.label}</Link> : v.target.label}</dd>
+        <dt>Market</dt><dd data-testid="rule-market">{v.market ?? '—'}</dd>
+        <dt>Selects</dt><dd data-testid="rule-selects">{isSurveyOnly(v) ? <SurveyOnlyNote /> : v.target.script_family_id ? <Link className="link" to={scriptHref(v.target.script_family_id, v.target.id ?? undefined)}>{v.target.label}</Link> : v.target.label}</dd>
         <dt>Effective</dt><dd>{when(v.effective_from)} – {v.effective_to ? when(v.effective_to) : 'open'} SGT</dd>
         <dt>Author / checker</dt><dd data-testid="rule-people">{people(v.people, v.author_ref)} / {people(v.people, v.checker_ref)}{v.published_by ? ` · published by ${people(v.people, v.published_by)}` : ''}</dd>
         <dt>Checksum</dt><dd className="mono">{short(v.checksum)}</dd>
-        <dt>Cases assigned</dt><dd data-testid="rule-cases-count">{v.cases_assigned} cases (recorded assignments; publishing a rule never reassigns cases)</dd>
+        <dt>Cases assigned</dt><dd data-testid="rule-cases-count">{isSurveyOnly(v) ? 'None, and never: this rule assigns no script to a case' : `${v.cases_assigned} cases (recorded assignments; publishing a rule never reassigns cases)`}</dd>
       </dl>
     </Card>
     <Card title="Cases assigned by this version" subtitle={mine && v.cases_assigned > mine.recent_cases.length ? `Latest ${mine.recent_cases.length} of ${v.cases_assigned}` : 'Each keeps its pinned script version'}>
@@ -144,7 +168,7 @@ function VersionFacts({ v, o }: { v: RuleVersion; o: RuleOptions | undefined }) 
         <div className="row wrap" style={{ gap: 6 }} data-testid="rule-cases">
           {mine.recent_cases.map((c) => <Link key={c.case_id} className="tag mono" to={`/cases/${c.case_id}`}>{c.case_ref}</Link>)}
         </div>
-      ) : <p className="xsmall muted" style={{ margin: 0 }}>{recorded.isPending ? 'Loading…' : 'No case was assigned by this rule version.'}</p>}
+      ) : <p className="xsmall muted" style={{ margin: 0 }}>{!scriptSide ? (isSurveyOnly(v) ? 'A rule that names no script assigns no case.' : 'The list of cases needs the script permission.') : recorded.isPending ? 'Loading…' : 'No case was assigned by this rule version.'}</p>}
     </Card>
     </>
   );
@@ -152,13 +176,15 @@ function VersionFacts({ v, o }: { v: RuleVersion; o: RuleOptions | undefined }) 
 
 function DraftWorkspace({ d, o, tab, setTab }: { d: RuleDraft; o: RuleOptions | undefined; tab: Tab; setTab: (t: Tab) => void }) {
   const { can } = useAuth();
-  const editing = d.status === 'DRAFT' && can('script.edit');
+  const rule = capability(can, 'assignment_rule');
+  const scripts = can('script.read');
+  const editing = d.status === 'DRAFT' && rule('edit');
   const tabs: Array<[Tab, string]> = [['rule', editing ? 'Edit rule' : 'Rule'], ['simulate', 'Simulate'], ['review', 'Review & publish'], ['compare', 'Compare versions'], ['history', 'Change history']];
   return (
     <>
       <section className="card card-pad" data-testid="rule-draft-header">
         <div className="row wrap"><RuleStatus status={d.status} /><Badge tone="blue">{d.rule_code}</Badge><Badge tone="gray">{`v${d.planned_version} draft`}</Badge>
-          {d.is_fallback ? <Badge tone="blue">Default fallback</Badge> : null}<Badge tone="amber">Synthetic · not production-approved</Badge>
+          {d.is_fallback ? <Badge tone="blue">Default fallback</Badge> : null}<TargetKind kind={d.target_kind} /><Badge tone="amber">Synthetic · not production-approved</Badge>
           {d.base_ref ? <span className="xsmall muted">based on {d.base_ref}</span> : null}{d.copied_from_ref ? <span className="xsmall muted">copied from {d.copied_from_ref}</span> : null}</div>
         <h2 style={{ fontSize: 22, margin: '13px 0 6px' }}>{d.name}</h2>
         <p className="small muted" style={{ margin: 0 }}>Author {people(d.people, d.author_ref)} · validation {humanize(d.validation_status)}{d.manifest_sha256 ? ` · manifest ${short(d.manifest_sha256)}` : ''}</p>
@@ -168,7 +194,7 @@ function DraftWorkspace({ d, o, tab, setTab }: { d: RuleDraft; o: RuleOptions | 
       <Tabs tab={tab} setTab={setTab} tabs={tabs} />
       <div id="rule-panel" role="tabpanel" aria-labelledby={`rule-tab-${tab}`} className="stack" style={{ gap: 16 }}>
         {tab === 'rule' ? (editing && o ? <><RuleBuilder d={d} o={o} /><SubmitPanel d={d} /></> : <DraftFacts d={d} o={o} />) : null}
-        {tab === 'simulate' ? (d.status === 'ABANDONED' || d.status === 'PUBLISHED' ? <Card><Empty title="Closed drafts cannot be simulated" /></Card> : <RuleSimulation draftIds={[d.id]} o={o} />) : null}
+        {tab === 'simulate' ? (isSurveyOnly(d) || !scripts ? <NotOnCases /> : d.status === 'ABANDONED' || d.status === 'PUBLISHED' ? <Card><Empty title="Closed drafts cannot be simulated" /></Card> : <RuleSimulation draftIds={[d.id]} o={o} />) : null}
         {tab === 'review' ? <Review d={d} /> : null}
         {tab === 'compare' ? <Compare ruleCode={d.rule_code} current={`draft:${d.id}`} /> : null}
         {tab === 'history' ? <History ruleCode={d.rule_code} /> : null}
@@ -185,7 +211,8 @@ function DraftFacts({ d, o }: { d: RuleDraft; o: RuleOptions | undefined }) {
         <dl className="kv">
           <dt>Applies when</dt><dd><ConditionChips conditions={d.conditions} o={o} /></dd>
           <dt>Priority / specificity</dt><dd>{d.priority} / {d.analysis.specificity} (calculated)</dd>
-          <dt>Assigns</dt><dd>{d.target?.label ?? '—'}</dd>
+          <dt>Market</dt><dd data-testid="rule-market">{d.market}</dd>
+          <dt>Selects</dt><dd data-testid="rule-selects">{isSurveyOnly(d) ? <SurveyOnlyNote /> : d.target?.label ?? '—'}</dd>
           <dt>Effective</dt><dd>{d.effective_from ? when(d.effective_from) : 'On publication'} – {d.effective_to ? when(d.effective_to) : 'open'}</dd>
         </dl>
         <div><div className="section-label">Validation now</div><IssueList analysis={d.analysis} /></div>
@@ -196,6 +223,7 @@ function DraftFacts({ d, o }: { d: RuleDraft; o: RuleOptions | undefined }) {
 
 function Review({ d }: { d: RuleDraft }) {
   const { can, me } = useAuth();
+  const rule = capability(can, 'assignment_rule');
   const ch = useRuleChange(d.id, d.rule_code);
   const [reason, setReason] = useState('');
   const [supersede, setSupersede] = useState(false);
@@ -219,7 +247,7 @@ function Review({ d }: { d: RuleDraft }) {
           <dt>Re-check against current rules</dt><dd><IssueList analysis={d.analysis} testId="review-issues" /></dd>
         </dl>
         {d.status === 'DRAFT' ? <p className="small muted" style={{ margin: 0 }}>The author submits from “Edit rule” once validation passes.</p> : null}
-        {d.status === 'SUBMITTED_FOR_REVIEW' ? (can('script.approve') ? (blocked ? <p className="small" role="note" data-testid="rule-maker-note">{blocked}</p> : (
+        {d.status === 'SUBMITTED_FOR_REVIEW' ? (rule('approve') ? (blocked ? <p className="small" role="note" data-testid="rule-maker-note">{blocked}</p> : (
           <div className="stack" style={{ gap: 8 }}>
             <p className="small" style={{ margin: 0 }}>Check the conditions, the <strong>Simulate</strong> and <strong>Compare versions</strong> tabs, then decide. A reason is recorded either way.</p>
             <Field id="rr-reason" label="Reviewer reason">{(p) => <textarea {...p} className="field textarea labelled" rows={2} value={reason} onChange={(e) => setReason(e.target.value)} />}</Field>
@@ -228,7 +256,7 @@ function Review({ d }: { d: RuleDraft }) {
               <Button disabled={ch.pending} onClick={() => void review('REQUEST_CHANGES')} data-testid="rule-return">Return for changes</Button>
             </div>
           </div>)) : <p className="small muted">Awaiting an S&C checker.</p>) : null}
-        {d.status === 'APPROVED' ? (can('script.publish') ? (blocked ? <p className="small" role="note" data-testid="rule-maker-note">{blocked}</p> : (
+        {d.status === 'APPROVED' ? (rule('publish') ? (blocked ? <p className="small" role="note" data-testid="rule-maker-note">{blocked}</p> : (
           <div className="stack" style={{ gap: 8 }}>
             <p className="small" style={{ margin: 0 }}>Publishing re-validates the rule against the rules live now and makes this version immutable. It does <strong>not</strong> reassign any case (S2-C).</p>
             {d.live_rule_version_id ? (

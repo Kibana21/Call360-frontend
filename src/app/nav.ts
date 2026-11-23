@@ -6,7 +6,7 @@
 // it (`permission`) — the route guard still decides.
 import type { IconName } from '../components/Icon';
 
-export interface NavChild { label: string; to: string; permission?: string; /** the address must match exactly to be "here" */ exact?: boolean; /** also "here" under these path prefixes */ under?: string[]; /** a query the address must carry to be "here" */ query?: string }
+export interface NavChild { label: string; to: string; /** one permission, or several of which any one is enough */ permission?: string | string[]; /** the address must match exactly to be "here" */ exact?: boolean; /** also "here" under these path prefixes */ under?: string[]; /** a query the address must carry to be "here" */ query?: string }
 export interface NavItem {
   label: string;
   icon: IconName;
@@ -63,15 +63,20 @@ const LEGACY: NavGroup = {
 
 /** `studio`: Survey Studio is listed (its build setting is on). `persisted`: it is the persisted mode, which has the
     assignment, simulation and evaluation screens; the in-memory prototype has only its own pages. */
-export function navFor(studio: boolean, persisted = false): NavGroup[] {
+/** `applicability`: the Survey Applicability prototype (APPL-X1) is listed under Survey Studio (its own build setting). */
+export function navFor(studio: boolean, persisted = false, applicability = false): NavGroup[] {
+  const kids = SURVEY_STUDIO.children ?? [];
+  const studioItem: NavItem = applicability && persisted
+    ? { ...SURVEY_STUDIO, children: [...kids.slice(0, 3), { label: 'Survey applicability', to: '/survey-studio/applicability' }, ...kids.slice(3)] }
+    : SURVEY_STUDIO;
   const design: NavGroup = {
     group: 'Design & Govern',
     items: [
-      ...(studio ? [persisted ? SURVEY_STUDIO : { ...SURVEY_STUDIO, children: undefined }] : []),
+      ...(studio ? [persisted ? studioItem : { ...SURVEY_STUDIO, children: undefined }] : []),
       {
         label: 'Assignment Rules', icon: 'sliders', to: '/assignment-rules',
         children: persisted ? [
-          { label: 'Rules', to: '/assignment-rules', under: ['/assignment-rules'], permission: 'script.read' },
+          { label: 'Rules', to: '/assignment-rules', under: ['/assignment-rules'], permission: ['assignment_rule.read', 'script.read'] },
           { label: 'Survey bindings and groups', to: '/survey-studio/assignment', permission: 'survey.assignment.read' },
         ] : undefined,
       },

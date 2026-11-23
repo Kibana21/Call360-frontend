@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppShell } from './app/AppShell';
 import { AuthProvider } from './auth/AuthContext';
+import { readersOf } from './auth/capability';
 import { RequireAuth, RequirePermission } from './auth/guards';
 import { AdminLayout } from './features/admin/AdminLayout';
 import { AuditPage } from './features/admin/AuditPage';
@@ -60,10 +61,10 @@ export function App() {
           {/* FI-1: the persisted mode has its own setting and its own permission (survey.read); it does not need script.read. */}
           {surveyStudioPersisted() ? <Route path="survey-studio/*" element={<RequirePermission permission="survey.read"><PersistedStudioRoot /></RequirePermission>} />
             : surveyStudioEnabled() ? <Route path="survey-studio/*" element={<RequirePermission permission="script.read"><StudioRoot /></RequirePermission>} /> : null}
-          <Route path="assignment-rules" element={<RequirePermission permission="script.read"><AssignmentRulesPage /></RequirePermission>} />
-          <Route path="assignment-rules/:ruleCode" element={<RequirePermission permission="script.read"><RuleDetailPage /></RequirePermission>} />
+          <Route path="assignment-rules" element={<RequirePermission permission={readersOf('assignment_rule')}><AssignmentRulesPage /></RequirePermission>} />
+          <Route path="assignment-rules/:ruleCode" element={<RequirePermission permission={readersOf('assignment_rule')}><RuleDetailPage /></RequirePermission>} />
           <Route path="simulator" element={<RequirePermission permission="script.read"><TextSimulatorPage /></RequirePermission>} />
-          <Route path="finding-rules" element={<RequirePermission permission="script.read"><FindingRulesPage /></RequirePermission>} />
+          <Route path="finding-rules" element={<RequirePermission permission={readersOf('finding_rule')}><FindingRulesPage /></RequirePermission>} />
           <Route path="reviews" element={<RequirePermission permission="queue.read"><ReviewWorkbenchPage /></RequirePermission>} />
           <Route path="reviews/cases/:caseId" element={<RequirePermission permission="queue.read"><ReviewCasePage /></RequirePermission>} />
           <Route path="voice-studio" element={<RequirePermission permission="voice.preflight.read"><VoiceStudioPage /></RequirePermission>} />

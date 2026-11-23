@@ -8,6 +8,7 @@ import { useSearchParams } from 'react-router-dom';
 import { api, unwrap } from '../../api/client';
 import type { components } from '../../api/generated/schema';
 import { useAuth } from '../../auth/AuthContext';
+import { capability } from '../../auth/capability';
 import { Empty } from '../../components/StateView';
 import { Badge, Button, Card, PageHead, type Tone } from '../../components/ui';
 import { humanize, Region, when } from '../cases/shared';
@@ -32,6 +33,7 @@ export function useFindingRuleSets() {
 export function FindingRulesPage() {
   const [params, setParams] = useSearchParams();
   const { can } = useAuth();
+  const rule = capability(can, 'finding_rule'); // SHARED-1: its own permission, or the script permission as before
   const qc = useQueryClient();
   const list = useFindingRuleSets();
   const selected = params.get('version') ?? list.data?.items.find((i) => ['DRAFT', 'SUBMITTED_FOR_REVIEW', 'APPROVED'].includes(i.status))?.id ?? list.data?.published_id ?? list.data?.items[0]?.id ?? null;
@@ -44,7 +46,7 @@ export function FindingRulesPage() {
     <>
       <PageHead eyebrow="Compliance governance" title="Finding Rules"
         description="Governed rules that turn answer-evaluation outcomes into findings for human review: which question or compliance control, which evaluation outcome, the finding category, severity with its justification and whether review is required. Drafted by an author, approved and published by a different S&C checker; published versions are immutable."
-        actions={can('script.edit') && !open ? <div className="row" style={{ gap: 8 }}>
+        actions={rule('edit') && !open ? <div className="row" style={{ gap: 8 }}>
           <Button variant="primary" icon="plus" onClick={() => create.mutate(false)} disabled={create.isPending} data-testid="frs-new">{list.data?.published_id ? 'New draft from published' : 'New rule set'}</Button>
         </div> : undefined} />
       <div className="topnotice" role="note" data-testid="frs-banner"><span><strong>Synthetic configuration.</strong> Rules, categories and severities here are development examples, not approved compliance policy or regulatory classifications. A finding is a flagged potential concern for review — never a breach determination, case decision or verification outcome.</span></div>
@@ -73,6 +75,7 @@ export function FindingRulesPage() {
 
 function RuleSetView({ id }: { id: string }) {
   const { can } = useAuth();
+  const rule = capability(can, 'finding_rule'); // SHARED-1: its own permission, or the script permission as before
   const qc = useQueryClient();
   const uid = useId();
   const opts = useFindingRuleOptions();
@@ -92,7 +95,7 @@ function RuleSetView({ id }: { id: string }) {
     <Region query={q} label="the finding rule set">
       {() => {
         const v = q.data!;
-        const draft = v.status === 'DRAFT' && can('script.edit');
+        const draft = v.status === 'DRAFT' && rule('edit');
         const rules = v.rules.map((x) => ({ rule_code: x.rule_code, scope: x.scope, target: x.target, mandatory_only: x.mandatory_only, trigger: x.trigger, category: x.category, description: x.description, severity: x.severity, severity_justification: x.severity_justification, review_required: x.review_required }) as Rule);
         const d = v.diff_vs_published as { added: string[]; removed: string[]; changed: { rule_code: string; changes: Record<string, { from: unknown; to: unknown }> }[] } | null;
         return (
@@ -129,7 +132,7 @@ function RuleSetView({ id }: { id: string }) {
                     <Button variant="danger" onClick={() => abandon.mutate()} disabled={abandon.isPending} data-testid="frs-abandon">Abandon draft</Button>
                   </div>
                 ) : null}
-                {v.status === 'SUBMITTED_FOR_REVIEW' && can('script.approve') ? (
+                {v.status === 'SUBMITTED_FOR_REVIEW' && rule('approve') ? (
                   v.i_am_maker ? <p className="small" data-testid="frs-maker-note">You authored this version; another S&C checker must review it.</p> : (
                     <div className="row wrap" style={{ gap: 8, alignItems: 'flex-end' }}>
                       <Field id={`${uid}-r`} label="Reviewer reason">{(p) => <input {...p} className="field labelled" value={reason} onChange={(e) => setReason(e.target.value)} maxLength={500} style={{ minWidth: 280 }} data-testid="frs-reason" />}</Field>
@@ -138,7 +141,7 @@ function RuleSetView({ id }: { id: string }) {
                     </div>
                   )
                 ) : null}
-                {v.status === 'APPROVED' && can('script.publish') ? (v.i_am_maker ? <p className="small">You authored this version; another S&C checker must publish it.</p>
+                {v.status === 'APPROVED' && rule('publish') ? (v.i_am_maker ? <p className="small">You authored this version; another S&C checker must publish it.</p>
                   : <div><Button variant="primary" onClick={() => publish.mutate()} disabled={publish.isPending} data-testid="frs-publish">Publish</Button></div>) : null}
                 {v.review_reason ? <p className="xsmall muted" style={{ margin: 0 }}>Review: {v.review_reason}{v.reviewed_by_name ? ` — ${v.reviewed_by_name}` : ''}</p> : null}
                 <ol className="plain-list xsmall stack" style={{ gap: 2 }} aria-label="History" data-testid="frs-history">

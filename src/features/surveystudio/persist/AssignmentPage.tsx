@@ -176,8 +176,10 @@ function RuleRow({ rule, published, open, versions, busy, can, act }: { rule: As
   const [pick, setPick] = useState('');
   const [reason, setReason] = useState('');
   return (
-    <tr data-testid={`ss-asg-rule-${rule.rule_code}`} data-bound={String(!!published)}>
-      <th scope="row"><strong>{rule.name}</strong><span className="ss-code">{rule.ref}</span>{rule.is_fallback ? <Tag tone="warn">Default fallback</Tag> : null}{rule.effective_now ? null : <Tag>Not in effect now</Tag>}</th>
+    <tr data-testid={`ss-asg-rule-${rule.rule_code}`} data-bound={String(!!published)} data-target-kind={rule.target_kind}>
+      <th scope="row"><strong>{rule.name}</strong><span className="ss-code">{rule.ref}</span>{rule.is_fallback ? <Tag tone="warn">Default fallback</Tag> : null}{rule.effective_now ? null : <Tag>Not in effect now</Tag>}
+        {/* SHARED-1: a rule that names no script exists only to select a survey here */}
+        {rule.target_kind === 'SURVEY_BINDING' ? <Tag tone="shared">Survey only · names no script</Tag> : null}</th>
       <td>{rule.when.length ? <ul className="ss-asg-when">{rule.when.map((w) => <li key={w}>{w}</li>)}</ul> : 'every application'}</td>
       <td>Priority {rule.priority}<br /><span className="ss-muted">specificity {rule.specificity}</span></td>
       <td>

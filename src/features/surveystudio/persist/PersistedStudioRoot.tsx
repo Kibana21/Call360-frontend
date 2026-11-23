@@ -32,6 +32,8 @@ import { WorkspacePage } from './Workspace';
 import { missing } from './workspaceApi';
 import { keepFrame } from '../model/standalone';
 import { PlaceProvider, type Place } from '../place';
+import { applicabilityEnabled } from '../../applicability/flag';
+import { ApplicabilityRoot } from '../../applicability/Shell';
 
 
 // the baseline of each survey opened in this page, beside its unsaved workspace (store.tsx): memory only
@@ -56,6 +58,8 @@ export function PersistedStudioRoot() {
         {/* LIB-2: a reusable module authored on its own, and the test of any published module */}
         <Route path="modules/:moduleCode/*" element={<OpenModule />} />
         <Route path="module-tests/:code/:revision" element={<PublishedModuleTestPage bar={(crumbs) => <Bar crumbs={crumbs} />} />} />
+        {/* APPL-X1: the Survey Applicability prototype — its own workspace, only when its build setting is on */}
+        {applicabilityEnabled() ? <Route path="applicability/*" element={<ApplicabilityRoot />} /> : null}
         <Route path="*" element={<Missing />} />
       </Routes>
     </div>

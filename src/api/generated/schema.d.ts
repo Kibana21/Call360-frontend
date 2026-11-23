@@ -389,6 +389,9 @@ export interface paths {
         /**
          * Rule Create
          * @description Create a rule (draft version 1), optionally copying an existing rule version's conditions and settings.
+         *
+         *     SHARED-1: ``target_kind`` SURVEY_BINDING creates a rule that names no script — it can be bound to a published survey
+         *     and can never assign a script to a case. It needs ``shared_rule_services_enabled``.
          */
         post: operations["rule_create"];
         delete?: never;
@@ -2683,6 +2686,88 @@ export interface paths {
         get: operations["workbench_versions"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-applicability/prototype/analyse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Applicability Analyse
+         * @description Every diagnostic of a workspace and, when given, of one policy. A BLOCKER would stop submission.
+         */
+        post: operations["survey_applicability_analyse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-applicability/prototype/condition-test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Applicability Condition Test
+         * @description One expression against one set of facts: TRUE, FALSE or UNKNOWN, with the full trace and what is missing.
+         */
+        post: operations["survey_applicability_condition_test"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-applicability/prototype/evaluate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Applicability Evaluate
+         * @description One policy applied to each scenario: the selection plan with its trace, and — when a second policy is given —
+         *     what changes for each scenario and which requirements are the reason.
+         */
+        post: operations["survey_applicability_evaluate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/survey-applicability/prototype/scenarios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Survey Applicability Scenarios
+         * @description Generated synthetic applications — one for each distinct result the policy can give — and a statement of what
+         *     was and was not covered. It never claims a coverage it did not compute.
+         */
+        post: operations["survey_applicability_scenarios"];
         delete?: never;
         options?: never;
         head?: never;
@@ -10408,6 +10493,13 @@ export interface components {
             market: string;
             /** Name */
             name: string;
+            /**
+             * Target Kind
+             * @description SHARED-1: what the rule selects, fixed for its life. SURVEY_BINDING needs `shared_rule_services_enabled`.
+             * @default SCRIPT_VERSION
+             * @enum {string}
+             */
+            target_kind: "SCRIPT_VERSION" | "SURVEY_BINDING";
         };
         /** RuleDiff */
         RuleDiff: {
@@ -10506,6 +10598,12 @@ export interface components {
             /** Status */
             status: string;
             target: components["schemas"]["RuleTargetRef"] | null;
+            /**
+             * Target Kind
+             * @default SCRIPT_VERSION
+             * @enum {string}
+             */
+            target_kind: "SCRIPT_VERSION" | "SURVEY_BINDING";
             /** Updated At */
             updated_at: string | null;
             /** Validation Status */
@@ -10569,6 +10667,13 @@ export interface components {
             priority: number;
             /** Rule Code */
             rule_code?: string | null;
+            /**
+             * Target Kind
+             * @description SHARED-1: what the rule being edited selects.
+             * @default SCRIPT_VERSION
+             * @enum {string}
+             */
+            target_kind: "SCRIPT_VERSION" | "SURVEY_BINDING";
             /** Target Script Version Id */
             target_script_version_id?: string | null;
         };
@@ -10654,6 +10759,12 @@ export interface components {
             precedence: string[];
             /** Priority Range */
             priority_range: number[];
+            /**
+             * Survey Only Rules
+             * @description SHARED-1: whether this server can create a rule that names no script and selects a survey only through a governed survey binding.
+             * @default false
+             */
+            survey_only_rules: boolean;
             /** Targets */
             targets: components["schemas"]["RuleTargetOption"][];
             /** Unsupported */
@@ -10764,6 +10875,13 @@ export interface components {
             open_draft: components["schemas"]["RuleDraftSummary"] | null;
             /** Rule Code */
             rule_code: string;
+            /**
+             * Target Kind
+             * @description SHARED-1: what every version of this rule selects.
+             * @default SCRIPT_VERSION
+             * @enum {string}
+             */
+            target_kind: "SCRIPT_VERSION" | "SURVEY_BINDING";
             /** Versions */
             versions: components["schemas"]["RuleVersionOut"][];
         };
@@ -10846,6 +10964,11 @@ export interface components {
             id: string;
             /** Is Fallback */
             is_fallback: boolean;
+            /**
+             * Market
+             * @description SHARED-1: the rule's own governed market.
+             */
+            market?: string | null;
             /** Name */
             name: string;
             /** People */
@@ -10863,6 +10986,13 @@ export interface components {
             /** Status */
             status: string;
             target: components["schemas"]["RuleTargetRef"];
+            /**
+             * Target Kind
+             * @description SCRIPT_VERSION: assigns a published script version to a case. SURVEY_BINDING: names no script; it selects a survey only through a governed survey binding and can never assign a script to a case.
+             * @default SCRIPT_VERSION
+             * @enum {string}
+             */
+            target_kind: "SCRIPT_VERSION" | "SURVEY_BINDING";
             /** Version */
             version: number;
         };
@@ -12945,6 +13075,95 @@ export interface components {
             /** Reason */
             reason: string;
         };
+        /** SurveyApplicabilityAnalyseIn */
+        SurveyApplicabilityAnalyseIn: {
+            /** Policy */
+            policy?: {
+                [key: string]: unknown;
+            } | null;
+            /** Workspace */
+            workspace: {
+                [key: string]: unknown;
+            };
+        };
+        /** SurveyApplicabilityConditionTestIn */
+        SurveyApplicabilityConditionTestIn: {
+            /** Expr */
+            expr: {
+                [key: string]: unknown;
+            };
+            /** Facts */
+            facts?: {
+                [key: string]: unknown;
+            };
+            /** Profiles */
+            profiles?: string[] | null;
+            /** Workspace */
+            workspace: {
+                [key: string]: unknown;
+            };
+        };
+        /** SurveyApplicabilityEvaluateIn */
+        SurveyApplicabilityEvaluateIn: {
+            /**
+             * Compare With
+             * @description A second policy (for example the published one) to compare every result against.
+             */
+            compare_with?: {
+                [key: string]: unknown;
+            } | null;
+            /** Policy */
+            policy: {
+                [key: string]: unknown;
+            };
+            /** Scenarios */
+            scenarios: components["schemas"]["SurveyApplicabilityScenarioIn"][];
+            /** Workspace */
+            workspace: {
+                [key: string]: unknown;
+            };
+        };
+        /** SurveyApplicabilityGenerateIn */
+        SurveyApplicabilityGenerateIn: {
+            /**
+             * Limit
+             * @default 40
+             */
+            limit: number;
+            /** Policy */
+            policy: {
+                [key: string]: unknown;
+            };
+            /** Workspace */
+            workspace: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * SurveyApplicabilityOut
+         * @description A result of the applicability evaluator: ``result`` is the evaluator's own document.
+         */
+        SurveyApplicabilityOut: {
+            /** Contract */
+            contract: string;
+            /** Note */
+            note: string;
+            /** Result */
+            result: {
+                [key: string]: unknown;
+            };
+        };
+        /** SurveyApplicabilityScenarioIn */
+        SurveyApplicabilityScenarioIn: {
+            /** Facts */
+            facts?: {
+                [key: string]: unknown;
+            };
+            /** Id */
+            id: string;
+            /** Profiles */
+            profiles?: string[] | null;
+        };
         /** SurveyAssignmentBinding */
         SurveyAssignmentBinding: {
             /** Approved By */
@@ -13315,6 +13534,13 @@ export interface components {
             rule_version_id: string | null;
             /** Specificity */
             specificity: number;
+            /**
+             * Target Kind
+             * @description SHARED-1: SURVEY_BINDING = the rule names no script; it selects a survey only through a binding.
+             * @default SCRIPT_VERSION
+             * @enum {string}
+             */
+            target_kind: "SCRIPT_VERSION" | "SURVEY_BINDING";
             /** When */
             when: string[];
         };
@@ -28657,6 +28883,246 @@ export interface operations {
             };
             /** @description Conflict */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_applicability_analyse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyApplicabilityAnalyseIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyApplicabilityOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_applicability_condition_test: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyApplicabilityConditionTestIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyApplicabilityOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_applicability_evaluate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyApplicabilityEvaluateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyApplicabilityOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    survey_applicability_scenarios: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SurveyApplicabilityGenerateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SurveyApplicabilityOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

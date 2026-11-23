@@ -21,6 +21,16 @@ export function useRuleOptions() {
   return useQuery({ queryKey: ['rule-options'], queryFn: async () => unwrap(await api.GET('/api/v1/assignment-rules/options')), staleTime: 60_000 });
 }
 
+/** SHARED-1 — what a rule selects. A survey-only rule names no script and can never assign one to a case. */
+export const SURVEY_ONLY = 'SURVEY_BINDING';
+export const isSurveyOnly = (x: { target_kind?: string } | null | undefined) => x?.target_kind === SURVEY_ONLY;
+export const BINDINGS_HREF = '/survey-studio/assignment';
+export function TargetKind({ kind }: { kind: string | undefined }) {
+  return kind === SURVEY_ONLY
+    ? <Badge tone="purple" noDot>Survey binding · no script</Badge>
+    : <Badge tone="gray" noDot>Script · for cases</Badge>;
+}
+
 export const ruleHref = (code: string, query?: string) => `/assignment-rules/${encodeURIComponent(code)}${query ? `?${query}` : ''}`;
 
 export function fieldLabel(o: RuleOptions | undefined, field: string): string {

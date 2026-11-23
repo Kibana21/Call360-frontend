@@ -16399,6 +16399,16 @@
             "maxLength": 120,
             "title": "Name",
             "type": "string"
+          },
+          "target_kind": {
+            "default": "SCRIPT_VERSION",
+            "description": "SHARED-1: what the rule selects, fixed for its life. SURVEY_BINDING needs `shared_rule_services_enabled`.",
+            "enum": [
+              "SCRIPT_VERSION",
+              "SURVEY_BINDING"
+            ],
+            "title": "Target Kind",
+            "type": "string"
           }
         },
         "required": [
@@ -16704,6 +16714,15 @@
               }
             ]
           },
+          "target_kind": {
+            "default": "SCRIPT_VERSION",
+            "enum": [
+              "SCRIPT_VERSION",
+              "SURVEY_BINDING"
+            ],
+            "title": "Target Kind",
+            "type": "string"
+          },
           "updated_at": {
             "anyOf": [
               {
@@ -16897,6 +16916,16 @@
               }
             ],
             "title": "Rule Code"
+          },
+          "target_kind": {
+            "default": "SCRIPT_VERSION",
+            "description": "SHARED-1: what the rule being edited selects.",
+            "enum": [
+              "SCRIPT_VERSION",
+              "SURVEY_BINDING"
+            ],
+            "title": "Target Kind",
+            "type": "string"
           },
           "target_script_version_id": {
             "anyOf": [
@@ -17166,6 +17195,12 @@
             },
             "title": "Priority Range",
             "type": "array"
+          },
+          "survey_only_rules": {
+            "default": false,
+            "description": "SHARED-1: whether this server can create a rule that names no script and selects a survey only through a governed survey binding.",
+            "title": "Survey Only Rules",
+            "type": "boolean"
           },
           "targets": {
             "items": {
@@ -17490,6 +17525,16 @@
             "title": "Rule Code",
             "type": "string"
           },
+          "target_kind": {
+            "default": "SCRIPT_VERSION",
+            "description": "SHARED-1: what every version of this rule selects.",
+            "enum": [
+              "SCRIPT_VERSION",
+              "SURVEY_BINDING"
+            ],
+            "title": "Target Kind",
+            "type": "string"
+          },
           "versions": {
             "items": {
               "$ref": "#/components/schemas/RuleVersionOut"
@@ -17729,6 +17774,18 @@
             "title": "Is Fallback",
             "type": "boolean"
           },
+          "market": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "SHARED-1: the rule's own governed market.",
+            "title": "Market"
+          },
           "name": {
             "title": "Name",
             "type": "string"
@@ -17769,6 +17826,16 @@
           },
           "target": {
             "$ref": "#/components/schemas/RuleTargetRef"
+          },
+          "target_kind": {
+            "default": "SCRIPT_VERSION",
+            "description": "SCRIPT_VERSION: assigns a published script version to a case. SURVEY_BINDING: names no script; it selects a survey only through a governed survey binding and can never assign a script to a case.",
+            "enum": [
+              "SCRIPT_VERSION",
+              "SURVEY_BINDING"
+            ],
+            "title": "Target Kind",
+            "type": "string"
           },
           "version": {
             "title": "Version",
@@ -23461,6 +23528,198 @@
         "title": "SurveyAcknowledgement",
         "type": "object"
       },
+      "SurveyApplicabilityAnalyseIn": {
+        "properties": {
+          "policy": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy"
+          },
+          "workspace": {
+            "additionalProperties": true,
+            "title": "Workspace",
+            "type": "object"
+          }
+        },
+        "required": [
+          "workspace"
+        ],
+        "title": "SurveyApplicabilityAnalyseIn",
+        "type": "object"
+      },
+      "SurveyApplicabilityConditionTestIn": {
+        "properties": {
+          "expr": {
+            "additionalProperties": true,
+            "title": "Expr",
+            "type": "object"
+          },
+          "facts": {
+            "additionalProperties": true,
+            "title": "Facts",
+            "type": "object"
+          },
+          "profiles": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profiles"
+          },
+          "workspace": {
+            "additionalProperties": true,
+            "title": "Workspace",
+            "type": "object"
+          }
+        },
+        "required": [
+          "workspace",
+          "expr"
+        ],
+        "title": "SurveyApplicabilityConditionTestIn",
+        "type": "object"
+      },
+      "SurveyApplicabilityEvaluateIn": {
+        "properties": {
+          "compare_with": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A second policy (for example the published one) to compare every result against.",
+            "title": "Compare With"
+          },
+          "policy": {
+            "additionalProperties": true,
+            "title": "Policy",
+            "type": "object"
+          },
+          "scenarios": {
+            "items": {
+              "$ref": "#/components/schemas/SurveyApplicabilityScenarioIn"
+            },
+            "maxItems": 300,
+            "title": "Scenarios",
+            "type": "array"
+          },
+          "workspace": {
+            "additionalProperties": true,
+            "title": "Workspace",
+            "type": "object"
+          }
+        },
+        "required": [
+          "workspace",
+          "policy",
+          "scenarios"
+        ],
+        "title": "SurveyApplicabilityEvaluateIn",
+        "type": "object"
+      },
+      "SurveyApplicabilityGenerateIn": {
+        "properties": {
+          "limit": {
+            "default": 40,
+            "maximum": 60.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "policy": {
+            "additionalProperties": true,
+            "title": "Policy",
+            "type": "object"
+          },
+          "workspace": {
+            "additionalProperties": true,
+            "title": "Workspace",
+            "type": "object"
+          }
+        },
+        "required": [
+          "workspace",
+          "policy"
+        ],
+        "title": "SurveyApplicabilityGenerateIn",
+        "type": "object"
+      },
+      "SurveyApplicabilityOut": {
+        "description": "A result of the applicability evaluator: ``result`` is the evaluator's own document.",
+        "properties": {
+          "contract": {
+            "title": "Contract",
+            "type": "string"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "result": {
+            "additionalProperties": true,
+            "title": "Result",
+            "type": "object"
+          }
+        },
+        "required": [
+          "contract",
+          "note",
+          "result"
+        ],
+        "title": "SurveyApplicabilityOut",
+        "type": "object"
+      },
+      "SurveyApplicabilityScenarioIn": {
+        "properties": {
+          "facts": {
+            "additionalProperties": true,
+            "title": "Facts",
+            "type": "object"
+          },
+          "id": {
+            "maxLength": 80,
+            "title": "Id",
+            "type": "string"
+          },
+          "profiles": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profiles"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "SurveyApplicabilityScenarioIn",
+        "type": "object"
+      },
       "SurveyAssignmentBinding": {
         "properties": {
           "approved_by": {
@@ -24339,6 +24598,16 @@
           "specificity": {
             "title": "Specificity",
             "type": "integer"
+          },
+          "target_kind": {
+            "default": "SCRIPT_VERSION",
+            "description": "SHARED-1: SURVEY_BINDING = the rule names no script; it selects a survey only through a binding.",
+            "enum": [
+              "SCRIPT_VERSION",
+              "SURVEY_BINDING"
+            ],
+            "title": "Target Kind",
+            "type": "string"
           },
           "when": {
             "items": {
@@ -35052,7 +35321,7 @@
         ]
       },
       "post": {
-        "description": "Create a rule (draft version 1), optionally copying an existing rule version's conditions and settings.",
+        "description": "Create a rule (draft version 1), optionally copying an existing rule version's conditions and settings.\n\nSHARED-1: ``target_kind`` SURVEY_BINDING creates a rule that names no script — it can be bound to a published survey\nand can never assign a script to a case. It needs ``shared_rule_services_enabled``.",
         "operationId": "rule_create",
         "requestBody": {
           "content": {
@@ -48494,6 +48763,294 @@
         "summary": "Workbench Versions",
         "tags": [
           "simulation-workbench"
+        ]
+      }
+    },
+    "/api/v1/survey-applicability/prototype/analyse": {
+      "post": {
+        "description": "Every diagnostic of a workspace and, when given, of one policy. A BLOCKER would stop submission.",
+        "operationId": "survey_applicability_analyse",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SurveyApplicabilityAnalyseIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurveyApplicabilityOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Survey Applicability Analyse",
+        "tags": [
+          "survey-applicability"
+        ]
+      }
+    },
+    "/api/v1/survey-applicability/prototype/condition-test": {
+      "post": {
+        "description": "One expression against one set of facts: TRUE, FALSE or UNKNOWN, with the full trace and what is missing.",
+        "operationId": "survey_applicability_condition_test",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SurveyApplicabilityConditionTestIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurveyApplicabilityOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Survey Applicability Condition Test",
+        "tags": [
+          "survey-applicability"
+        ]
+      }
+    },
+    "/api/v1/survey-applicability/prototype/evaluate": {
+      "post": {
+        "description": "One policy applied to each scenario: the selection plan with its trace, and — when a second policy is given —\nwhat changes for each scenario and which requirements are the reason.",
+        "operationId": "survey_applicability_evaluate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SurveyApplicabilityEvaluateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurveyApplicabilityOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Survey Applicability Evaluate",
+        "tags": [
+          "survey-applicability"
+        ]
+      }
+    },
+    "/api/v1/survey-applicability/prototype/scenarios": {
+      "post": {
+        "description": "Generated synthetic applications — one for each distinct result the policy can give — and a statement of what\nwas and was not covered. It never claims a coverage it did not compute.",
+        "operationId": "survey_applicability_scenarios",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SurveyApplicabilityGenerateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurveyApplicabilityOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Survey Applicability Scenarios",
+        "tags": [
+          "survey-applicability"
         ]
       }
     },

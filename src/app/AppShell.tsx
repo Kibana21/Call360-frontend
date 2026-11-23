@@ -1,3 +1,4 @@
+import { applicabilityEnabled } from '../features/applicability/flag';
 import { useEffect, useRef, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
@@ -18,7 +19,7 @@ export function AppShell() {
   const title = PAGE_TITLES[location.pathname] ?? (surveyStudioVisible() && location.pathname.startsWith('/survey-studio') ? 'Survey Studio' : location.pathname.startsWith('/cases/') ? 'Call Detail' : location.pathname.startsWith('/policies/') ? 'Policy Detail' : location.pathname.startsWith('/scripts/') ? 'Script Detail' : location.pathname.startsWith('/assignment-rules/') ? 'Rule Detail' : location.pathname.startsWith('/reviews/cases/') ? 'Case Review' : location.pathname === '/account/password' ? 'Change password' : 'Call360');
   const isAdmin = !!me?.roles.includes('ADMIN');
   // NAV-1: where the address is in the navigation (for the active entry and the breadcrumb), and which sections are open
-  const groups = navFor(surveyStudioVisible(), surveyStudioPersisted());
+  const groups = navFor(surveyStudioVisible(), surveyStudioPersisted(), applicabilityEnabled());
   const place = placeOf(groups, location.pathname, location.search);
   const [toggled, setToggled] = useState<Record<string, boolean>>({});
 
@@ -58,7 +59,7 @@ export function AppShell() {
                   );
                 }
                 const here = place?.item === item;
-                const children = (item.children ?? []).filter((c) => !c.permission || can(c.permission));
+                const children = (item.children ?? []).filter((c) => !c.permission || [c.permission].flat().some(can));
                 const open = children.length > 0 && (toggled[item.label] ?? here);
                 const id = `navsub-${item.label.replace(/\W/g, '')}`;
                 return (

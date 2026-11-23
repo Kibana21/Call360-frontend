@@ -24,7 +24,7 @@ export default defineConfig({
       cwd: backend,
       // These journeys sign several different people in within a minute; the per-address sign-in limit of the product
       // (20 a minute) is raised for THIS test server only. The limit itself is covered by the backend's own tests.
-      env: { CALL360_ENV_FILE: '.env.test', SURVEY_DEFINITIONS_ENABLED: 'true', SURVEY_LIBRARY_ENABLED: 'true', SURVEY_SIMULATION_ENABLED: 'true', SURVEY_ASSIGNMENT_ENABLED: 'true', SURVEY_ASSIGNMENT_GROUPS_ENABLED: 'true', SURVEY_COORDINATED_SIMULATION_ENABLED: 'true', SURVEY_EVALUATION_ENABLED: 'true', SURVEY_CONTROL_POLICY_ENABLED: 'true', SURVEY_EXECUTION_ASSURANCE_ENABLED: 'true', SURVEY_MODULE_AUTHORING_ENABLED: 'true', LOGIN_IP_PER_MINUTE: '300' },
+      env: { CALL360_ENV_FILE: '.env.test', SURVEY_DEFINITIONS_ENABLED: 'true', SURVEY_LIBRARY_ENABLED: 'true', SURVEY_SIMULATION_ENABLED: 'true', SURVEY_ASSIGNMENT_ENABLED: 'true', SURVEY_ASSIGNMENT_GROUPS_ENABLED: 'true', SURVEY_COORDINATED_SIMULATION_ENABLED: 'true', SURVEY_EVALUATION_ENABLED: 'true', SURVEY_CONTROL_POLICY_ENABLED: 'true', SURVEY_EXECUTION_ASSURANCE_ENABLED: 'true', SURVEY_MODULE_AUTHORING_ENABLED: 'true', SHARED_RULE_SERVICES_ENABLED: 'true', LOGIN_IP_PER_MINUTE: '300' },
       url: 'http://127.0.0.1:8001/health/live',
       reuseExistingServer: false,
       timeout: 60_000,

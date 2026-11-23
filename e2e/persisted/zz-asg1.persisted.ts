@@ -195,7 +195,7 @@ test('ASG-1 a synthetic application is selected by governed rules, planned and s
   // … and the survey people gain nothing of Script Studio: the Assignment Rules API still needs its own permission
   for (const path of ['/api/v1/assignment-rules', '/api/v1/assignment-rules/options']) expect((await author.page.request.get(path)).status(), path).toBe(403);
   // what the policy returns is what this page needs: no script target, rule author, checker or draft
-  expect(Object.keys((await get(author, `${A}/policy`)).rules[0]).sort()).toEqual(['effective_from', 'effective_now', 'effective_to', 'is_fallback', 'market_code', 'name', 'open_binding', 'priority', 'published_binding', 'ref', 'rule_code', 'rule_version', 'rule_version_id', 'specificity', 'when']);
+  expect(Object.keys((await get(author, `${A}/policy`)).rules[0]).sort()).toEqual(['effective_from', 'effective_now', 'effective_to', 'is_fallback', 'market_code', 'name', 'open_binding', 'priority', 'published_binding', 'ref', 'rule_code', 'rule_version', 'rule_version_id', 'specificity', 'target_kind', 'when']); // SHARED-1: whether the rule names a script at all — never which one
 
   // ---- 12. no customer case was created by any of it
   const check = await session(browser, 'user');

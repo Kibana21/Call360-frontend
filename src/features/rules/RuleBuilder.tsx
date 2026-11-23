@@ -9,7 +9,7 @@ import { Icon } from '../../components/Icon';
 import { Badge, Button, Card } from '../../components/ui';
 import { isoToSgtInput, sgtInputToIso } from '../intake/model';
 import { ErrorBox, errorText, Field } from '../scripts/ScriptEditor';
-import { ConflictList, IssueList, type RuleCondition, type RuleContent, type RuleDraft, type RuleOptions, type RuleValue } from './shared';
+import { BINDINGS_HREF, ConflictList, isSurveyOnly, IssueList, type RuleCondition, type RuleContent, type RuleDraft, type RuleOptions, type RuleValue } from './shared';
 
 type Err = ReturnType<typeof errorText> | null;
 
@@ -53,7 +53,7 @@ export function RuleBuilder({ d, o, onSaved }: { d: RuleDraft; o: RuleOptions; o
   const live = useQuery({
     queryKey: ['rule-explain', d.id, JSON.stringify(probe)],
     enabled: dirty,
-    queryFn: async () => unwrap(await api.POST('/api/v1/assignment-rules/explain', { body: { ...probe, rule_code: d.rule_code, market: d.market } })),
+    queryFn: async () => unwrap(await api.POST('/api/v1/assignment-rules/explain', { body: { ...probe, rule_code: d.rule_code, market: d.market, target_kind: d.target_kind } })),
     placeholderData: (prev) => prev,
   });
   const analysis = dirty && live.data ? live.data : d.analysis;
@@ -62,6 +62,7 @@ export function RuleBuilder({ d, o, onSaved }: { d: RuleDraft; o: RuleOptions; o
   const setCond = (field: string, values: RuleValue[]) => setC({ ...c, conditions: c.conditions.map((x) => (x.field === field ? { field, values } : x)) });
   const save = () => ch.run(async () => unwrap(await api.PUT('/api/v1/assignment-rule-drafts/{draft_id}', { params: { path: { draft_id: d.id } }, body: { expected_row_version: d.row_version, content: c } }))).then((ok) => { if (ok) onSaved?.(); });
   const targets = o.targets;
+  const surveyOnly = isSurveyOnly(d);
   const chosen = targets.find((t) => t.id === c.target_script_version_id);
 
   return (
@@ -98,7 +99,7 @@ export function RuleBuilder({ d, o, onSaved }: { d: RuleDraft; o: RuleOptions; o
         </div>
       </Card>
 
-      <Card title="Precedence, target and dates" subtitle="Lower priority number wins; on equal priority the more specific rule wins">
+      <Card title={surveyOnly ? 'Precedence and dates' : 'Precedence, target and dates'} subtitle="Lower priority number wins; on equal priority the more specific rule wins">
         <div className="input-grid">
           <Field id="rb-priority" label="Priority (1 is highest)" hint="1–999. Equal priority and specificity with another rule is a conflict.">
             {(p) => <input {...p} type="number" min={1} max={999} className="field labelled" value={c.priority}
@@ -109,6 +110,13 @@ export function RuleBuilder({ d, o, onSaved }: { d: RuleDraft; o: RuleOptions; o
             <strong className="small" data-testid="rb-specificity">{analysis.specificity}</strong>
             <span className="xsmall muted">Number of constrained fields; several values in one field count once. Cannot be edited.</span>
           </div>
+          {surveyOnly ? (
+            <div className="stack" style={{ gap: 4 }} data-testid="rb-survey-only">
+              <span className="form-label" style={{ marginBottom: 0 }}>What this rule selects</span>
+              <strong className="small">A survey, through a survey binding</strong>
+              <span className="xsmall muted">This rule names no script and can never assign one to a callback case. Once it is published, bind this exact version to a published survey in <a className="link" href={BINDINGS_HREF}>Survey bindings and groups</a>. Market {d.market}.</span>
+            </div>
+          ) : (
           <Field id="rb-target" label="Assign this published script version" hint={chosen && chosen.content_approval_status !== 'APPROVED_BY_SC' ? 'Synthetic script — not production-approved wording' : undefined}>
             {(p) => (
               <select {...p} className="field labelled" value={c.target_script_version_id ?? ''} data-testid="rb-target"
@@ -118,6 +126,7 @@ export function RuleBuilder({ d, o, onSaved }: { d: RuleDraft; o: RuleOptions; o
               </select>
             )}
           </Field>
+          )}
           <div className="stack" style={{ gap: 6 }}>
             <label className="row small" style={{ gap: 6 }}>
               <input type="checkbox" checked={c.is_fallback ?? false} onChange={(e) => setC({ ...c, is_fallback: e.target.checked })} data-testid="rb-fallback" />

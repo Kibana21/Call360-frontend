@@ -17,8 +17,10 @@ export function RequireAuth({ children }: { children: ReactNode }) {
 }
 
 /** UI-only convenience; the backend enforces every permission independently (IAM-005). */
-export function RequirePermission({ permission, children }: { permission: string; children: ReactNode }) {
+/** `permission`: the one needed, or several of which ANY ONE is enough (a shared capability reachable by its own
+    permission or by the legacy one). The server decides either way. */
+export function RequirePermission({ permission, children }: { permission: string | string[]; children: ReactNode }) {
   const { can } = useAuth();
-  if (!can(permission)) return <Navigate to="/unauthorized" replace />;
+  if (![permission].flat().some(can)) return <Navigate to="/unauthorized" replace />;
   return <>{children}</>;
 }
