@@ -692,6 +692,25 @@
         "title": "AnswerEvaluationItem",
         "type": "object"
       },
+      "ApplicabilityArchiveIn": {
+        "properties": {
+          "expected_revision": {
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "reason": {
+            "default": "",
+            "maxLength": 500,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_revision"
+        ],
+        "title": "ApplicabilityArchiveIn",
+        "type": "object"
+      },
       "ApplicabilityAsset": {
         "properties": {
           "candidate": {
@@ -2029,6 +2048,1987 @@
         "title": "ApplicabilityRevisionIn",
         "type": "object"
       },
+      "ApplicabilityRun": {
+        "properties": {
+          "coverage": {
+            "additionalProperties": true,
+            "description": "Requirement- and condition-level coverage of the scenarios run. Never a claim of exhaustiveness.",
+            "title": "Coverage",
+            "type": "object"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "title": "Created By",
+            "type": "string"
+          },
+          "duration_ms": {
+            "title": "Duration Ms",
+            "type": "integer"
+          },
+          "evaluator_contract": {
+            "title": "Evaluator Contract",
+            "type": "string"
+          },
+          "failed": {
+            "title": "Failed",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "invalid": {
+            "title": "Invalid",
+            "type": "integer"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "market_code": {
+            "title": "Market Code",
+            "type": "string"
+          },
+          "no_expectation": {
+            "title": "No Expectation",
+            "type": "integer"
+          },
+          "not_evaluated": {
+            "title": "Not Evaluated",
+            "type": "integer"
+          },
+          "note": {
+            "default": "Synthetic data and synthetic results only. A selection plan assigns nothing and gives no permission to call anyone.",
+            "title": "Note",
+            "type": "string"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "integer"
+          },
+          "policy_code": {
+            "title": "Policy Code",
+            "type": "string"
+          },
+          "policy_document_sha256": {
+            "title": "Policy Document Sha256",
+            "type": "string"
+          },
+          "policy_fingerprint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Fingerprint"
+          },
+          "policy_id": {
+            "title": "Policy Id",
+            "type": "string"
+          },
+          "policy_name": {
+            "title": "Policy Name",
+            "type": "string"
+          },
+          "policy_reasons": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Policy Reasons",
+            "type": "array"
+          },
+          "policy_revision": {
+            "title": "Policy Revision",
+            "type": "integer"
+          },
+          "policy_snapshot_sha256": {
+            "title": "Policy Snapshot Sha256",
+            "type": "string"
+          },
+          "policy_status": {
+            "title": "Policy Status",
+            "type": "string"
+          },
+          "record_class": {
+            "const": "SYNTHETIC",
+            "title": "Record Class",
+            "type": "string"
+          },
+          "record_sha256": {
+            "title": "Record Sha256",
+            "type": "string"
+          },
+          "replayed": {
+            "default": false,
+            "description": "True when this answer is a run recorded earlier under the same idempotency key.",
+            "title": "Replayed",
+            "type": "boolean"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/ApplicabilityRunResultSummary"
+            },
+            "title": "Results",
+            "type": "array"
+          },
+          "results_total": {
+            "title": "Results Total",
+            "type": "integer"
+          },
+          "run_sha256": {
+            "title": "Run Sha256",
+            "type": "string"
+          },
+          "scenarios": {
+            "title": "Scenarios",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "PASSED",
+              "FAILED",
+              "COULD_NOT_EVALUATE",
+              "INVALID_DEFINITION"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "suite": {
+            "additionalProperties": true,
+            "description": "The suite exactly as it was run: members, revisions and expectations.",
+            "title": "Suite",
+            "type": "object"
+          },
+          "suite_code": {
+            "title": "Suite Code",
+            "type": "string"
+          },
+          "suite_id": {
+            "title": "Suite Id",
+            "type": "string"
+          },
+          "suite_name": {
+            "title": "Suite Name",
+            "type": "string"
+          },
+          "suite_purpose": {
+            "title": "Suite Purpose",
+            "type": "string"
+          },
+          "suite_revision": {
+            "title": "Suite Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "market_code",
+          "record_class",
+          "suite_id",
+          "suite_code",
+          "suite_name",
+          "suite_revision",
+          "suite_purpose",
+          "policy_id",
+          "policy_code",
+          "policy_name",
+          "policy_revision",
+          "policy_document_sha256",
+          "policy_snapshot_sha256",
+          "policy_fingerprint",
+          "evaluator_contract",
+          "status",
+          "scenarios",
+          "passed",
+          "failed",
+          "not_evaluated",
+          "invalid",
+          "no_expectation",
+          "record_sha256",
+          "run_sha256",
+          "duration_ms",
+          "created_at",
+          "created_by",
+          "coverage",
+          "suite",
+          "policy_status",
+          "policy_reasons",
+          "results_total",
+          "results",
+          "limit",
+          "offset"
+        ],
+        "title": "ApplicabilityRun",
+        "type": "object"
+      },
+      "ApplicabilityRunCompareIn": {
+        "properties": {
+          "after_run_id": {
+            "format": "uuid",
+            "title": "After Run Id",
+            "type": "string"
+          },
+          "before_run_id": {
+            "format": "uuid",
+            "title": "Before Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "before_run_id",
+          "after_run_id"
+        ],
+        "title": "ApplicabilityRunCompareIn",
+        "type": "object"
+      },
+      "ApplicabilityRunComparison": {
+        "properties": {
+          "after": {
+            "additionalProperties": true,
+            "title": "After",
+            "type": "object"
+          },
+          "before": {
+            "$ref": "#/components/schemas/ApplicabilityRunSummary"
+          },
+          "changed": {
+            "title": "Changed",
+            "type": "integer"
+          },
+          "dependency_changes": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Dependency Changes",
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "RUN_TO_RUN",
+              "RUN_TO_CURRENT_DRAFT"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "policy_changed": {
+            "title": "Policy Changed",
+            "type": "boolean"
+          },
+          "same_policy": {
+            "title": "Same Policy",
+            "type": "boolean"
+          },
+          "scenarios": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Scenarios",
+            "type": "array"
+          },
+          "unchanged": {
+            "title": "Unchanged",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "kind",
+          "before",
+          "after",
+          "same_policy",
+          "policy_changed",
+          "dependency_changes",
+          "scenarios",
+          "changed",
+          "unchanged",
+          "note"
+        ],
+        "title": "ApplicabilityRunComparison",
+        "type": "object"
+      },
+      "ApplicabilityRunIn": {
+        "properties": {
+          "idempotency_key": {
+            "description": "Chosen by the client; the same key for the same suite returns the run already recorded.",
+            "maxLength": 80,
+            "minLength": 8,
+            "title": "Idempotency Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "idempotency_key"
+        ],
+        "title": "ApplicabilityRunIn",
+        "type": "object"
+      },
+      "ApplicabilityRunPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ApplicabilityRunSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "ApplicabilityRunPage",
+        "type": "object"
+      },
+      "ApplicabilityRunResult": {
+        "properties": {
+          "actual": {
+            "additionalProperties": true,
+            "description": "The actual status, selected surveys and pending surveys, in brief.",
+            "title": "Actual",
+            "type": "object"
+          },
+          "diagnostics": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Diagnostics",
+            "type": "array"
+          },
+          "differences": {
+            "description": "Every way the actual plan differs from the expectation; empty when the test passed.",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Differences",
+            "type": "array"
+          },
+          "expectation": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expectation"
+          },
+          "outcome": {
+            "enum": [
+              "PASSED",
+              "FAILED",
+              "COULD_NOT_EVALUATE",
+              "INVALID_DEFINITION",
+              "NO_EXPECTATION"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "plan": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan"
+          },
+          "plan_fingerprint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Fingerprint"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "reproducible": {
+            "title": "Reproducible",
+            "type": "boolean"
+          },
+          "resolved": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Resolved",
+            "type": "array"
+          },
+          "scenario_code": {
+            "title": "Scenario Code",
+            "type": "string"
+          },
+          "scenario_document": {
+            "additionalProperties": true,
+            "title": "Scenario Document",
+            "type": "object"
+          },
+          "scenario_document_sha256": {
+            "title": "Scenario Document Sha256",
+            "type": "string"
+          },
+          "scenario_fingerprint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario Fingerprint"
+          },
+          "scenario_id": {
+            "title": "Scenario Id",
+            "type": "string"
+          },
+          "scenario_name": {
+            "title": "Scenario Name",
+            "type": "string"
+          },
+          "scenario_revision": {
+            "title": "Scenario Revision",
+            "type": "integer"
+          },
+          "scenario_snapshot": {
+            "additionalProperties": true,
+            "title": "Scenario Snapshot",
+            "type": "object"
+          },
+          "scenario_snapshot_sha256": {
+            "title": "Scenario Snapshot Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "position",
+          "scenario_id",
+          "scenario_code",
+          "scenario_name",
+          "scenario_revision",
+          "scenario_document_sha256",
+          "scenario_snapshot_sha256",
+          "expectation",
+          "outcome",
+          "plan_fingerprint",
+          "differences",
+          "reason",
+          "actual",
+          "plan",
+          "scenario_document",
+          "scenario_snapshot",
+          "diagnostics",
+          "resolved",
+          "reproducible",
+          "scenario_fingerprint"
+        ],
+        "title": "ApplicabilityRunResult",
+        "type": "object"
+      },
+      "ApplicabilityRunResultSummary": {
+        "properties": {
+          "actual": {
+            "additionalProperties": true,
+            "description": "The actual status, selected surveys and pending surveys, in brief.",
+            "title": "Actual",
+            "type": "object"
+          },
+          "differences": {
+            "description": "Every way the actual plan differs from the expectation; empty when the test passed.",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Differences",
+            "type": "array"
+          },
+          "expectation": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expectation"
+          },
+          "outcome": {
+            "enum": [
+              "PASSED",
+              "FAILED",
+              "COULD_NOT_EVALUATE",
+              "INVALID_DEFINITION",
+              "NO_EXPECTATION"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "plan_fingerprint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Fingerprint"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "scenario_code": {
+            "title": "Scenario Code",
+            "type": "string"
+          },
+          "scenario_document_sha256": {
+            "title": "Scenario Document Sha256",
+            "type": "string"
+          },
+          "scenario_id": {
+            "title": "Scenario Id",
+            "type": "string"
+          },
+          "scenario_name": {
+            "title": "Scenario Name",
+            "type": "string"
+          },
+          "scenario_revision": {
+            "title": "Scenario Revision",
+            "type": "integer"
+          },
+          "scenario_snapshot_sha256": {
+            "title": "Scenario Snapshot Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "position",
+          "scenario_id",
+          "scenario_code",
+          "scenario_name",
+          "scenario_revision",
+          "scenario_document_sha256",
+          "scenario_snapshot_sha256",
+          "expectation",
+          "outcome",
+          "plan_fingerprint",
+          "differences",
+          "reason",
+          "actual"
+        ],
+        "title": "ApplicabilityRunResultSummary",
+        "type": "object"
+      },
+      "ApplicabilityRunSummary": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by": {
+            "title": "Created By",
+            "type": "string"
+          },
+          "duration_ms": {
+            "title": "Duration Ms",
+            "type": "integer"
+          },
+          "evaluator_contract": {
+            "title": "Evaluator Contract",
+            "type": "string"
+          },
+          "failed": {
+            "title": "Failed",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "invalid": {
+            "title": "Invalid",
+            "type": "integer"
+          },
+          "market_code": {
+            "title": "Market Code",
+            "type": "string"
+          },
+          "no_expectation": {
+            "title": "No Expectation",
+            "type": "integer"
+          },
+          "not_evaluated": {
+            "title": "Not Evaluated",
+            "type": "integer"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "integer"
+          },
+          "policy_code": {
+            "title": "Policy Code",
+            "type": "string"
+          },
+          "policy_document_sha256": {
+            "title": "Policy Document Sha256",
+            "type": "string"
+          },
+          "policy_fingerprint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Fingerprint"
+          },
+          "policy_id": {
+            "title": "Policy Id",
+            "type": "string"
+          },
+          "policy_name": {
+            "title": "Policy Name",
+            "type": "string"
+          },
+          "policy_revision": {
+            "title": "Policy Revision",
+            "type": "integer"
+          },
+          "policy_snapshot_sha256": {
+            "title": "Policy Snapshot Sha256",
+            "type": "string"
+          },
+          "record_class": {
+            "const": "SYNTHETIC",
+            "title": "Record Class",
+            "type": "string"
+          },
+          "record_sha256": {
+            "title": "Record Sha256",
+            "type": "string"
+          },
+          "run_sha256": {
+            "title": "Run Sha256",
+            "type": "string"
+          },
+          "scenarios": {
+            "title": "Scenarios",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "PASSED",
+              "FAILED",
+              "COULD_NOT_EVALUATE",
+              "INVALID_DEFINITION"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "suite_code": {
+            "title": "Suite Code",
+            "type": "string"
+          },
+          "suite_id": {
+            "title": "Suite Id",
+            "type": "string"
+          },
+          "suite_name": {
+            "title": "Suite Name",
+            "type": "string"
+          },
+          "suite_purpose": {
+            "title": "Suite Purpose",
+            "type": "string"
+          },
+          "suite_revision": {
+            "title": "Suite Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "market_code",
+          "record_class",
+          "suite_id",
+          "suite_code",
+          "suite_name",
+          "suite_revision",
+          "suite_purpose",
+          "policy_id",
+          "policy_code",
+          "policy_name",
+          "policy_revision",
+          "policy_document_sha256",
+          "policy_snapshot_sha256",
+          "policy_fingerprint",
+          "evaluator_contract",
+          "status",
+          "scenarios",
+          "passed",
+          "failed",
+          "not_evaluated",
+          "invalid",
+          "no_expectation",
+          "record_sha256",
+          "run_sha256",
+          "duration_ms",
+          "created_at",
+          "created_by"
+        ],
+        "title": "ApplicabilityRunSummary",
+        "type": "object"
+      },
+      "ApplicabilityRunVerification": {
+        "properties": {
+          "mismatched_positions": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Mismatched Positions",
+            "type": "array"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "record_intact": {
+            "title": "Record Intact",
+            "type": "boolean"
+          },
+          "reproduced": {
+            "title": "Reproduced",
+            "type": "boolean"
+          },
+          "results_checked": {
+            "title": "Results Checked",
+            "type": "integer"
+          },
+          "results_reproduced": {
+            "title": "Results Reproduced",
+            "type": "integer"
+          },
+          "run_fingerprint_intact": {
+            "title": "Run Fingerprint Intact",
+            "type": "boolean"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "record_intact",
+          "run_fingerprint_intact",
+          "results_checked",
+          "results_reproduced",
+          "mismatched_positions",
+          "reproduced",
+          "note"
+        ],
+        "title": "ApplicabilityRunVerification",
+        "type": "object"
+      },
+      "ApplicabilityScenario": {
+        "properties": {
+          "baseline": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApplicabilityScenarioBaseline"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "baseline_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The scenario this one is a variant of.",
+            "title": "Baseline Id"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "document": {
+            "additionalProperties": true,
+            "title": "Document",
+            "type": "object"
+          },
+          "document_sha256": {
+            "title": "Document Sha256",
+            "type": "string"
+          },
+          "draft_revision": {
+            "title": "Draft Revision",
+            "type": "integer"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/ApplicabilityScenarioEvent"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "facts": {
+            "title": "Facts",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "inspection": {
+            "$ref": "#/components/schemas/ApplicabilityScenarioInspection"
+          },
+          "market_code": {
+            "title": "Market Code",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "policy_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Id"
+          },
+          "profiles": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Profiles",
+            "type": "array"
+          },
+          "purpose": {
+            "description": "REGRESSION: may belong to a publication-gating suite. EXPLORATORY: never counts towards publication.",
+            "enum": [
+              "REGRESSION",
+              "EXPLORATORY"
+            ],
+            "title": "Purpose",
+            "type": "string"
+          },
+          "record_class": {
+            "const": "SYNTHETIC",
+            "title": "Record Class",
+            "type": "string"
+          },
+          "scenario_fingerprint": {
+            "description": "One fingerprint over the canonical document and its dependency snapshot.",
+            "title": "Scenario Fingerprint",
+            "type": "string"
+          },
+          "snapshot": {
+            "additionalProperties": true,
+            "title": "Snapshot",
+            "type": "object"
+          },
+          "snapshot_sha256": {
+            "title": "Snapshot Sha256",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "DRAFT",
+              "ARCHIVED"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "suite_list": {
+            "items": {
+              "$ref": "#/components/schemas/ApplicabilityScenarioLink"
+            },
+            "title": "Suite List",
+            "type": "array"
+          },
+          "suites": {
+            "title": "Suites",
+            "type": "integer"
+          },
+          "unknown_facts": {
+            "title": "Unknown Facts",
+            "type": "integer"
+          },
+          "unpublished": {
+            "title": "Unpublished",
+            "type": "integer"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "updated_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated By"
+          },
+          "variant_list": {
+            "items": {
+              "$ref": "#/components/schemas/ApplicabilityScenarioLink"
+            },
+            "title": "Variant List",
+            "type": "array"
+          },
+          "variants": {
+            "title": "Variants",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "market_code",
+          "code",
+          "name",
+          "description",
+          "record_class",
+          "purpose",
+          "state",
+          "policy_id",
+          "baseline_id",
+          "draft_revision",
+          "updated_at",
+          "updated_by",
+          "created_at",
+          "profiles",
+          "facts",
+          "unknown_facts",
+          "unpublished",
+          "suites",
+          "variants",
+          "document_sha256",
+          "snapshot_sha256",
+          "scenario_fingerprint",
+          "document",
+          "snapshot",
+          "inspection",
+          "baseline",
+          "variant_list",
+          "suite_list",
+          "events"
+        ],
+        "title": "ApplicabilityScenario",
+        "type": "object"
+      },
+      "ApplicabilityScenarioBaseline": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "facts": {
+            "additionalProperties": true,
+            "title": "Facts",
+            "type": "object"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "profiles": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Profiles",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "facts",
+          "profiles"
+        ],
+        "title": "ApplicabilityScenarioBaseline",
+        "type": "object"
+      },
+      "ApplicabilityScenarioCompareIn": {
+        "properties": {
+          "after_id": {
+            "format": "uuid",
+            "title": "After Id",
+            "type": "string"
+          },
+          "before_id": {
+            "format": "uuid",
+            "title": "Before Id",
+            "type": "string"
+          },
+          "policy_id": {
+            "format": "uuid",
+            "title": "Policy Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "policy_id",
+          "before_id",
+          "after_id"
+        ],
+        "title": "ApplicabilityScenarioCompareIn",
+        "type": "object"
+      },
+      "ApplicabilityScenarioComparison": {
+        "properties": {
+          "after": {
+            "$ref": "#/components/schemas/ApplicabilityScenarioResult"
+          },
+          "before": {
+            "$ref": "#/components/schemas/ApplicabilityScenarioResult"
+          },
+          "comparison": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comparison"
+          },
+          "facts_changed": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Facts Changed",
+            "type": "array"
+          },
+          "policy_id": {
+            "title": "Policy Id",
+            "type": "string"
+          },
+          "policy_revision": {
+            "title": "Policy Revision",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "policy_id",
+          "policy_revision",
+          "status",
+          "before",
+          "after",
+          "facts_changed",
+          "comparison"
+        ],
+        "title": "ApplicabilityScenarioComparison",
+        "type": "object"
+      },
+      "ApplicabilityScenarioCreateIn": {
+        "properties": {
+          "baseline_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Makes this scenario a saved variant of another.",
+            "title": "Baseline Id"
+          },
+          "code": {
+            "description": "Chosen after naming the scenario; it never changes.",
+            "maxLength": 60,
+            "title": "Code",
+            "type": "string"
+          },
+          "document": {
+            "additionalProperties": true,
+            "description": "name, description, profiles, facts (a value, null for 'not known', absent for 'not provided'), pins.",
+            "title": "Document",
+            "type": "object"
+          },
+          "market_code": {
+            "maxLength": 40,
+            "title": "Market Code",
+            "type": "string"
+          },
+          "origin": {
+            "default": "",
+            "maxLength": 60,
+            "title": "Origin",
+            "type": "string"
+          },
+          "policy_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Id"
+          },
+          "purpose": {
+            "default": "REGRESSION",
+            "enum": [
+              "REGRESSION",
+              "EXPLORATORY"
+            ],
+            "title": "Purpose",
+            "type": "string"
+          }
+        },
+        "required": [
+          "market_code",
+          "code",
+          "document"
+        ],
+        "title": "ApplicabilityScenarioCreateIn",
+        "type": "object"
+      },
+      "ApplicabilityScenarioEvaluateIn": {
+        "properties": {
+          "policy_document": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "An unsaved edit of that policy: a preview.",
+            "title": "Policy Document"
+          },
+          "policy_id": {
+            "format": "uuid",
+            "title": "Policy Id",
+            "type": "string"
+          },
+          "scenarios": {
+            "items": {
+              "$ref": "#/components/schemas/ApplicabilityScenarioItemIn"
+            },
+            "maxItems": 60,
+            "title": "Scenarios",
+            "type": "array"
+          }
+        },
+        "required": [
+          "policy_id",
+          "scenarios"
+        ],
+        "title": "ApplicabilityScenarioEvaluateIn",
+        "type": "object"
+      },
+      "ApplicabilityScenarioEvaluation": {
+        "properties": {
+          "contract": {
+            "title": "Contract",
+            "type": "string"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "policy_document_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Document Sha256"
+          },
+          "policy_fingerprint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Fingerprint"
+          },
+          "policy_id": {
+            "title": "Policy Id",
+            "type": "string"
+          },
+          "policy_revision": {
+            "title": "Policy Revision",
+            "type": "integer"
+          },
+          "policy_snapshot_sha256": {
+            "title": "Policy Snapshot Sha256",
+            "type": "string"
+          },
+          "policy_source": {
+            "enum": [
+              "SAVED",
+              "PREVIEW"
+            ],
+            "title": "Policy Source",
+            "type": "string"
+          },
+          "reasons": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/ApplicabilityScenarioResult"
+            },
+            "title": "Results",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "OK",
+              "DEPENDENCY_STALE",
+              "INVALID_DEPENDENCY"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "policy_source",
+          "status",
+          "contract",
+          "note",
+          "policy_id",
+          "policy_revision",
+          "policy_document_sha256",
+          "policy_snapshot_sha256",
+          "policy_fingerprint",
+          "reasons",
+          "results"
+        ],
+        "title": "ApplicabilityScenarioEvaluation",
+        "type": "object"
+      },
+      "ApplicabilityScenarioEvent": {
+        "properties": {
+          "actor": {
+            "title": "Actor",
+            "type": "string"
+          },
+          "comment": {
+            "title": "Comment",
+            "type": "string"
+          },
+          "detail": {
+            "additionalProperties": true,
+            "title": "Detail",
+            "type": "object"
+          },
+          "draft_revision": {
+            "title": "Draft Revision",
+            "type": "integer"
+          },
+          "event": {
+            "title": "Event",
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "seq",
+          "event",
+          "actor",
+          "draft_revision",
+          "comment",
+          "detail",
+          "occurred_at"
+        ],
+        "title": "ApplicabilityScenarioEvent",
+        "type": "object"
+      },
+      "ApplicabilityScenarioInspectIn": {
+        "properties": {
+          "document": {
+            "additionalProperties": true,
+            "title": "Document",
+            "type": "object"
+          },
+          "market_code": {
+            "maxLength": 40,
+            "title": "Market Code",
+            "type": "string"
+          },
+          "snapshot": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The stored snapshot of the scenario being edited, if it is a saved one.",
+            "title": "Snapshot"
+          }
+        },
+        "required": [
+          "market_code",
+          "document"
+        ],
+        "title": "ApplicabilityScenarioInspectIn",
+        "type": "object"
+      },
+      "ApplicabilityScenarioInspection": {
+        "properties": {
+          "definitions": {
+            "additionalProperties": {
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "description": "The pinned definitions themselves, for the fact editor.",
+            "title": "Definitions",
+            "type": "object"
+          },
+          "dependencies": {
+            "description": "Each variable and profile with identity, version, fingerprints and state.",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Dependencies",
+            "type": "array"
+          },
+          "diagnostics": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Diagnostics",
+            "type": "array"
+          },
+          "invalid": {
+            "title": "Invalid",
+            "type": "integer"
+          },
+          "pins": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Pins",
+            "type": "array"
+          },
+          "reproducible": {
+            "description": "True only when every dependency is an exact published version and none has moved.",
+            "title": "Reproducible",
+            "type": "boolean"
+          },
+          "scenario_fingerprint": {
+            "title": "Scenario Fingerprint",
+            "type": "string"
+          },
+          "snapshot_sha256": {
+            "title": "Snapshot Sha256",
+            "type": "string"
+          },
+          "stale": {
+            "title": "Stale",
+            "type": "integer"
+          },
+          "unpublished": {
+            "title": "Unpublished",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "pins",
+          "dependencies",
+          "diagnostics",
+          "snapshot_sha256",
+          "scenario_fingerprint",
+          "stale",
+          "unpublished",
+          "invalid",
+          "reproducible",
+          "definitions"
+        ],
+        "title": "ApplicabilityScenarioInspection",
+        "type": "object"
+      },
+      "ApplicabilityScenarioItemIn": {
+        "properties": {
+          "document": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "An UNSAVED scenario: exploratory.",
+            "title": "Document"
+          },
+          "ref": {
+            "default": "",
+            "maxLength": 80,
+            "title": "Ref",
+            "type": "string"
+          },
+          "scenario_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A SAVED scenario, evaluated exactly as saved.",
+            "title": "Scenario Id"
+          },
+          "snapshot": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot"
+          }
+        },
+        "title": "ApplicabilityScenarioItemIn",
+        "type": "object"
+      },
+      "ApplicabilityScenarioLink": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "purpose": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purpose"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name"
+        ],
+        "title": "ApplicabilityScenarioLink",
+        "type": "object"
+      },
+      "ApplicabilityScenarioPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ApplicabilityScenarioSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "ApplicabilityScenarioPage",
+        "type": "object"
+      },
+      "ApplicabilityScenarioResult": {
+        "properties": {
+          "diagnostics": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Diagnostics",
+            "type": "array"
+          },
+          "mode": {
+            "enum": [
+              "SAVED_SCENARIO",
+              "EXPLORATORY"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "plan": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "ref": {
+            "title": "Ref",
+            "type": "string"
+          },
+          "reproducible": {
+            "description": "A saved scenario on published definitions against the saved policy revision.",
+            "title": "Reproducible",
+            "type": "boolean"
+          },
+          "resolved": {
+            "description": "Exactly which library definitions were read for this scenario, with fingerprints.",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Resolved",
+            "type": "array"
+          },
+          "scenario_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario Code"
+          },
+          "scenario_fingerprint": {
+            "title": "Scenario Fingerprint",
+            "type": "string"
+          },
+          "scenario_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario Id"
+          },
+          "scenario_revision": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario Revision"
+          },
+          "scenario_snapshot_sha256": {
+            "title": "Scenario Snapshot Sha256",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "EVALUATED",
+              "COULD_NOT_EVALUATE",
+              "INVALID_DEFINITION"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ref",
+          "scenario_id",
+          "scenario_code",
+          "scenario_revision",
+          "mode",
+          "state",
+          "reason",
+          "plan",
+          "diagnostics",
+          "resolved",
+          "scenario_fingerprint",
+          "scenario_snapshot_sha256",
+          "reproducible"
+        ],
+        "title": "ApplicabilityScenarioResult",
+        "type": "object"
+      },
+      "ApplicabilityScenarioSaveIn": {
+        "properties": {
+          "document": {
+            "additionalProperties": true,
+            "title": "Document",
+            "type": "object"
+          },
+          "expected_revision": {
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "note": {
+            "default": "",
+            "maxLength": 500,
+            "title": "Note",
+            "type": "string"
+          },
+          "purpose": {
+            "anyOf": [
+              {
+                "enum": [
+                  "REGRESSION",
+                  "EXPLORATORY"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purpose"
+          }
+        },
+        "required": [
+          "expected_revision",
+          "document"
+        ],
+        "title": "ApplicabilityScenarioSaveIn",
+        "type": "object"
+      },
+      "ApplicabilityScenarioSummary": {
+        "properties": {
+          "baseline_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The scenario this one is a variant of.",
+            "title": "Baseline Id"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "document_sha256": {
+            "title": "Document Sha256",
+            "type": "string"
+          },
+          "draft_revision": {
+            "title": "Draft Revision",
+            "type": "integer"
+          },
+          "facts": {
+            "title": "Facts",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "market_code": {
+            "title": "Market Code",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "policy_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Id"
+          },
+          "profiles": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Profiles",
+            "type": "array"
+          },
+          "purpose": {
+            "description": "REGRESSION: may belong to a publication-gating suite. EXPLORATORY: never counts towards publication.",
+            "enum": [
+              "REGRESSION",
+              "EXPLORATORY"
+            ],
+            "title": "Purpose",
+            "type": "string"
+          },
+          "record_class": {
+            "const": "SYNTHETIC",
+            "title": "Record Class",
+            "type": "string"
+          },
+          "scenario_fingerprint": {
+            "description": "One fingerprint over the canonical document and its dependency snapshot.",
+            "title": "Scenario Fingerprint",
+            "type": "string"
+          },
+          "snapshot_sha256": {
+            "title": "Snapshot Sha256",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "DRAFT",
+              "ARCHIVED"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "suites": {
+            "title": "Suites",
+            "type": "integer"
+          },
+          "unknown_facts": {
+            "title": "Unknown Facts",
+            "type": "integer"
+          },
+          "unpublished": {
+            "title": "Unpublished",
+            "type": "integer"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "updated_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated By"
+          },
+          "variants": {
+            "title": "Variants",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "market_code",
+          "code",
+          "name",
+          "description",
+          "record_class",
+          "purpose",
+          "state",
+          "policy_id",
+          "baseline_id",
+          "draft_revision",
+          "updated_at",
+          "updated_by",
+          "created_at",
+          "profiles",
+          "facts",
+          "unknown_facts",
+          "unpublished",
+          "suites",
+          "variants",
+          "document_sha256",
+          "snapshot_sha256",
+          "scenario_fingerprint"
+        ],
+        "title": "ApplicabilityScenarioSummary",
+        "type": "object"
+      },
       "ApplicabilityStartDraftIn": {
         "properties": {
           "version_no": {
@@ -2080,6 +4080,589 @@
           "expected_revision"
         ],
         "title": "ApplicabilitySubmitIn",
+        "type": "object"
+      },
+      "ApplicabilitySuite": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "diagnostics": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Diagnostics",
+            "type": "array"
+          },
+          "draft_revision": {
+            "title": "Draft Revision",
+            "type": "integer"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/ApplicabilityScenarioEvent"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "last_run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApplicabilitySuiteLastRun"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "market_code": {
+            "title": "Market Code",
+            "type": "string"
+          },
+          "member_list": {
+            "items": {
+              "$ref": "#/components/schemas/ApplicabilitySuiteMember"
+            },
+            "title": "Member List",
+            "type": "array"
+          },
+          "members": {
+            "title": "Members",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/ApplicabilitySuitePolicy"
+          },
+          "policy_id": {
+            "title": "Policy Id",
+            "type": "string"
+          },
+          "purpose": {
+            "enum": [
+              "PUBLICATION_GATING",
+              "EXPLORATORY"
+            ],
+            "title": "Purpose",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "DRAFT",
+              "ARCHIVED"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "suite_sha256": {
+            "title": "Suite Sha256",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "updated_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated By"
+          },
+          "with_expectation": {
+            "title": "With Expectation",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "market_code",
+          "code",
+          "name",
+          "description",
+          "purpose",
+          "policy_id",
+          "state",
+          "draft_revision",
+          "updated_at",
+          "updated_by",
+          "created_at",
+          "suite_sha256",
+          "members",
+          "with_expectation",
+          "last_run",
+          "policy",
+          "member_list",
+          "diagnostics",
+          "events"
+        ],
+        "title": "ApplicabilitySuite",
+        "type": "object"
+      },
+      "ApplicabilitySuiteCreateIn": {
+        "properties": {
+          "code": {
+            "maxLength": 60,
+            "title": "Code",
+            "type": "string"
+          },
+          "document": {
+            "additionalProperties": true,
+            "description": "name and description.",
+            "title": "Document",
+            "type": "object"
+          },
+          "market_code": {
+            "maxLength": 40,
+            "title": "Market Code",
+            "type": "string"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/ApplicabilitySuiteMemberIn"
+            },
+            "maxItems": 200,
+            "title": "Members",
+            "type": "array"
+          },
+          "origin": {
+            "default": "",
+            "maxLength": 60,
+            "title": "Origin",
+            "type": "string"
+          },
+          "policy_id": {
+            "format": "uuid",
+            "title": "Policy Id",
+            "type": "string"
+          },
+          "purpose": {
+            "default": "PUBLICATION_GATING",
+            "enum": [
+              "PUBLICATION_GATING",
+              "EXPLORATORY"
+            ],
+            "title": "Purpose",
+            "type": "string"
+          }
+        },
+        "required": [
+          "market_code",
+          "code",
+          "policy_id",
+          "document"
+        ],
+        "title": "ApplicabilitySuiteCreateIn",
+        "type": "object"
+      },
+      "ApplicabilitySuiteLastRun": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "failed": {
+            "title": "Failed",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "integer"
+          },
+          "policy_revision": {
+            "title": "Policy Revision",
+            "type": "integer"
+          },
+          "scenarios": {
+            "title": "Scenarios",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "PASSED",
+              "FAILED",
+              "COULD_NOT_EVALUATE",
+              "INVALID_DEFINITION"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "suite_revision": {
+            "title": "Suite Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "passed",
+          "failed",
+          "scenarios",
+          "created_at",
+          "policy_revision",
+          "suite_revision"
+        ],
+        "title": "ApplicabilitySuiteLastRun",
+        "type": "object"
+      },
+      "ApplicabilitySuiteMember": {
+        "properties": {
+          "baseline_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline Id"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "draft_revision": {
+            "title": "Draft Revision",
+            "type": "integer"
+          },
+          "expectation": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expectation"
+          },
+          "facts": {
+            "additionalProperties": true,
+            "title": "Facts",
+            "type": "object"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "profiles": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Profiles",
+            "type": "array"
+          },
+          "purpose": {
+            "enum": [
+              "REGRESSION",
+              "EXPLORATORY"
+            ],
+            "title": "Purpose",
+            "type": "string"
+          },
+          "scenario_changed": {
+            "description": "The scenario was saved again after its expectation was last reviewed.",
+            "title": "Scenario Changed",
+            "type": "boolean"
+          },
+          "scenario_id": {
+            "title": "Scenario Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "position",
+          "scenario_id",
+          "code",
+          "name",
+          "purpose",
+          "draft_revision",
+          "facts",
+          "profiles",
+          "baseline_id",
+          "expectation",
+          "scenario_changed"
+        ],
+        "title": "ApplicabilitySuiteMember",
+        "type": "object"
+      },
+      "ApplicabilitySuiteMemberIn": {
+        "properties": {
+          "expectation": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the person expects: status, selected [{code, version}], pending [codes], optionally replaced [requirement ids] and needs [variables]; 'confirmed' must be true. Never filled in by the server.",
+            "title": "Expectation"
+          },
+          "scenario_id": {
+            "format": "uuid",
+            "title": "Scenario Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scenario_id"
+        ],
+        "title": "ApplicabilitySuiteMemberIn",
+        "type": "object"
+      },
+      "ApplicabilitySuitePage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ApplicabilitySuiteSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "ApplicabilitySuitePage",
+        "type": "object"
+      },
+      "ApplicabilitySuitePolicy": {
+        "properties": {
+          "archived": {
+            "title": "Archived",
+            "type": "boolean"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "draft_revision": {
+            "title": "Draft Revision",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "draft_revision",
+          "archived"
+        ],
+        "title": "ApplicabilitySuitePolicy",
+        "type": "object"
+      },
+      "ApplicabilitySuiteSaveIn": {
+        "properties": {
+          "document": {
+            "additionalProperties": true,
+            "title": "Document",
+            "type": "object"
+          },
+          "expected_revision": {
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/ApplicabilitySuiteMemberIn"
+            },
+            "maxItems": 200,
+            "title": "Members",
+            "type": "array"
+          },
+          "note": {
+            "default": "",
+            "maxLength": 500,
+            "title": "Note",
+            "type": "string"
+          },
+          "purpose": {
+            "enum": [
+              "PUBLICATION_GATING",
+              "EXPLORATORY"
+            ],
+            "title": "Purpose",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_revision",
+          "document",
+          "purpose",
+          "members"
+        ],
+        "title": "ApplicabilitySuiteSaveIn",
+        "type": "object"
+      },
+      "ApplicabilitySuiteSummary": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "draft_revision": {
+            "title": "Draft Revision",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "last_run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApplicabilitySuiteLastRun"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "market_code": {
+            "title": "Market Code",
+            "type": "string"
+          },
+          "members": {
+            "title": "Members",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "policy_id": {
+            "title": "Policy Id",
+            "type": "string"
+          },
+          "purpose": {
+            "enum": [
+              "PUBLICATION_GATING",
+              "EXPLORATORY"
+            ],
+            "title": "Purpose",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "DRAFT",
+              "ARCHIVED"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "suite_sha256": {
+            "title": "Suite Sha256",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "updated_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated By"
+          },
+          "with_expectation": {
+            "title": "With Expectation",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "market_code",
+          "code",
+          "name",
+          "description",
+          "purpose",
+          "policy_id",
+          "state",
+          "draft_revision",
+          "updated_at",
+          "updated_by",
+          "created_at",
+          "suite_sha256",
+          "members",
+          "with_expectation",
+          "last_run"
+        ],
+        "title": "ApplicabilitySuiteSummary",
         "type": "object"
       },
       "ApplicabilityTestIn": {
@@ -38505,6 +41088,2578 @@
         "summary": "Bring an archived policy back",
         "tags": [
           "applicability-policies"
+        ]
+      }
+    },
+    "/api/v1/applicability/runs": {
+      "get": {
+        "description": "Recorded runs, newest first.",
+        "operationId": "applicability_run_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "suite_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Suite Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "policy_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Policy Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicabilityRunPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Applicability Run List",
+        "tags": [
+          "applicability-scenarios"
+        ]
+      }
+    },
+    "/api/v1/applicability/runs/compare": {
+      "post": {
+        "description": "Two recorded runs: what changed in the policy and its dependencies, and for each scenario in facts, expectation,\nverdict and selection.",
+        "operationId": "applicability_run_compare",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicabilityRunCompareIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicabilityRunComparison"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Applicability Run Compare",
+        "tags": [
+          "applicability-scenarios"
+        ]
+      }
+    },
+    "/api/v1/applicability/runs/{run_id}": {
+      "get": {
+        "description": "A recorded run and a page of its results. It reads the same whatever happened to the policy, the scenarios or the\nlibrary since.",
+        "operationId": "applicability_run_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "outcome",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "PASSED",
+                    "FAILED",
+                    "COULD_NOT_EVALUATE",
+                    "INVALID_DEFINITION",
+                    "NO_EXPECTATION"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Outcome"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicabilityRun"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Applicability Run Get",
+        "tags": [
+          "applicability-scenarios"
+        ]
+      }
+    },
+    "/api/v1/applicability/runs/{run_id}/against-current": {
+      "post": {
+        "description": "A recorded run's scenarios and expectations against the policy's CURRENT saved draft — a what-if, not recorded.",
+        "operationId": "applicability_run_against_current",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicabilityRunComparison"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Applicability Run Against Current",
+        "tags": [
+          "applicability-scenarios"
+        ]
+      }
+    },
+    "/api/v1/applicability/runs/{run_id}/results/{position}": {
+      "get": {
+        "description": "One recorded result in full: the scenario exactly as it was, the expectation, the complete plan and explanation.",
+        "operationId": "applicability_run_result",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "position",
+            "required": true,
+            "schema": {
+              "title": "Position",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicabilityRunResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Applicability Run Result",
+        "tags": [
+          "applicability-scenarios"
+        ]
+      }
+    },
+    "/api/v1/applicability/runs/{run_id}/verify": {
+      "post": {
+        "description": "Re-evaluate a recorded run from its own record — not from the library — and compare every fingerprint. Writes nothing.",
+        "operationId": "applicability_run_verify",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicabilityRunVerification"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Applicability Run Verify",
+        "tags": [
+          "applicability-scenarios"
+        ]
+      }
+    },
+    "/api/v1/applicability/scenarios": {
+      "get": {
+        "description": "A page of saved scenarios of the caller's markets, most recently saved first. Nothing is evaluated to list them.",
+        "operationId": "applicability_scenario_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "policy_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Policy Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Q",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "purpose",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "REGRESSION",
+                    "EXPLORATORY"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Purpose"
+            }
+          },
+          {
+            "in": "query",
+            "name": "baseline_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Baseline Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "suite_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Suite Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Archived",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicabilityScenarioPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Applicability Scenario List",
+        "tags": [
+          "applicability-scenarios"
+        ]
+      },
+      "post": {
+        "description": "Save a new synthetic scenario — blank, from a profile, a copy, or a VARIANT of another (``baseline_id``). Every\nfact's variable and every profile is pinned at an exact version. Anything that looks like a real identifier is refused.",
+        "operationId": "applicability_scenario_create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicabilityScenarioCreateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicabilityScenario"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Applicability Scenario Create",
+        "tags": [
+          "applicability-scenarios"
+        ]
+      }
+    },
+    "/api/v1/applicability/scenarios/compare": {
+      "post": {
+        "description": "Two saved scenarios against one saved policy: the facts that differ and what that changes in the selection.",
+        "operationId": "applicability_scenario_compare",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicabilityScenarioCompareIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicabilityScenarioComparison"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Applicability Scenario Compare",
+        "tags": [
+          "applicability-scenarios"
+        ]
+      }
+    },
+    "/api/v1/applicability/scenarios/evaluate": {
+      "post": {
+        "description": "Scenarios against a policy, by the Python evaluator. A saved scenario is evaluated exactly as saved; an unsaved one\nis EXPLORATORY and says which definitions were resolved for it. Records nothing.",
+        "operationId": "applicability_scenario_evaluate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicabilityScenarioEvaluateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicabilityScenarioEvaluation"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Applicability Scenario Evaluate",
+        "tags": [
+          "applicability-scenarios"
+        ]
+      }
+    },
+    "/api/v1/applicability/scenarios/inspect": {
+      "post": {
+        "description": "What the server says about a scenario document, saved or not: the exact definitions it resolves to, their state,\nand every diagnostic. Writes nothing.",
+        "operationId": "applicability_scenario_inspect",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicabilityScenarioInspectIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicabilityScenarioInspection"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Applicability Scenario Inspect",
+        "tags": [
+          "applicability-scenarios"
+        ]
+      }
+    },
+    "/api/v1/applicability/scenarios/{scenario_id}": {
+      "get": {
+        "description": "One scenario: its document, its dependency snapshot, its baseline and variants, the suites it is in, its history.",
+        "operationId": "applicability_scenario_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scenario_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Scenario Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicabilityScenario"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Applicability Scenario Get",
+        "tags": [
+          "applicability-scenarios"
+        ]
+      }
+    },
+    "/api/v1/applicability/scenarios/{scenario_id}/archive": {
+      "post": {
+        "operationId": "applicability_scenario_archive",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scenario_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Scenario Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicabilityArchiveIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicabilityScenario"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Archive a scenario: out of the listings, never deleted",
+        "tags": [
+          "applicability-scenarios"
+        ]
+      }
+    },
+    "/api/v1/applicability/scenarios/{scenario_id}/draft": {
+      "put": {
+        "description": "Save the scenario. 409 STALE_REVISION when someone else saved first. Document, snapshot, dependency rows, history: one transaction.",
+        "operationId": "applicability_scenario_save",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scenario_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Scenario Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicabilityScenarioSaveIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicabilityScenario"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Applicability Scenario Save",
+        "tags": [
+          "applicability-scenarios"
+        ]
+      }
+    },
+    "/api/v1/applicability/scenarios/{scenario_id}/restore": {
+      "post": {
+        "operationId": "applicability_scenario_restore",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "scenario_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Scenario Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicabilityArchiveIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicabilityScenario"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Bring an archived scenario back",
+        "tags": [
+          "applicability-scenarios"
+        ]
+      }
+    },
+    "/api/v1/applicability/suites": {
+      "get": {
+        "description": "A page of regression suites, with each one's last recorded run in brief.",
+        "operationId": "applicability_suite_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "policy_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Policy Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Archived",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicabilitySuitePage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Applicability Suite List",
+        "tags": [
+          "applicability-scenarios"
+        ]
+      },
+      "post": {
+        "description": "Create a suite for one policy — empty, or with members (a clone carries its members and expectations).",
+        "operationId": "applicability_suite_create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicabilitySuiteCreateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicabilitySuite"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Applicability Suite Create",
+        "tags": [
+          "applicability-scenarios"
+        ]
+      }
+    },
+    "/api/v1/applicability/suites/{suite_id}": {
+      "get": {
+        "description": "One suite: its ordered members, each one's expected outcome, what is missing, and its history.",
+        "operationId": "applicability_suite_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "suite_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Suite Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicabilitySuite"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Applicability Suite Get",
+        "tags": [
+          "applicability-scenarios"
+        ]
+      }
+    },
+    "/api/v1/applicability/suites/{suite_id}/archive": {
+      "post": {
+        "operationId": "applicability_suite_archive",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "suite_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Suite Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicabilityArchiveIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicabilitySuite"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Archive a suite: its recorded runs are kept",
+        "tags": [
+          "applicability-scenarios"
+        ]
+      }
+    },
+    "/api/v1/applicability/suites/{suite_id}/draft": {
+      "put": {
+        "description": "Save the suite: name, purpose, ordered members and their expected outcomes. Expectations are stored as stated and\nmust be confirmed; the server never fills one in from a result.",
+        "operationId": "applicability_suite_save",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "suite_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Suite Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicabilitySuiteSaveIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicabilitySuite"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Applicability Suite Save",
+        "tags": [
+          "applicability-scenarios"
+        ]
+      }
+    },
+    "/api/v1/applicability/suites/{suite_id}/restore": {
+      "post": {
+        "operationId": "applicability_suite_restore",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "suite_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Suite Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicabilityArchiveIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicabilitySuite"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Bring an archived suite back",
+        "tags": [
+          "applicability-scenarios"
+        ]
+      }
+    },
+    "/api/v1/applicability/suites/{suite_id}/runs": {
+      "post": {
+        "description": "Run the whole suite against the policy's SAVED revision and RECORD it: the exact policy document and manifest, the\ndefinitions read, every scenario as it was, every expectation, every actual plan and verdict. Immutable. A test that\ncould not be evaluated, or has no expectation, never passes.",
+        "operationId": "applicability_suite_run",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "suite_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Suite Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicabilityRunIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicabilityRun"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          }
+        },
+        "summary": "Applicability Suite Run",
+        "tags": [
+          "applicability-scenarios"
         ]
       }
     },

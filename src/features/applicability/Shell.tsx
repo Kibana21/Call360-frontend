@@ -15,6 +15,8 @@ import { PoliciesProvider, usePolicies } from './policyService';
 import { useAuth } from '../../auth/AuthContext';
 import { ProfilesPage } from './Profiles';
 import { ScenariosPage } from './Scenarios';
+import { ScenarioStudioPage } from './ScenarioStudio';
+import { applicabilityScenarios } from './flag';
 import { SurveyPreview } from './SurveyPreview';
 import { usePublishedSurveys } from './surveys';
 import { ApplicabilityProvider, PEOPLE, useAppl } from './store';
@@ -84,7 +86,7 @@ function Frame() {
           <Route path="conditions" element={<ConditionLabPage />} />
           <Route path="policies" element={<PoliciesPage />} />
           <Route path="policies/:code" element={<DesignerPage />} />
-          <Route path="scenarios" element={<ScenariosPage />} />
+          <Route path="scenarios" element={applicabilityScenarios() ? <ScenarioStudioPage /> : <ScenariosPage />} />
           <Route path="governance" element={<GovernancePage />} />
           <Route path="governance/:code" element={<GovernancePage />} />
           <Route path="*" element={<div className="ap-page"><p>That page does not exist. <Link to={BASE}>Back to the overview</Link></p></div>} />
@@ -118,7 +120,7 @@ function Kept({ catalogue }: { catalogue: CatalogueState & { reload: () => void 
             <dt><Icon name="policy" size={13} /> Applicability policies</dt>
             <dd data-testid="ap-kept-policies">{pol.on ? (pol.status === 'ready' ? <><strong>Saved in Call360 as working drafts.</strong> {data.policies.length} polic{data.policies.length === 1 ? 'y' : 'ies'}.{pol.unsaved ? ` ${pol.unsaved} with changes in this tab not saved yet.` : ''} Publication is not available yet.</> : pol.status === 'forbidden' ? 'You are not permitted to read saved policies.' : pol.status === 'loading' ? 'Reading…' : `Could not be read${pol.reason ? `: ${pol.reason}` : ''}.`) : <><strong>In this tab only.</strong> Not saved in Call360 yet: they are lost when the page is reloaded, and their approval is simulated.</>}</dd>
             <dt><Icon name="scenario" size={13} /> Synthetic scenarios</dt>
-            <dd data-testid="ap-kept-scenarios"><strong>In this tab only.</strong> Lost when the page is reloaded; saved scenarios arrive with policy publication.</dd>
+            <dd data-testid="ap-kept-scenarios">{applicabilityScenarios() ? <><strong>Saved in Call360.</strong> Scenarios, regression suites and recorded runs, in the Scenario studio. The quick examples of the designer’s live preview stay in this tab.</> : <><strong>In this tab only.</strong> Lost when the page is reloaded; saved scenarios arrive with policy publication.</>}</dd>
             <dt><Icon name="survey" size={13} /> Surveys</dt>
             <dd data-testid="ap-kept-surveys">{catalogue.status === 'loading' ? 'Reading Survey Studio…' : catalogue.status === 'unavailable' ? 'Survey Studio could not be read.' : <><strong>{catalogue.surveys.length} published versions</strong> read from Survey Studio. Nothing is invented here.</>}</dd>
           </dl>

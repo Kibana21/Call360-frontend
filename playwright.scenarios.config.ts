@@ -1,0 +1,42 @@
+import { defineConfig, devices } from '@playwright/test';
+
+// APPL-X4a — the persisted Scenario Studio journeys: saved scenarios, regression suites and recorded runs (migration 0040). A separate configuration with the scenarios settings ON, so the accepted applicability journeys (scenarios in the tab) run unchanged under their own configuration.
+// the stateless evaluator operations on. A separate configuration, so no existing suite changes.
+// FI-1 — Survey Studio in PERSISTED mode, full stack: Chromium → Vite → FastAPI → PostgreSQL (the isolated test schema
+// call360_test, reset by the global setup; never the development schema). A SEPARATE configuration: the standard suite
+// (playwright.config.ts) and the in-memory prototype journeys (playwright.prototype.config.ts) are untouched. The
+// backend runs with the survey-definition, component-library (LIB-1) and simulation (SS-03B) settings ON; Vite with the persisted-mode setting ON and the prototype setting
+// off. It uses the standard test ports, so it is never run at the same time as the other two.
+const backend = '../Call360-backend';
+
+export default defineConfig({
+  testDir: 'e2e/scenarios',
+  testMatch: /\.scn\.ts$/,
+  fullyParallel: false,
+  workers: 1,
+  retries: 0,
+  reporter: [['list']],
+  globalSetup: './e2e/applicability/global-setup.ts',
+  outputDir: 'test-results/scenarios',
+  use: { baseURL: 'http://127.0.0.1:5174', trace: 'retain-on-failure' },
+  projects: [{ name: 'scenarios', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } }],
+  webServer: [
+    {
+      command: 'uv run uvicorn --factory app.main:app_factory --host 127.0.0.1 --port 8001',
+      cwd: backend,
+      // These journeys sign several different people in within a minute; the per-address sign-in limit of the product
+      // (20 a minute) is raised for THIS test server only. The limit itself is covered by the backend's own tests.
+      env: { CALL360_ENV_FILE: '.env.test', SURVEY_DEFINITIONS_ENABLED: 'true', SURVEY_APPLICABILITY_PROTOTYPE_ENABLED: 'true', APPLICABILITY_LIBRARY_ENABLED: 'true', APPLICABILITY_POLICIES_ENABLED: 'true', APPLICABILITY_SCENARIOS_ENABLED: 'true', SURVEY_LIBRARY_ENABLED: 'true', SURVEY_SIMULATION_ENABLED: 'true', SURVEY_ASSIGNMENT_ENABLED: 'true', SURVEY_ASSIGNMENT_GROUPS_ENABLED: 'true', SURVEY_COORDINATED_SIMULATION_ENABLED: 'true', SURVEY_EVALUATION_ENABLED: 'true', SURVEY_CONTROL_POLICY_ENABLED: 'true', SURVEY_EXECUTION_ASSURANCE_ENABLED: 'true', SURVEY_MODULE_AUTHORING_ENABLED: 'true', SHARED_RULE_SERVICES_ENABLED: 'true', LOGIN_IP_PER_MINUTE: '300' },
+      url: 'http://127.0.0.1:8001/health/live',
+      reuseExistingServer: false,
+      timeout: 60_000,
+    },
+    {
+      command: 'npx vite --host 127.0.0.1 --port 5174 --strictPort',
+      env: { VITE_API_TARGET: 'http://127.0.0.1:8001', VITE_SURVEY_STUDIO_PERSISTED: '1', VITE_SURVEY_APPLICABILITY: '1', VITE_APPLICABILITY_LIBRARY: '1', VITE_APPLICABILITY_POLICIES: '1', VITE_APPLICABILITY_SCENARIOS: '1' },
+      url: 'http://127.0.0.1:5174',
+      reuseExistingServer: false,
+      timeout: 60_000,
+    },
+  ],
+});

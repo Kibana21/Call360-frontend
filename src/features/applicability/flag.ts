@@ -7,3 +7,7 @@ export const applicabilityLibrary = (): boolean => import.meta.env.VITE_APPLICAB
 // APPL-X3: with VITE_APPLICABILITY_POLICIES=1 (and the library) applicability POLICIES are saved in Call360 as working
 // drafts (migration 0039). Without it they stay in the tab, exactly as before. Scenarios stay in the tab either way.
 export const applicabilityPolicies = (): boolean => applicabilityLibrary() && import.meta.env.VITE_APPLICABILITY_POLICIES === '1';
+// APPL-X4a: with VITE_APPLICABILITY_SCENARIOS=1 (and saved policies) synthetic SCENARIOS, regression SUITES and recorded
+// evaluation RUNS are saved in Call360 (migration 0040), and step 4 is the persisted Scenario Studio. Without it step 4
+// is the in-tab scenario lab, exactly as before.
+export const applicabilityScenarios = (): boolean => applicabilityPolicies() && import.meta.env.VITE_APPLICABILITY_SCENARIOS === '1';

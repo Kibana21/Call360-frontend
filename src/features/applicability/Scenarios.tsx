@@ -12,7 +12,7 @@ import { Empty, Field, Icon, Picker, Segmented, Tag, useParamState } from './ui'
 import { BASE, composed, shortName } from './usage';
 
 type Tab = 'test' | 'generate' | 'impact';
-const TEMPLATES: { id: string; name: string; says: string; facts: Record<string, unknown> }[] = [
+export const TEMPLATES: { id: string; name: string; says: string; facts: Record<string, unknown> }[] = [
   { id: 'ilp', name: 'ILP only', says: 'An investment-linked sale, nothing else.', facts: { product_family: 'ILP', nftf: false, replacement: false } },
   { id: 'nftf', name: 'NFTF only', says: 'A protection sale where NFTF applies.', facts: { product_family: 'PROTECTION', nftf: true, replacement: false } },
   { id: 'both', name: 'ILP + NFTF', says: 'Both at once.', facts: { product_family: 'ILP', nftf: true, replacement: false } },
@@ -141,7 +141,7 @@ export function ScenariosPage() {
 }
 
 /** The condition-to-survey path that selected one survey for this application. */
-function SurveyPath({ plan, code }: { plan: NonNullable<EvalRow['plan']>; code: string }) {
+export function SurveyPath({ plan, code }: { plan: NonNullable<EvalRow['plan']>; code: string }) {
   const sel = plan.selected.find((e) => e.survey.code === code) ?? plan.pending.find((e) => e.survey.code === code);
   const reqs = plan.requirements.filter((r) => sel?.required_by.includes(r.id));
   if (!sel) return null;
