@@ -1,6 +1,8 @@
 // Survey Applicability (APPL-X1) — the Applicability Designer: one policy document, three views of it (cards, canvas,
 // matrix), a palette on the left and an inspector on the right. Nothing here knows about assignment rules, survey
 // bindings or requirement groups: a requirement names its surveys directly.
+import { applicabilityScenarios } from './flag';
+import { SavedScenariosInDesigner } from './ScenarioStudio';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useAnalysis, useEvaluation, type EvaluateResult } from './api';
@@ -107,6 +109,7 @@ export function DesignerPage() {
         <span className="ap-preview-with"><Icon name="play" size={13} /> Previewing
           <Picker label="Preview with a scenario" testid="ap-preview-scenario" items={data.scenarios.map((s) => ({ id: s.id, label: s.name, hint: s.description, group: s.suite ?? 'Scenarios', icon: 'scenario' }))} onPick={setScenarioId} placeholder="Search scenarios…" button={<span className="ap-chip scenario"><Icon name="scenario" size={13} /> {scenario?.name ?? 'Choose a scenario'} <Icon name="down" size={11} /></span>} />
         </span>
+        {applicabilityScenarios() ? <SavedScenariosInDesigner doc={doc} /> : null}
         <span className="ap-spacer" />
         {editable ? <button type="button" className="ap-btn primary" onClick={() => setAdding(!adding)} aria-expanded={adding} data-testid="ap-add-requirement"><Icon name="plus" size={14} /> Add requirement</button> : null}
         <button type="button" className={`ap-iconbtn labelled${right ? ' on' : ''}`} aria-pressed={right} onClick={() => setRight(!right)} data-testid="ap-toggle-inspector">Inspector <Icon name="panel" /></button>

@@ -661,6 +661,81 @@ test('X4.9 Journey I: read-only and unauthorised people; another market; stale, 
   expect(await outsider.evaluate(async () => [(await fetch('/api/v1/applicability/scenarios')).status, (await fetch('/api/v1/applicability/suites')).status, (await fetch('/api/v1/applicability/runs')).status])).toEqual([403, 403, 403]);
 });
 
+test('X4.11 carry-forward: archived scenarios and suites are restored from the screen; the designer looks at saved scenarios read-only', async () => {
+  test.setTimeout(240_000);
+  // ---- an archived scenario: kept, shown with who and why, restored after a confirmation
+  const s = await scenario('TO-ARCHIVE', 'Archived then restored', { product_family: 'ILP', nftf: false, replacement: false, selected_riders: [] });
+  await ok(author, `scenarios/${s.id}/archive`, 'POST', { expected_revision: 1, reason: 'Archived to show that it is kept and can be restored.' });
+  await studio(author);
+  await expect(author.getByTestId('ap-scn-TO-ARCHIVE')).toHaveCount(0);
+  await author.getByTestId('ap-scn-archived-toggle').check();
+  await author.getByTestId('ap-scn-TO-ARCHIVE').click();
+  await expect(editor(author)).toHaveAttribute('data-state', 'readonly');
+  await expect(author.getByTestId('ap-scn-bar-says')).toContainText('Archived by E2E Applicability Author');
+  await expect(author.getByTestId('ap-scn-bar-says')).toContainText('“Archived to show that it is kept and can be restored.”');
+  await author.getByTestId('ap-scn-restore').click();
+  await expect(author.getByTestId('ap-scn-history')).toContainText('Archived · revision 1'); // the history is shown before confirming
+  await expect(author.getByTestId('ap-scn-restore-confirm')).toContainText('Restore “Archived then restored”?');
+  await shot(author, '31-archived-scenario-restore-confirmation', false);
+  await author.getByTestId('ap-scn-restore-ok').click();
+  await saved(author);
+  await author.getByTestId('ap-scn-history-toggle').click(); await author.getByTestId('ap-scn-history-toggle').click();
+  await expect(author.getByTestId('ap-scn-history')).toContainText('Restored · revision 1');
+  await author.getByTestId('ap-scn-archived-toggle').uncheck();
+  await expect(author.getByTestId('ap-scn-TO-ARCHIVE')).toBeVisible();
+  // a person who may not edit sees the archived scenario and no Restore control; the API refuses too
+  await ok(author, `scenarios/${s.id}/archive`, 'POST', { expected_revision: 1, reason: 'Archived again for the read-only check.' });
+  await studio(checker, `s=${s.id}`);
+  await expect(editor(checker)).toHaveAttribute('data-state', 'readonly', { timeout: 15_000 });
+  await expect(checker.getByTestId('ap-scn-restore')).toHaveCount(0);
+  expect((await api(checker, `scenarios/${s.id}/restore`, 'POST', { expected_revision: 1 })).status).toBe(403);
+  // ---- an archived suite: its recorded runs are kept; restored from the screen
+  const u = await ok(author, 'suites', 'POST', { market_code: 'SG', code: 'TO-ARCHIVE', policy_id: policyId, document: { name: 'Suite archived then restored' }, purpose: 'EXPLORATORY', members: [{ scenario_id: ids['ILP-ONLY'], expectation: expectation('RESOLVED', ['A']) }] });
+  const run = await ok(author, `suites/${u.id}/runs`, 'POST', { idempotency_key: 'before-archiving-it' });
+  await ok(author, `suites/${u.id}/archive`, 'POST', { expected_revision: 1, reason: 'Archived to show that its runs are kept.' });
+  await studio(author, 'view=suites');
+  await expect(author.getByTestId('ap-suite-TO-ARCHIVE')).toHaveCount(0);
+  await author.getByTestId('ap-suite-archived-toggle').check();
+  await author.getByTestId('ap-suite-TO-ARCHIVE').click();
+  await expect(author.getByTestId('ap-suite-editor')).toHaveAttribute('data-state', 'readonly');
+  await expect(author.getByTestId('ap-suite-bar-says')).toContainText('its recorded runs are kept');
+  await expect(author.getByTestId('ap-suite-history')).toContainText('Archived · revision 1');
+  expect((await ok(author, `runs/${run.id}`)).run_sha256).toBe(run.run_sha256); // the evidence of an archived suite still reads
+  await author.getByTestId('ap-suite-restore').click();
+  await author.getByTestId('ap-suite-restore-ok').click();
+  await suiteSaved(author);
+  await expect(author.getByTestId('ap-suite-history')).toContainText('Restored · revision 1');
+  // ---- the designer: saved scenarios are looked at read-only; the quick examples of the live preview are untouched
+  await author.goto(`${B}/policies/${POLICY}`);
+  await expect(author.getByTestId('ap-designer')).toBeVisible({ timeout: 30_000 });
+  await expect(author.getByTestId('ap-preview-scenario')).toBeVisible(); // the accepted quick preview is still there
+  await expect(author.getByTestId('ap-designer-saved-count')).toHaveAttribute('data-count', /\d+/, { timeout: 20_000 });
+  const before = { runs: (await ok(author, `runs?policy_id=${policyId}`)).total, scenario: (await ok(author, `scenarios/${ids['ILP-NFTF']}`)).scenario_fingerprint };
+  await author.getByTestId('ap-designer-saved').click();
+  await author.getByTestId('ap-designer-saved-opt-' + ids['ILP-NFTF']).click();
+  const drawer = author.getByTestId('ap-designer-saved-drawer');
+  await expect(drawer.getByTestId('ap-designer-saved-source')).toHaveAttribute('data-policy-source', 'SAVED', { timeout: 20_000 });
+  await expect(drawer.getByTestId('ap-designer-saved-plan')).toHaveAttribute('data-status', 'RESOLVED');
+  await expect(drawer.getByTestId('ap-designer-saved-plan-selected').locator('li')).toHaveCount(3); // A, B and C, from the server
+  await expect(drawer.getByTestId('ap-designer-saved-facts')).toContainText('NFTF applies yes');
+  await shot(author, '32-designer-looks-at-a-saved-scenario-read-only', false);
+  // nothing was changed or recorded by looking
+  expect({ runs: (await ok(author, `runs?policy_id=${policyId}`)).total, scenario: (await ok(author, `scenarios/${ids['ILP-NFTF']}`)).scenario_fingerprint }).toEqual(before);
+  await drawer.getByTestId('ap-designer-saved-open').click();
+  await expect(author.getByTestId('ap-studio')).toHaveAttribute('data-state', 'ready', { timeout: 30_000 });
+  await expect(editor(author)).toHaveAttribute('data-code', 'ILP-NFTF');
+  // ---- an unsaved edit is not silently lost by going to Survey Studio and coming back
+  await saved(author);
+  await author.getByTestId('ap-scn-description').fill('Edited, not saved yet.');
+  await expect(editor(author)).toHaveAttribute('data-state', 'unsaved');
+  await author.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Surveys', exact: true }).click();
+  await expect(author).toHaveURL(/survey-studio\?view=surveys/);
+  await author.goBack();
+  await expect(editor(author)).toHaveAttribute('data-state', 'unsaved', { timeout: 20_000 });
+  await expect(author.getByTestId('ap-scn-description')).toHaveValue('Edited, not saved yet.');
+  await author.getByTestId('ap-scn-revert').click(); await saved(author);
+});
+
 test('X4.10 keyboard, four widths and an accessibility scan', async () => {
   test.setTimeout(300_000);
   const found: string[] = [];

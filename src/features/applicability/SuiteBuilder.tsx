@@ -22,12 +22,15 @@ const SUITE: Record<SuitePurpose, { word: string; says: string }> = {
 interface Member { scenario_id: string; code: string; name: string; purpose: string; facts: Record<string, unknown>; expectation: Expectation | null; scenario_changed?: boolean }
 interface Work { name: string; description: string; purpose: SuitePurpose; members: Member[] }
 const workOf = (u: SuiteDetail): Work => ({ name: u.name, description: u.description, purpose: u.purpose, members: u.member_list.map((m) => ({ scenario_id: m.scenario_id, code: m.code, name: m.name, purpose: m.purpose, facts: m.facts, expectation: (m.expectation as unknown as Expectation | null) ?? null, scenario_changed: m.scenario_changed })) });
+/** unsaved edits of a suite survive moving around the product in this tab; they are not saved until the person saves */
+const unsavedSuites = new Map<string, { w: Work; revision: number }>();
 const wire = (w: Work): { doc: { name: string; description: string }; purpose: SuitePurpose; members: MemberIn[] } => ({ doc: { name: w.name.trim(), description: w.description }, purpose: w.purpose, members: w.members.map((m) => ({ scenario_id: m.scenario_id, expectation: m.expectation ? (stated(m.expectation) as Expectation) : null })) });
 
 export function SuiteBuilder({ policy, canEdit }: { policy: StudioPolicy; canEdit: boolean }) {
   const [chosen, setChosen] = useParamState('u');
   const [creating, setCreating] = useState<null | { clone?: SuiteDetail }>(null);
-  const list = useQuery({ queryKey: ['x4-suites', policy.id], queryFn: () => listSuites({ policy_id: policy.id, limit: 100 }) });
+  const [archived, setArchived] = useState(false);
+  const list = useQuery({ queryKey: ['x4-suites', policy.id, archived], queryFn: () => listSuites({ policy_id: policy.id, limit: 100, archived }) });
   const items = list.data?.items ?? [];
   if (chosen) return <SuiteEditor key={chosen} id={chosen} policy={policy} canEdit={canEdit} others={items.filter((u) => u.id !== chosen)} onBack={() => setChosen(null)} onClone={(u) => { setChosen(null); setCreating({ clone: u }); }} />;
   return (
@@ -37,7 +40,9 @@ export function SuiteBuilder({ policy, canEdit }: { policy: StudioPolicy; canEdi
       {creating && canEdit ? <NewSuite policy={policy} clone={creating.clone} taken={(c) => items.some((u) => u.code.toLowerCase() === c.toLowerCase())} onCancel={() => setCreating(null)} onCreated={(id) => { setCreating(null); setChosen(id); }} /> : null}
       {list.isError ? <p className="ap-callout warn">The suites could not be read: {why(list.error)}</p> : null}
       <ul className="ap-suite-cards">{items.map((u) => <li key={u.id}><SuiteCard u={u} onOpen={() => setChosen(u.id)} /></li>)}</ul>
-      {list.isSuccess && !items.length && !creating ? <Empty icon="cards" title="No suite yet" action={canEdit ? <button type="button" className="ap-btn primary" onClick={() => setCreating({})} data-testid="ap-suite-new-empty"><Icon name="plus" size={13} /> Create the first suite</button> : undefined}>Group saved scenarios and state what each must select.</Empty> : null}
+      <label className="ap-archived-toggle"><input type="checkbox" checked={archived} onChange={(e) => setArchived(e.target.checked)} data-testid="ap-suite-archived-toggle" /> Show archived suites</label>
+      {list.isSuccess && !items.length && archived ? <p className="ap-quiet" data-testid="ap-suite-archived-none">No suite is archived.</p> : null}
+      {list.isSuccess && !items.length && !creating && !archived ? <Empty icon="cards" title="No suite yet" action={canEdit ? <button type="button" className="ap-btn primary" onClick={() => setCreating({})} data-testid="ap-suite-new-empty"><Icon name="plus" size={13} /> Create the first suite</button> : undefined}>Group saved scenarios and state what each must select.</Empty> : null}
     </div>
   );
 }
@@ -83,15 +88,17 @@ function SuiteEditor({ id, policy, canEdit, others, onBack, onClone }: { id: str
   const qc = useQueryClient();
   const detail = useQuery({ queryKey: ['x4-suite', id], queryFn: () => getSuite(id) });
   const u = detail.data;
-  const [work, setWork] = useState<{ w: Work; revision: number } | null>(null);
+  const [work, setWork] = useState<{ w: Work; revision: number } | null>(() => unsavedSuites.get(id) ?? null);
   const [open, setOpen] = useState<string | null>(null);
   const [busy, setBusy] = useState<null | 'saving' | 'running'>(null);
   const [flag, setFlag] = useState<{ state: 'conflict' | 'error'; message: string } | null>(null);
   const [against, setAgainst] = useState<string | null>(null);
   const [archiving, setArchiving] = useState<string | null>(null);
+  const [restoring, setRestoring] = useState(false);
   useEffect(() => { if (u && (!work || work.revision !== u.draft_revision)) setWork({ w: workOf(u), revision: u.draft_revision }); }, [u]); // eslint-disable-line react-hooks/exhaustive-deps
   const w = work?.w;
   const dirty = !!u && !!w && !same(wire(w), wire(workOf(u)));
+  useEffect(() => { if (work && dirty) unsavedSuites.set(id, work); else unsavedSuites.delete(id); }, [id, work, dirty]);
   const unconfirmed = (w?.members ?? []).filter((m) => m.expectation && !m.expectation.confirmed);
   const lastId = u?.last_run?.id;
   const last = useQuery({ queryKey: ['x4-run', lastId, 'all'], queryFn: () => getRun(lastId!, { limit: 100 }), enabled: !!lastId });
@@ -132,7 +139,7 @@ function SuiteEditor({ id, policy, canEdit, others, onBack, onClone }: { id: str
       <p className="ap-back"><button type="button" className="ap-linkbtn" onClick={onBack} data-testid="ap-suite-back"><Icon name="left" size={12} /> All suites</button></p>
       <div className={`ap-savebar is-${state}`} data-testid="ap-suite-bar" data-state={state} role="status">
         <span className="ap-savebar-says" data-testid="ap-suite-bar-says">
-          {state === 'readonly' ? <><Icon name="lock" size={13} /> Read only.</> : state === 'saving' ? 'Saving…' : state === 'conflict' || state === 'error' ? <><Icon name="warn" size={13} /> {flag?.message}</>
+          {state === 'readonly' ? <><Icon name="lock" size={13} /> {u.state === 'ARCHIVED' ? <>Archived by {[...u.events].reverse().find((e) => e.event === 'ARCHIVED')?.actor ?? 'someone'} — “{[...u.events].reverse().find((e) => e.event === 'ARCHIVED')?.comment || 'no reason given'}”. Read only; its recorded runs are kept.</> : 'Read only.'}</> : state === 'saving' ? 'Saving…' : state === 'conflict' || state === 'error' ? <><Icon name="warn" size={13} /> {flag?.message}</>
             : state === 'unsaved' ? <><Icon name="info" size={13} /> <strong>Unsaved changes.</strong> Save before running: a run uses what is saved.</> : <><Icon name="check" size={13} /> <strong>Saved in Call360</strong> · revision {u.draft_revision} · {u.updated_by ?? 'someone'} · {when(u.updated_at)}</>}
         </span>
         {!readOnly ? <span className="ap-savebar-acts">
@@ -140,7 +147,9 @@ function SuiteEditor({ id, policy, canEdit, others, onBack, onClone }: { id: str
             : <>{dirty ? <button type="button" className="ap-btn quiet" onClick={() => { setWork({ w: workOf(u), revision: u.draft_revision }); setFlag(null); }} data-testid="ap-suite-revert">Discard changes</button> : null}
               <button type="button" className="ap-btn" disabled={!dirty || !!busy || w.name.trim().length < 2 || unconfirmed.length > 0} title={unconfirmed.length ? `${unconfirmed.length} expected outcome${unconfirmed.length === 1 ? ' is' : 's are'} not confirmed yet` : undefined} onClick={() => void save()} data-testid="ap-suite-save"><Icon name="check" size={13} /> Save</button></>}
           <button type="button" className="ap-btn primary" disabled={dirty || !!busy || !w.members.length} title={dirty ? 'Save first' : !w.members.length ? 'Add a scenario first' : `Runs against saved policy revision ${policy.revision} and records the result`} onClick={() => void run()} data-testid="ap-suite-run"><Icon name="play" size={13} /> {busy === 'running' ? 'Running…' : 'Run and record'}</button>
-        </span> : null}
+        </span> : canEdit && u.state === 'ARCHIVED' ? <span className="ap-savebar-acts">{restoring
+          ? <span className="ap-archived-ask" data-testid="ap-suite-restore-confirm"><span>Restore “{u.name}”? It returns to the suites exactly as it was saved.</span><button type="button" className="ap-btn primary" onClick={async () => { try { const back = await archiveSuite(id, u.draft_revision, '', true); qc.setQueryData(['x4-suite', id], back); await qc.invalidateQueries({ queryKey: ['x4-suites'] }); setRestoring(false); say(`“${u.name}” restored`); } catch (e) { say(why(e), 'warn'); } }} data-testid="ap-suite-restore-ok">Yes, restore it</button><button type="button" className="ap-btn quiet" onClick={() => setRestoring(false)}>Cancel</button></span>
+          : <button type="button" className="ap-btn" onClick={() => setRestoring(true)} data-testid="ap-suite-restore"><Icon name="history" size={13} /> Restore</button>}</span> : null}
       </div>
       {unconfirmed.length ? <p className="ap-callout warn" data-testid="ap-suite-unconfirmed"><Icon name="warn" /> <span>{unconfirmed.length} expected outcome{unconfirmed.length === 1 ? ' is a proposal' : 's are proposals'} that you have not confirmed. Review {unconfirmed.length === 1 ? 'it' : 'each'} and confirm, or clear it. Nothing is saved until then.</span></p> : null}
 
@@ -204,7 +213,7 @@ function SuiteEditor({ id, policy, canEdit, others, onBack, onClone }: { id: str
 
       {cov && !dirty ? <CoveragePanel cov={cov} policy={policy} stale={stale} purpose={u.purpose} /> : null}
       {against && other.data ? <SuiteDiff mine={w} theirs={workOf(other.data)} theirName={other.data.name} /> : null}
-      <details className="ap-suite-history"><summary>History of this suite</summary><ol className="ap-lib-events" data-testid="ap-suite-history">{u.events.map((e) => <li key={e.seq} data-event={e.event}><strong>{e.event === 'CREATED' ? 'Created' : e.event === 'DRAFT_SAVED' ? 'Saved' : e.event === 'ARCHIVED' ? 'Archived' : 'Restored'} · revision {e.draft_revision}</strong> by {e.actor}<small>{when(e.occurred_at)}{(e.detail.expectations_changed as string[] | undefined)?.length ? ` · ${(e.detail.expectations_changed as string[]).length} expected outcome(s) changed` : ''}{(e.detail.proposed_from_result as string[] | undefined)?.length ? ` · ${(e.detail.proposed_from_result as string[]).length} taken from a result and confirmed` : ''}</small></li>)}</ol></details>
+      <details className="ap-suite-history" open={u.state === 'ARCHIVED'}><summary>History of this suite</summary><ol className="ap-lib-events" data-testid="ap-suite-history">{u.events.map((e) => <li key={e.seq} data-event={e.event}><strong>{e.event === 'CREATED' ? 'Created' : e.event === 'DRAFT_SAVED' ? 'Saved' : e.event === 'ARCHIVED' ? 'Archived' : 'Restored'} · revision {e.draft_revision}</strong> by {e.actor}<small>{when(e.occurred_at)}{(e.detail.expectations_changed as string[] | undefined)?.length ? ` · ${(e.detail.expectations_changed as string[]).length} expected outcome(s) changed` : ''}{(e.detail.proposed_from_result as string[] | undefined)?.length ? ` · ${(e.detail.proposed_from_result as string[]).length} taken from a result and confirmed` : ''}</small></li>)}</ol></details>
     </div>
   );
 }

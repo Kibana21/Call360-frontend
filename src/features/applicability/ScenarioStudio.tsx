@@ -20,7 +20,7 @@ import {
 import { SurveyPath, TEMPLATES } from './Scenarios';
 import { useAppl } from './store';
 import { SuiteBuilder } from './SuiteBuilder';
-import { Empty, Field, Icon, Picker, Segmented, Tag, short, useParamState } from './ui';
+import { DrawerPanel, Empty, Field, Icon, Picker, Segmented, Tag, short, useParamState } from './ui';
 import { BASE, composed, shortName, surveysOf } from './usage';
 
 export interface StudioPolicy { id: string; code: string; name: string; market: string; revision: number; doc: Policy; unsaved: boolean; surveys: { code: string; version: number; name: string }[] }
@@ -81,7 +81,8 @@ function ScenariosView({ policy, canEdit }: { policy: StudioPolicy; canEdit: boo
   const [scope, setScope] = useState<'policy' | 'market'>('policy');
   const [purpose, setPurpose] = useState<'' | Purpose>('');
   const [limit, setLimit] = useState(50);
-  const list = useQuery({ queryKey: ['x4-scenarios', scope === 'policy' ? policy.id : policy.market, q, purpose, limit], queryFn: () => listScenarios({ policy_id: scope === 'policy' ? policy.id : undefined, q: q.trim() || undefined, purpose: purpose || undefined, limit }), placeholderData: (p) => p });
+  const [archived, setArchived] = useState(false);
+  const list = useQuery({ queryKey: ['x4-scenarios', scope === 'policy' ? policy.id : policy.market, q, purpose, limit, archived], queryFn: () => listScenarios({ policy_id: scope === 'policy' ? policy.id : undefined, q: q.trim() || undefined, purpose: purpose || undefined, limit, archived }), placeholderData: (p) => p });
   const items = list.data?.items ?? [];
   const sel = chosen ?? (fresh ? null : items[0]?.id ?? null);
   // D-418: nothing can be created until the list is known — a suggested code may already be taken
@@ -95,9 +96,10 @@ function ScenariosView({ policy, canEdit }: { policy: StudioPolicy; canEdit: boo
           <Segmented label="Which scenarios" value={scope} onChange={setScope} testid="ap-scn-scope" options={[{ value: 'policy', label: 'This policy' }, { value: 'market', label: `All of ${policy.market}` }]} />
           <select className="ap-input" aria-label="Purpose" value={purpose} onChange={(e) => setPurpose(e.target.value as '' | Purpose)} data-testid="ap-scn-purpose-filter"><option value="">Any purpose</option><option value="REGRESSION">Regression</option><option value="EXPLORATORY">Exploratory</option></select>
         </div>
+        <label className="ap-archived-toggle"><input type="checkbox" checked={archived} onChange={(e) => { setArchived(e.target.checked); setChosen(null); setFresh(null); }} data-testid="ap-scn-archived-toggle" /> Show archived scenarios</label>
         {list.isError ? <p className="ap-callout warn">The scenarios could not be read: {why(list.error)}</p> : null}
         <ul>{items.map((s) => <li key={s.id}><ScenarioRow s={s} on={s.id === sel} onPick={() => { setChosen(s.id); setFresh(null); }} /></li>)}</ul>
-        {ready && !items.length ? <Empty icon="scenario" title={q || purpose ? 'No scenario matches' : 'No saved scenario yet'}>{q || purpose ? 'Try another search.' : 'A scenario is one synthetic application with its facts. Create the first one.'}</Empty> : null}
+        {ready && !items.length ? <Empty icon="scenario" title={archived ? 'No archived scenario' : q || purpose ? 'No scenario matches' : 'No saved scenario yet'}>{archived ? 'Archived scenarios are kept here and can be restored.' : q || purpose ? 'Try another search.' : 'A scenario is one synthetic application with its facts. Create the first one.'}</Empty> : null}
         {list.data ? <p className="ap-quiet ap-list-foot" data-testid="ap-scn-count">Showing {items.length} of {list.data.total}{list.data.total > items.length ? <> · <button type="button" className="ap-linkbtn" onClick={() => setLimit(Math.min(limit + 50, 100))} disabled={limit >= 100} data-testid="ap-scn-more">{limit >= 100 ? 'Search to narrow' : 'Show more'}</button></> : null}</p> : null}
       </aside>
       <section className="ap-scn-main">
@@ -204,24 +206,30 @@ function NewScenario({ policy, existing, from, onCancel, onCreated }: { policy: 
 
 // --------------------------------------------------------------------------------------------- one scenario, edited
 interface Work { doc: ScenarioDoc; purpose: Purpose }
+type Hist = { past: Work[]; now: Work; future: Work[]; revision: number };
+/** Unsaved edits of a scenario survive moving around the product in this tab (to Survey Studio and back, say): they are
+    kept here until saved or discarded. They are NOT saved in Call360 until the person saves, and the save bar says so. */
+const unsavedScenarios = new Map<string, Hist>();
 const docOf = (d: ScenarioDetail): ScenarioDoc => ({ name: '', description: '', profiles: [], facts: {}, pins: [], ...(d.document as object) }) as ScenarioDoc;
 
 function ScenarioEditor({ id, policy, canEdit, onVariant, onCopy, onOpen, onGone }: { id: string; policy: StudioPolicy; canEdit: boolean; onVariant: () => void; onCopy: () => void; onOpen: (id: string) => void; onGone: () => void }) {
   const { data, look, say, setPreview } = useAppl();
   const qc = useQueryClient();
   const detail = useQuery({ queryKey: ['x4-scenario', id], queryFn: () => getScenario(id) });
-  const [hist, setHist] = useState<{ past: Work[]; now: Work; future: Work[]; revision: number } | null>(null);
+  const [hist, setHist] = useState<Hist | null>(() => unsavedScenarios.get(id) ?? null);
   const [flag, setFlag] = useState<{ state: 'saving' | 'conflict' | 'error'; message?: string } | null>(null);
   const [factScope, setFactScope] = useState<'policy' | 'profile' | 'changed'>('policy');
   const [factFind, setFactFind] = useState('');
   const [activeSurvey, setActiveSurvey] = useState<string | null>(null);
   const [panel, setPanel] = useState<'none' | 'history' | 'archive'>('none');
   const [reason, setReason] = useState('');
+  const [restoring, setRestoring] = useState(false);
   const d = detail.data;
   // the editor follows what is saved: on first load, and again after every save or reload
   useEffect(() => { if (d && (!hist || hist.revision !== d.draft_revision)) setHist({ past: [], now: { doc: docOf(d), purpose: d.purpose }, future: [], revision: d.draft_revision }); }, [d]); // eslint-disable-line react-hooks/exhaustive-deps
   const work = hist?.now;
   const dirty = !!d && !!work && (!same(work.doc, docOf(d)) || work.purpose !== d.purpose);
+  useEffect(() => { if (hist && dirty) unsavedScenarios.set(id, hist); else unsavedScenarios.delete(id); }, [id, hist, dirty]);
   const edit = (f: (w: Work) => void) => setHist((h) => { if (!h) return h; const next = structuredClone(h.now); f(next); return same(next, h.now) ? h : { ...h, past: [...h.past, h.now].slice(-60), now: next, future: [] }; });
   const undo = () => setHist((h) => (h && h.past.length ? { ...h, past: h.past.slice(0, -1), now: h.past[h.past.length - 1]!, future: [h.now, ...h.future] } : h));
   const redo = () => setHist((h) => (h && h.future.length ? { ...h, past: [...h.past, h.now], now: h.future[0]!, future: h.future.slice(1) } : h));
@@ -283,6 +291,7 @@ function ScenarioEditor({ id, policy, canEdit, onVariant, onCopy, onOpen, onGone
       await Promise.all([qc.invalidateQueries({ queryKey: ['x4-suites'] }), qc.invalidateQueries({ queryKey: ['x4-suite', suiteId] }), detail.refetch()]); say(`Added to “${u.name}”. State its expected outcome in the suite.`);
     } catch (e) { say(why(e), 'warn'); }
   };
+  const restore = async () => { try { const back = await archiveScenario(id, d.draft_revision, '', true); qc.setQueryData(['x4-scenario', id], back); await qc.invalidateQueries({ queryKey: ['x4-scenarios'] }); setRestoring(false); say(`“${d.name}” restored exactly as it was saved`); } catch (e) { say(why(e), 'warn'); } };
   const archive = async () => { try { await archiveScenario(id, d.draft_revision, reason); await qc.invalidateQueries({ queryKey: ['x4-scenarios'] }); say(`“${d.name}” archived. It is kept and can be restored.`); onGone(); } catch (e) { say(why(e), 'warn'); } };
 
   return (
@@ -290,7 +299,7 @@ function ScenarioEditor({ id, policy, canEdit, onVariant, onCopy, onOpen, onGone
       <div className="ap-scn-inputs" data-testid="ap-scenario-inputs">
         <div className={`ap-savebar is-${state}`} data-testid="ap-scn-bar" data-state={state} role="status">
           <span className="ap-savebar-says" data-testid="ap-scn-bar-says">
-            {state === 'readonly' ? <><Icon name="lock" size={13} /> {d.state === 'ARCHIVED' ? 'Archived — read only.' : 'Read only: you may not edit scenarios.'}</>
+            {state === 'readonly' ? <><Icon name="lock" size={13} /> {d.state === 'ARCHIVED' ? <>Archived by {[...d.events].reverse().find((e) => e.event === 'ARCHIVED')?.actor ?? 'someone'} — “{[...d.events].reverse().find((e) => e.event === 'ARCHIVED')?.comment || 'no reason given'}”. Read only; nothing was deleted.</> : 'Read only: you may not edit scenarios.'}</>
               : state === 'saving' ? 'Saving…' : state === 'conflict' ? <><Icon name="warn" size={13} /> {flag?.message}</> : state === 'error' ? <><Icon name="warn" size={13} /> Not saved: {flag?.message}</>
                 : state === 'unsaved' ? <><Icon name="info" size={13} /> <strong>Unsaved changes.</strong> The result on the right is of the unsaved edit.</> : <><Icon name="check" size={13} /> <strong>Saved in Call360</strong> · revision {d.draft_revision} · {d.updated_by ?? 'someone'} · {when(d.updated_at)}</>}
           </span>
@@ -299,7 +308,9 @@ function ScenarioEditor({ id, policy, canEdit, onVariant, onCopy, onOpen, onGone
             <button type="button" className="ap-iconbtn" aria-label="Redo" disabled={!hist?.future.length} onClick={redo} data-testid="ap-scn-redo"><Icon name="redo" size={14} /></button>
             {state === 'conflict' ? <><button type="button" className="ap-btn" onClick={() => void reload()} data-testid="ap-scn-reload">Show the saved version</button><button type="button" className="ap-btn" onClick={() => void save(true)} data-testid="ap-scn-overwrite">Save mine over it</button></>
               : <>{dirty ? <button type="button" className="ap-btn quiet" onClick={() => void reload()} data-testid="ap-scn-revert">Discard changes</button> : null}<button type="button" className="ap-btn primary" disabled={!dirty || state === 'saving' || work.doc.name.trim().length < 2} onClick={() => void save()} data-testid="ap-scn-save"><Icon name="check" size={13} /> Save</button></>}
-          </span> : null}
+          </span> : canEdit && d.state === 'ARCHIVED' ? <span className="ap-savebar-acts">{restoring
+            ? <span className="ap-archived-ask" data-testid="ap-scn-restore-confirm"><span>Restore “{d.name}”? It returns to the list exactly as it was saved.</span><button type="button" className="ap-btn primary" onClick={() => void restore()} data-testid="ap-scn-restore-ok">Yes, restore it</button><button type="button" className="ap-btn quiet" onClick={() => setRestoring(false)}>Cancel</button></span>
+            : <button type="button" className="ap-btn" onClick={() => { setRestoring(true); setPanel('history'); }} data-testid="ap-scn-restore"><Icon name="history" size={13} /> Restore</button>}</span> : null}
         </div>
         <div className="ap-scn-title">
           <textarea className="ap-title-input" rows={1} aria-label="Scenario name" readOnly={readOnly} value={work.doc.name} onChange={(e) => edit((w) => { w.doc.name = e.target.value.replace(/\n/g, ' '); })} data-testid="ap-scn-name" />
@@ -404,3 +415,41 @@ function Dependencies({ deps, diagnostics, reproducible, readOnly, onAdopt, fing
     </section>
   );
 }
+
+// --------------------------------------------------------------- saved scenarios, read-only, from the designer
+/** APPL-X4a carry-forward (5.1): the designer can LOOK at what this policy selects for a saved scenario, without
+    leaving the designer and without changing anything. The quick in-tab examples of the live preview are untouched.
+    A saved scenario is evaluated exactly as saved; while the policy has unsaved edits the answer is a labelled preview. */
+export function SavedScenariosInDesigner({ doc }: { doc: Policy }) {
+  const { look, setPreview } = useAppl();
+  const kept = savedPolicy(doc.code);
+  const [open, setOpen] = useState<string | null>(null);
+  const list = useQuery({ queryKey: ['x4-scenarios', kept?.id, '', '', 100, false], queryFn: () => listScenarios({ policy_id: kept!.id, limit: 100 }), enabled: !!kept });
+  const unsaved = isUnsaved(doc);
+  const policyDoc = unsaved ? toServer(doc) : null;
+  const one = useQuery({ queryKey: ['x4-designer-eval', kept?.id, kept?.revision, policyDoc ? JSON.stringify(policyDoc) : null, open], enabled: !!kept && !!open, retry: false, placeholderData: (p) => p, queryFn: () => evaluateScenarios(kept!.id, [{ ref: 'saved', scenario_id: open! }], policyDoc) });
+  const detail = useQuery({ queryKey: ['x4-scenario', open], queryFn: () => getScenario(open!), enabled: !!open });
+  if (!kept) return null;
+  const items = list.data?.items ?? [];
+  const row = one.data?.results[0];
+  const facts = ((detail.data?.document as { facts?: Facts } | undefined)?.facts ?? {}) as Facts;
+  return (
+    <>
+      <Picker label="Look at a saved scenario" testid="ap-designer-saved" placeholder="Search saved scenarios…" items={items.map((x) => ({ id: x.id, label: x.name, hint: `${x.code} · ${x.purpose === 'REGRESSION' ? 'regression' : 'exploratory'}`, icon: 'scenario' as const }))} onPick={setOpen}
+        button={<span className="ap-chip plain" data-testid="ap-designer-saved-count" data-count={list.data?.total ?? ''}><Icon name="scenario" size={13} /> Saved scenarios{list.data ? ` (${list.data.total})` : ''} <Icon name="down" size={11} /></span>}
+        footer={() => <Link className="ap-linkbtn" to={`${BASE}/scenarios?policy=${doc.code}`} data-testid="ap-designer-saved-studio">Open the Scenario studio</Link>} />
+      {open ? (
+        <DrawerPanel title={detail.data?.name ?? 'Saved scenario'} subtitle="A saved synthetic scenario — read only here" onClose={() => setOpen(null)} testid="ap-designer-saved-drawer">
+          <p className={`ap-evalsource is-${row?.reproducible ? 'saved' : 'preview'}`} data-testid="ap-designer-saved-source" data-policy-source={one.data?.policy_source ?? ''}>
+            {!row ? 'Working it out…' : unsaved ? <><Icon name="info" size={13} /> Saved scenario against your UNSAVED edit of this policy — a preview, not evidence.</> : <><Icon name="check" size={13} /> Saved scenario (revision {detail.data?.draft_revision}) against saved policy revision {one.data?.policy_revision}.</>}
+          </p>
+          <ul className="ap-diff-facts" data-testid="ap-designer-saved-facts">{Object.entries(facts).map(([k, v]) => <li key={k}><strong>{look.variable(k)?.name ?? k}</strong> <span className="now">{factWord(v)}</span></li>)}</ul>
+          {row && row.state !== 'EVALUATED' ? <p className="ap-callout warn">{row.reason}</p> : <PlanView plan={row?.plan ?? undefined} testid="ap-designer-saved-plan" onSurvey={(c) => { const e = [...(row?.plan?.selected ?? []), ...(row?.plan?.pending ?? [])].find((y) => y.survey.code === c); if (e) setPreview(e.survey); }} />}
+          <p><Link className="ap-btn" to={`${BASE}/scenarios?policy=${doc.code}&s=${open}`} data-testid="ap-designer-saved-open"><Icon name="scenario" size={13} /> Open it in the Scenario studio</Link></p>
+          <p className="ap-quiet">Nothing is changed or recorded by looking. To edit the scenario, or to record a run, use the Scenario studio.</p>
+        </DrawerPanel>
+      ) : null}
+    </>
+  );
+}
+
