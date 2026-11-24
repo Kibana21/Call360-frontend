@@ -2,6 +2,7 @@
 // It reads the survey's current draft documents and its history through the operations the composer and the review
 // screens already use, and lays out the modules in the order the survey runs them, with how each is entered and where
 // each of its endings leads. A module that is published in the library opens in the inspector from here.
+import { ApplicabilityWhereUsed } from '../../applicability/WhereUsed';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ApiFailure } from '../../../api/client';
@@ -59,6 +60,7 @@ export function SurveyOverviewDrawer({ survey, facts, published, onInspect, onCl
           {survey.latest_version_id && can('survey.simulate') ? <Link className="ss-btn" to={`/survey-studio/surveys/${survey.code}/simulate`} data-testid="ss-so-simulate">Simulate</Link> : null}
           <Link className="ss-btn" to={`/survey-studio/surveys/${survey.code}/review`} data-testid="ss-so-governance">Review and governance</Link>
         </div>
+        <ApplicabilityWhereUsed code={survey.code} />
         {error ? <div className="ss-empty" role="alert"><p><strong>This survey’s content cannot be shown.</strong> {error}</p></div> : null}
         {!draft && !error ? <p className="ss-loading" role="status"><span className="ss-spinner" aria-hidden="true" /> Loading the survey…</p> : null}
         {draft ? (

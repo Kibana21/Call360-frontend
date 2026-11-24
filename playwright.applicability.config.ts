@@ -16,7 +16,7 @@ export default defineConfig({
   workers: 1,
   retries: 0,
   reporter: [['list']],
-  globalSetup: './e2e/persisted/global-setup.ts',
+  globalSetup: './e2e/applicability/global-setup.ts',
   outputDir: 'test-results/applicability',
   use: { baseURL: 'http://127.0.0.1:5174', trace: 'retain-on-failure' },
   projects: [{ name: 'applicability', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } }],
@@ -26,14 +26,14 @@ export default defineConfig({
       cwd: backend,
       // These journeys sign several different people in within a minute; the per-address sign-in limit of the product
       // (20 a minute) is raised for THIS test server only. The limit itself is covered by the backend's own tests.
-      env: { CALL360_ENV_FILE: '.env.test', SURVEY_DEFINITIONS_ENABLED: 'true', SURVEY_APPLICABILITY_PROTOTYPE_ENABLED: 'true', SURVEY_LIBRARY_ENABLED: 'true', SURVEY_SIMULATION_ENABLED: 'true', SURVEY_ASSIGNMENT_ENABLED: 'true', SURVEY_ASSIGNMENT_GROUPS_ENABLED: 'true', SURVEY_COORDINATED_SIMULATION_ENABLED: 'true', SURVEY_EVALUATION_ENABLED: 'true', SURVEY_CONTROL_POLICY_ENABLED: 'true', SURVEY_EXECUTION_ASSURANCE_ENABLED: 'true', SURVEY_MODULE_AUTHORING_ENABLED: 'true', SHARED_RULE_SERVICES_ENABLED: 'true', LOGIN_IP_PER_MINUTE: '300' },
+      env: { CALL360_ENV_FILE: '.env.test', SURVEY_DEFINITIONS_ENABLED: 'true', SURVEY_APPLICABILITY_PROTOTYPE_ENABLED: 'true', APPLICABILITY_LIBRARY_ENABLED: 'true', APPLICABILITY_POLICIES_ENABLED: 'true', SURVEY_LIBRARY_ENABLED: 'true', SURVEY_SIMULATION_ENABLED: 'true', SURVEY_ASSIGNMENT_ENABLED: 'true', SURVEY_ASSIGNMENT_GROUPS_ENABLED: 'true', SURVEY_COORDINATED_SIMULATION_ENABLED: 'true', SURVEY_EVALUATION_ENABLED: 'true', SURVEY_CONTROL_POLICY_ENABLED: 'true', SURVEY_EXECUTION_ASSURANCE_ENABLED: 'true', SURVEY_MODULE_AUTHORING_ENABLED: 'true', SHARED_RULE_SERVICES_ENABLED: 'true', LOGIN_IP_PER_MINUTE: '300' },
       url: 'http://127.0.0.1:8001/health/live',
       reuseExistingServer: false,
       timeout: 60_000,
     },
     {
       command: 'npx vite --host 127.0.0.1 --port 5174 --strictPort',
-      env: { VITE_API_TARGET: 'http://127.0.0.1:8001', VITE_SURVEY_STUDIO_PERSISTED: '1', VITE_SURVEY_APPLICABILITY: '1' },
+      env: { VITE_API_TARGET: 'http://127.0.0.1:8001', VITE_SURVEY_STUDIO_PERSISTED: '1', VITE_SURVEY_APPLICABILITY: '1', VITE_APPLICABILITY_LIBRARY: '1', VITE_APPLICABILITY_POLICIES: '1' },
       url: 'http://127.0.0.1:5174',
       reuseExistingServer: false,
       timeout: 60_000,

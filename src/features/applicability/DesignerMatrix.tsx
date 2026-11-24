@@ -1,12 +1,12 @@
 // Survey Applicability (APPL-X1) — the Decision Matrix: example applications down the side, surveys across the top.
 // Every cell is the Python evaluator's result for that application under this policy. Rows can be filtered, grouped
 // and sorted; a cell leads back to the requirement responsible; the whole table exports as synthetic test evidence.
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { valueLabel } from './model/describe';
 import type { EvalRow, Policy, Scenario, SurveyRef } from './model/types';
 import { useAppl } from './store';
 import { Empty, Icon, Tag } from './ui';
-import { surveysOf } from './usage';
+import { surveysOf, shortName } from './usage';
 
 type Cell = { mark: 'selected' | 'pending' | 'replaced' | 'none'; text: string; why: string; req?: string };
 function cellOf(row: EvalRow | undefined, s: SurveyRef): Cell {
@@ -23,9 +23,11 @@ function cellOf(row: EvalRow | undefined, s: SurveyRef): Cell {
 }
 const download = (name: string, type: string, text: string) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click(); window.setTimeout(() => URL.revokeObjectURL(a.href), 500); };
 
-export function DesignerMatrix({ policy, scenarios, rows, variables, onOpen, onScenario, activeScenario, fingerprint }: {
+export function DesignerMatrix({ policy, scenarios, rows, variables, onOpen, onScenario, activeScenario, fingerprint, source, deps }: {
   policy: Policy; scenarios: Scenario[]; rows: EvalRow[] | undefined; variables: string[];
   onOpen: (requirement: string) => void; onScenario: (id: string) => void; activeScenario?: string | null; fingerprint?: string | null;
+  /** APPL-X3: whose results these are (the saved revision, or an unsaved preview), and each requirement's dependency flags */
+  source?: ReactNode; deps?: (id: string) => ReactNode;
 }) {
   const { look, data } = useAppl();
   const [q, setQ] = useState('');
@@ -44,7 +46,7 @@ export function DesignerMatrix({ policy, scenarios, rows, variables, onOpen, onS
   const keyOf = (s: Scenario) => {
     const plan = byId.get(s.id)?.plan;
     if (group === 'suite') return s.suite ?? 'No suite';
-    if (group === 'result') return plan?.selected?.length ? plan.selected.map((e) => e.survey.name.split(' · ')[0]).join(' + ') + (plan.status === 'RESOLVED' ? '' : ' (not decided)') : plan?.status === 'RESOLVED' ? 'No survey required' : 'Not decided';
+    if (group === 'result') return plan?.selected?.length ? plan.selected.map((e) => shortName(e.survey.name)).join(' + ') + (plan.status === 'RESOLVED' ? '' : ' (not decided)') : plan?.status === 'RESOLVED' ? 'No survey required' : 'Not decided';
     if (group === 'condition') return plan?.requirements?.filter((r) => r.state === 'APPLIES').map((r) => r.name).join(' + ') || 'No requirement applies';
     return '';
   };
@@ -60,6 +62,8 @@ export function DesignerMatrix({ policy, scenarios, rows, variables, onOpen, onS
   if (!scenarios.length) return <Empty icon="scenario" title="No scenario to show">Create example applications in the Scenario lab, or generate combinations there.</Empty>;
   return (
     <div className="ap-matrix" data-testid="ap-matrix">
+      {source}
+      {deps ? <p className="ap-matrix-deps" data-testid="ap-matrix-deps">{policy.requirements.map((r) => <span key={r.id}>{deps(r.id)}</span>)}</p> : null}
       <div className="ap-toolbar">
         <label className="ap-searchbox"><Icon name="search" size={14} /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search scenarios" aria-label="Search scenarios" data-testid="ap-matrix-search" /></label>
         <select className="ap-input" aria-label="Suite" value={suite} onChange={(e) => setSuite(e.target.value)} data-testid="ap-matrix-suite"><option value="ALL">Every suite</option>{data.suites.map((s) => <option key={s}>{s}</option>)}</select>
@@ -74,7 +78,7 @@ export function DesignerMatrix({ policy, scenarios, rows, variables, onOpen, onS
         <table className="ap-table ap-matrix-table" data-testid="ap-matrix-table">
           <thead>
             <tr><th rowSpan={2} className="sticky">Example application</th><th colSpan={Math.max(variables.length, 1)} className="band facts">Its facts</th><th rowSpan={2}>Result</th><th colSpan={Math.max(surveys.length, 1)} className="band surveys">Surveys, in delivery order</th></tr>
-            <tr>{variables.map((c) => <th key={c} className="fact">{look.variable(c)?.name ?? c}</th>)}{!variables.length ? <th /> : null}{surveys.map((s, i) => <th key={s.code} className="survey" title={s.name}><span className="ap-matrix-n">{i + 1}</span>{s.name.split(' · ')[0]}<small>{s.name.split(' · ')[1]}</small></th>)}</tr>
+            <tr>{variables.map((c) => <th key={c} className="fact">{look.variable(c)?.name ?? c}</th>)}{!variables.length ? <th /> : null}{surveys.map((s, i) => <th key={s.code} className="survey" title={s.name}><span className="ap-matrix-n">{i + 1}</span>{shortName(s.name)}</th>)}</tr>
           </thead>
           {groups.map(([label, list]) => (
             <tbody key={label || 'all'}>

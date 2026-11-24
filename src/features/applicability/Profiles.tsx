@@ -4,10 +4,12 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAnalysis } from './api';
 import { useVariableItems } from './editors';
-import { TYPE_LABEL, slug } from './model/describe';
+import { TYPE_LABEL } from './model/describe';
 import type { Data, Profile } from './model/types';
+import { LibraryBar, LibraryDot, useLibrary } from './library';
+import { NameAndCode, codeOk, suggestCode } from './policyService';
 import { useAppl } from './store';
-import { Icon, Picker, Tag, useParamState } from './ui';
+import { DrawerPanel, Icon, Picker, Tag, useParamState } from './ui';
 import { BASE, composed, docsOf } from './usage';
 
 const TONES = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
@@ -15,10 +17,12 @@ const edit = (d: Data, code: string, f: (p: Profile) => void) => { const p = d.p
 
 export function ProfilesPage() {
   const { data, update, look, openDrawer, say } = useAppl();
+  const lib = useLibrary();
   const go = useNavigate();
   const [chosen, setChosen] = useParamState('p');
   const sel = data.profiles.find((p) => p.code === chosen) ?? data.profiles[0];
   const [also, setAlso] = useState<string[]>([]);
+  const [naming, setNaming] = useState<{ name: string; code: string | null } | null>(null);
   const items = useVariableItems();
   const analysis = useAnalysis(data, null);
   const pick = (code: string) => { setChosen(code); setAlso([]); };
@@ -36,7 +40,9 @@ export function ProfilesPage() {
   const consumers = data.policies.flatMap((rec) => docsOf(rec).filter(({ doc }) => doc.profiles.some((c) => composed(data, [c]).profiles.includes(sel.code))).map(({ doc, state }) => ({ doc, state })));
   // what this profile already carries, itself or through what it builds on: a variable is never added twice
   const own = composed(data, [sel.code]);
-  const newProfile = () => { const name = 'New profile'; let code = slug(name), n = 1; while (data.profiles.some((p) => p.code === code)) code = `${slug(name)}_${++n}`; update('Create a profile', (d) => d.profiles.push({ code, name: n > 1 ? `${name} ${n}` : name, description: '', extends: ['common'], sections: [{ name: 'Variables', variables: [] }], required: [], version: 1, status: 'DRAFT' })); pick(code); };
+  // a profile is NAMED first; its code is suggested from the name, reviewed, and then never changes
+  const taken = (c: string) => data.profiles.some((p) => p.code.toLowerCase() === c.trim().toLowerCase());
+  const createProfile = () => { if (!naming) return; const code = naming.code ?? suggestCode(naming.name, 'lower'); update(`Create profile ${naming.name}`, (d) => d.profiles.push({ code, name: naming.name.trim(), description: '', extends: data.profiles.some((p) => p.code === 'common') ? ['common'] : [], sections: [{ name: 'Variables', variables: [] }], required: [], version: 1, status: 'DRAFT' })); setNaming(null); pick(code); };
   const sample = () => {
     const id = `sc-${Date.now().toString(36)}`;
     const facts = Object.fromEntries(combo.rows.filter((r) => !look.variable(r.variable)?.derived).map((r) => { const v = look.variable(r.variable)!; const allowed = combo.constraints.find((c) => c.variable === r.variable)?.allowed; return [r.variable, allowed?.[0] ?? v.samples?.[0] ?? null]; }));
@@ -45,9 +51,15 @@ export function ProfilesPage() {
   };
   return (
     <div className="ap-page ap-profiles" data-testid="ap-profiles">
+      {naming ? (
+        <DrawerPanel onClose={() => setNaming(null)} testid="ap-profile-create" title="Create a profile" subtitle="A reusable set of variables. Name it first; it starts as a draft."
+          footer={<><button type="button" className="ap-btn quiet" onClick={() => setNaming(null)}>Cancel</button><span className="ap-spacer" /><button type="button" className="ap-btn primary" disabled={naming.name.trim().length < 3 || !codeOk(naming.code ?? suggestCode(naming.name, 'lower'), taken)} onClick={createProfile} data-testid="ap-profile-create-save"><Icon name="check" size={13} /> Create profile</button></>}>
+          <NameAndCode noun="profile" style="lower" name={naming.name} setName={(name) => setNaming({ ...naming, name })} code={naming.code} setCode={(code) => setNaming({ ...naming, code })} taken={taken} />
+        </DrawerPanel>
+      ) : null}
       <aside className="ap-list" aria-label="Profiles">
-        <header><h2>Profiles</h2><button type="button" className="ap-btn quiet" onClick={newProfile} data-testid="ap-profile-new"><Icon name="plus" size={13} /> New</button></header>
-        <ul>{data.profiles.map((p) => <li key={p.code}><button type="button" className={p.code === sel.code ? 'on' : ''} onClick={() => pick(p.code)} data-testid={`ap-profile-${p.code}`}><span className="ap-list-icon"><Icon name="profile" size={15} /></span><span><strong>{p.name}</strong><small>{composed(data, [p.code]).rows.length} variables{p.extends.length ? ` · builds on ${p.extends.length}` : ''}</small></span>{p.status === 'DRAFT' ? <Tag tone="draft">Draft</Tag> : null}</button></li>)}</ul>
+        <header><h2>Profiles</h2><button type="button" className="ap-btn quiet" onClick={() => setNaming({ name: '', code: null })} data-testid="ap-profile-new"><Icon name="plus" size={13} /> New</button></header>
+        <ul>{data.profiles.map((p) => <li key={p.code}><button type="button" className={p.code === sel.code ? 'on' : ''} onClick={() => pick(p.code)} data-testid={`ap-profile-${p.code}`}><span className="ap-list-icon"><Icon name="profile" size={15} /></span><span><strong>{p.name}</strong><small>{composed(data, [p.code]).rows.length} variables{p.extends.length ? ` · builds on ${p.extends.length}` : ''}</small></span>{lib.on ? <LibraryDot kind="PROFILE" code={p.code} /> : p.status === 'DRAFT' ? <Tag tone="draft">Draft</Tag> : null}</button></li>)}</ul>
       </aside>
 
       <section className="ap-composer" aria-label={`${sel.name}: composer`}>
@@ -56,8 +68,9 @@ export function ProfilesPage() {
             <input className="ap-title-input" aria-label="Profile name" value={sel.name} onChange={(e) => update('Rename profile', (d) => edit(d, sel.code, (p) => { p.name = e.target.value; }))} data-testid="ap-profile-name" />
             <input className="ap-sub-input" aria-label="What this profile is for" placeholder="What is this profile for?" value={sel.description} onChange={(e) => update('Describe profile', (d) => edit(d, sel.code, (p) => { p.description = e.target.value; }))} />
           </div>
-          <Tag tone={sel.status === 'PUBLISHED' ? 'published' : 'draft'}>{sel.status === 'PUBLISHED' ? `Version ${sel.version} published` : `Version ${sel.version} draft`}</Tag>
+          {lib.on ? null : <Tag tone={sel.status === 'PUBLISHED' ? 'published' : 'draft'}>{sel.status === 'PUBLISHED' ? `Version ${sel.version} published` : `Version ${sel.version} draft`}</Tag>}
         </header>
+        <LibraryBar key={sel.code} kind="PROFILE" code={sel.code} />
 
         <div className="ap-block">
           <h3>Builds on</h3>

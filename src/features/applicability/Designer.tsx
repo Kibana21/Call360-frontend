@@ -3,18 +3,21 @@
 // bindings or requirement groups: a requirement names its surveys directly.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { useAnalysis, useEvaluation } from './api';
+import { useAnalysis, useEvaluation, type EvaluateResult } from './api';
+import { Dependencies, PolicyBar, RequirementDeps, usePolicies } from './policyService';
+import { savedPolicy } from './policyStore';
 import { ConditionBuilder } from './editors';
 import { FactsEditor } from './facts';
 import { DeliveryOrder, DesignerCards, dragData } from './DesignerCards';
 import { DesignerCanvas, type CanvasSelection } from './DesignerCanvas';
 import { DesignerMatrix } from './DesignerMatrix';
+import { RequirementEditor } from './RequirementEditor';
 import { sentence } from './model/describe';
 import type { Diagnostic, EvalRow, Expr, Plan, Policy, Requirement, SurveyRef } from './model/types';
 import { OutcomeMark, PlanView } from './plan';
 import { editPolicy, newId, useAppl } from './store';
 import { Empty, Icon, Picker, Segmented, Tag, short, type IconName } from './ui';
-import { BASE, composed, conditionUses, surveyUses, surveysOf, variableUses } from './usage';
+import { BASE, composed, conditionUses, surveyUses, surveysOf, variableUses, shortName } from './usage';
 
 type View = 'cards' | 'canvas' | 'matrix';
 const ref = (code: string, version: number): Expr => ({ op: 'ref', condition: code, version });
@@ -23,11 +26,16 @@ export function DesignerPage() {
   const { data, update, look, openDrawer, say, persona } = useAppl();
   const { code } = useParams();
   const [params, setParams] = useSearchParams();
-  const rec = data.policies.find((p) => p.code === code) ?? data.policies[0];
+  const { current, setCurrent } = useAppl();
+  const rec = data.policies.find((p) => p.code === code) ?? current;
+  useEffect(() => { if (rec) setCurrent(rec.code); }, [rec, setCurrent]);
   const [showing, setShowing] = useState<'draft' | 'published'>('draft');
   const doc: Policy | null = rec ? (showing === 'published' && rec.published ? rec.published : rec.draft ?? rec.published) : null;
   const readOnly = !rec?.draft || doc !== rec.draft ? !!rec?.published && doc === rec.published && !!rec.draft : false;
   const locked = !!rec?.candidate;
+  const pol = usePolicies();
+  // APPL-X3: a policy that is saved in Call360. Its state, its save and its evaluation are the server's.
+  const persisted = pol.on && !!rec && !!savedPolicy(rec.code);
   const view = (params.get('view') as View) || 'cards';
   const [scenarioId, setScenarioId] = useState<string>(() => params.get('s') ?? data.scenarios.find((s) => s.id === 'sc-both')?.id ?? data.scenarios[0]?.id ?? '');
   const [sel, setSel] = useState<CanvasSelection | null>(() => (params.get('r') ? { kind: 'requirement', id: params.get('r')! } : params.get('focus') ? { kind: 'survey', id: params.get('focus')! } : null));
@@ -50,7 +58,7 @@ export function DesignerPage() {
   const cardRef = useRef<HTMLDivElement>(null);
   useEffect(() => { if (sel?.kind === 'requirement' && view === 'cards') cardRef.current?.querySelector(`[data-testid="ap-card-${sel.id}"]`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, [sel, view]);
   if (!rec || !doc) return <div className="ap-page"><Empty icon="policy" title="No policy yet">Create a policy to start connecting conditions to surveys.</Empty></div>;
-  const editable = !readOnly && !locked;
+  const editable = !readOnly && !locked && (!persisted || pol.canEdit);
   const change = (label: string, f: (p: Policy) => void) => update(label, (d) => editPolicy(d, rec.code, f));
   const addReq = (label: string, make: (p: Policy, id: string) => Requirement | Requirement[]) => {
     let first = '';
@@ -58,8 +66,9 @@ export function DesignerPage() {
     setSel({ kind: 'requirement', id: first }); setEditing(first); setAdding(false); if (view !== 'cards') setView('cards');
   };
   const blank = (id: string, name: string, when: Expr | null, surveys: SurveyRef[] = []): Requirement => ({ id, name, when, action: { kind: 'INCLUDE', surveys }, replaces: [] });
-  const save = () => { update('Save the draft', (d) => { const r = d.policies.find((x) => x.code === rec.code); if (r) { r.unsaved = false; r.events.push({ at: new Date().toISOString().slice(0, 16).replace('T', ' '), who: 'You', persona, what: `Saved draft version ${r.draft?.version}`, detail: 'Prototype: kept in this tab' }); } }); say('Draft saved (in this tab — the prototype stores nothing in Call360)'); };
+  const save = () => { update('Save the draft', (d) => { const r = d.policies.find((x) => x.code === rec.code); if (r) { r.unsaved = false; r.events.push({ at: new Date().toISOString().slice(0, 16).replace('T', ' '), who: 'You', persona, what: `Kept draft version ${r.draft?.version} in this tab`, detail: 'Prototype: kept in this tab' }); } }); say('Draft kept in this tab. It is not saved to Call360 and is lost on reload.', 'info'); };
   const activeSurvey = sel?.kind === 'survey' ? sel.id : null;
+  const resolve = editable ? (survey: string, requirements: string[]) => { change('State that one delivery satisfies several requirements', (p) => { p.shared_deliveries = [...p.shared_deliveries.filter((d) => d.survey !== survey || !d.requirements.every((r) => requirements.includes(r))), { survey, requirements }]; }); say('Stated: one delivery satisfies these requirements. It is listed under “Applies to”.'); } : undefined;
   // the canvas takes the whole width until something on it is selected
   const showRight = right && (view !== 'canvas' || !!sel);
   const profileVars = composed(data, doc.profiles);
@@ -78,15 +87,17 @@ export function DesignerPage() {
     <div className="ap-designer" data-testid="ap-designer" data-view={view}>
       <header className="ap-designer-head">
         <div className="ap-editable">
-          <input className="ap-title-input" aria-label="Policy name" value={doc.name} readOnly={!editable} onChange={(e) => change('Rename the policy', (p) => { p.name = e.target.value; })} data-testid="ap-policy-name" />
+          <textarea className="ap-title-input ap-title-area" rows={1} aria-label="Policy name" title={doc.name} value={doc.name} readOnly={!editable} onChange={(e) => change('Rename the policy', (p) => { p.name = e.target.value.replace(/\n/g, ' '); })} data-testid="ap-policy-name" />
           <span className="ap-designer-meta">{doc.code} · {doc.market} · {doc.requirements.length} requirement{doc.requirements.length === 1 ? '' : 's'}</span>
         </div>
-        <div className="ap-designer-state" data-testid="ap-policy-state" data-state={locked ? 'in-review' : readOnly || !rec.draft ? 'published' : rec.unsaved ? 'unsaved' : 'saved'}>
-          {rec.published && rec.draft ? <Segmented label="Which version to show" value={readOnly ? 'published' : 'draft'} onChange={(v) => setShowing(v as 'draft' | 'published')} options={[{ value: 'draft', label: `Draft v${rec.draft.version}`, testid: 'ap-show-draft' }, { value: 'published', label: `Published v${rec.published.version}`, icon: 'lock', testid: 'ap-show-published' }]} /> : null}
-          {readOnly ? <Tag tone="published"><Icon name="lock" size={11} /> Published — read only</Tag> : locked ? <Tag tone="info"><Icon name="lock" size={11} /> In review — locked</Tag> : !rec.draft ? <Tag tone="published" testid="ap-published-editable"><Icon name="lock" size={11} /> Version {rec.published?.version} published · a change starts version {(rec.published?.version ?? 0) + 1}</Tag> : rec.unsaved ? <Tag tone="warn" testid="ap-unsaved">Unsaved changes</Tag> : <Tag tone="draft" testid="ap-saved">Draft saved</Tag>}
-          {editable ? <button type="button" className="ap-btn" onClick={save} disabled={!rec.unsaved} data-testid="ap-save-draft"><Icon name="check" size={13} /> Save draft</button> : null}
+        <div className="ap-designer-state" data-testid="ap-policy-state" data-state={locked ? 'in-review' : readOnly || !rec.draft ? 'published' : rec.unsaved ? 'unsaved' : 'saved'} data-persisted={persisted}>
+          {persisted ? <PolicyBar rec={rec} /> : <>
+          {rec.published && rec.draft ? <Segmented label="Which version to show" value={readOnly ? 'published' : 'draft'} onChange={(v) => setShowing(v as 'draft' | 'published')} options={[{ value: 'draft', label: `Draft v${rec.draft.version}`, testid: 'ap-show-draft' }, { value: 'published', label: `Published example v${rec.published.version}`, icon: 'lock', testid: 'ap-show-published' }]} /> : null}
+          {readOnly ? <Tag tone="published" title="A simulated example state in this prototype"><Icon name="lock" size={11} /> Published example (simulated) — read only</Tag> : locked ? <Tag tone="info"><Icon name="lock" size={11} /> In review — locked</Tag> : !rec.draft ? <Tag tone="published" testid="ap-published-editable"><Icon name="lock" size={11} /> Version {rec.published?.version} published (simulated) · a change starts version {(rec.published?.version ?? 0) + 1}</Tag> : rec.unsaved ? <Tag tone="warn" testid="ap-unsaved" title="Applicability policies are not saved in Call360 yet">Changes not kept yet</Tag> : <Tag tone="draft" testid="ap-saved" title="Applicability policies are not saved in Call360 yet: reloading the page loses this draft">Draft kept in this tab only</Tag>}
+          {editable ? <button type="button" className="ap-btn" onClick={save} disabled={!rec.unsaved} data-testid="ap-save-draft" title="Keeps this draft as a checkpoint in this browser tab. It is NOT saved to Call360 and is lost when the page is reloaded."><Icon name="check" size={13} /> Keep draft in this tab</button> : null}
+          </>}
           <Link className={`ap-validation${blockers ? ' bad' : warnings ? ' warn' : ' ok'}`} to={`${BASE}/governance/${rec.code}?tab=validation`} data-testid="ap-validation-chip" data-blockers={blockers}><Icon name={blockers ? 'warn' : 'check'} size={13} /> {blockers ? `${blockers} to fix` : warnings ? `${warnings} to check` : 'No problems'}</Link>
-          <Link className="ap-btn primary" to={`${BASE}/governance/${rec.code}`} data-testid="ap-to-governance">Review and publish <Icon name="right" size={13} /></Link>
+          <Link className="ap-btn primary" to={`${BASE}/governance/${rec.code}`} data-testid="ap-to-governance">{persisted ? 'Review readiness' : 'Review and publish'} <Icon name="right" size={13} /></Link>
         </div>
       </header>
 
@@ -108,20 +119,22 @@ export function DesignerPage() {
         </section>
       ) : null}
 
+      {editing && editable && doc.requirements.some((r) => r.id === editing) ? <RequirementEditor policy={doc} id={editing} plan={plan} diagnostics={diagnostics} onClose={() => setEditing(null)} /> : null}
       <div className={`ap-panes${left ? '' : ' no-left'}${showRight ? '' : ' no-right'}`}>
         {left ? <Palette policy={doc} editable={editable} sel={sel} onNew={(when, surveys, name) => addReq('Add a requirement from the palette', (_, id) => blank(id, name, when, surveys))} onToggleProfile={(c) => change('Change the profiles a policy uses', (p) => { p.profiles = p.profiles.includes(c) ? p.profiles.filter((x) => x !== c) : [...p.profiles, c]; })} profileVars={profileVars.rows.map((r) => r.variable)} /> : null}
 
         <div className="ap-center" ref={cardRef}>
+          {persisted ? <Dependencies rec={rec} inspection={analysis.data?.inspection} editable={editable} /> : null}
           {view === 'cards' ? (
             <>
               <PolicySettings policy={doc} editable={editable} change={change} />
-              {doc.requirements.length ? <DesignerCards policy={doc} plan={plan} diagnostics={diagnostics} selected={sel?.kind === 'requirement' ? sel.id : null} onSelect={(id) => setSel(id ? { kind: 'requirement', id } : null)} onSurvey={(c) => setSel({ kind: 'survey', id: c })} readOnly={!editable} activeSurvey={activeSurvey} editing={editing} />
+              {doc.requirements.length ? <DesignerCards policy={doc} plan={plan} diagnostics={diagnostics} deps={(id) => <RequirementDeps id={id} inspection={analysis.data?.inspection} />} selected={sel?.kind === 'requirement' ? sel.id : null} onSelect={(id) => setSel(id ? { kind: 'requirement', id } : null)} onSurvey={(c) => setSel({ kind: 'survey', id: c })} readOnly={!editable} activeSurvey={activeSurvey} onEdit={setEditing} />
                 : <Empty icon="policy" title="This policy selects nothing yet" action={editable ? <button type="button" className="ap-btn primary" onClick={() => setAdding(true)}><Icon name="plus" size={14} /> Add the first requirement</button> : undefined}>A requirement says: when these conditions apply, then these surveys are required.</Empty>}
               {editable && doc.requirements.length ? <button type="button" className="ap-add-card" onClick={() => setAdding(true)} data-testid="ap-add-requirement-bottom"><Icon name="plus" size={15} /> Add requirement</button> : null}
               {doc.requirements.length ? <DeliveryOrder policy={doc} readOnly={!editable} plan={plan} /> : null}
             </>
           ) : view === 'canvas' ? <DesignerCanvas policy={doc} plan={plan} selection={sel} onSelect={setSel} />
-            : <DesignerMatrix policy={doc} scenarios={data.scenarios} rows={all.data?.results} variables={policyVars} fingerprint={analysis.data?.policy_fingerprint} activeScenario={scenario?.id} onScenario={setScenarioId} onOpen={(id) => { setSel({ kind: 'requirement', id }); setView('cards'); }} />}
+            : <DesignerMatrix policy={doc} scenarios={data.scenarios} rows={all.data?.results} source={<PreviewSource result={all.data} />} deps={(id) => <RequirementDeps id={id} inspection={analysis.data?.inspection} />} variables={policyVars} fingerprint={analysis.data?.policy_fingerprint} activeScenario={scenario?.id} onScenario={setScenarioId} onOpen={(id) => { setSel({ kind: 'requirement', id }); setView('cards'); }} />}
         </div>
 
         {showRight ? (
@@ -133,9 +146,10 @@ export function DesignerPage() {
                     : (
                       <>
                         <header><div><span className="ap-side-kind"><Icon name="play" size={13} /> Live preview</span><h2>{scenario?.name ?? 'No scenario'}</h2></div></header>
+                        <PreviewSource result={live.data} />
                         <p className="ap-side-says">What this policy selects for the example application. Change a fact and it is worked out again by Call360’s evaluator.</p>
                         {scenario ? <FactsEditor codes={policyVars.filter((c) => !look.variable(c)?.derived)} facts={scenario.facts} states={plan?.facts} highlight={plan?.needs.map((n) => n.variable)} compact testid="ap-preview-facts" onChange={(f) => update(`Change a fact of “${scenario.name}”`, (d) => { const s = d.scenarios.find((x) => x.id === scenario.id); if (s) s.facts = f; })} /> : null}
-                        <PlanView plan={plan} compact onSurvey={(c) => setSel({ kind: 'survey', id: c })} onRequirement={(id) => setSel({ kind: 'requirement', id })} testid="ap-preview-plan" />
+                        <PlanView plan={plan} compact onSurvey={(c) => setSel({ kind: 'survey', id: c })} onRequirement={(id) => setSel({ kind: 'requirement', id })} onResolve={resolve} testid="ap-preview-plan" />
                         <Link className="ap-btn quiet" to={`${BASE}/scenarios?s=${scenario?.id ?? ''}`}><Icon name="scenario" size={13} /> Open in the scenario lab</Link>
                         <button type="button" className="ap-linkbtn" onClick={() => openDrawer({ kind: 'variable' })}>Missing a fact? Create a variable</button>
                       </>
@@ -143,7 +157,8 @@ export function DesignerPage() {
             {sel ? (
               <section className="ap-inspector-live" data-testid="ap-inspector-live">
                 <h3><Icon name="play" size={14} /> Live preview · {scenario?.name}</h3>
-                <PlanView plan={plan} compact onSurvey={(c) => setSel({ kind: 'survey', id: c })} onRequirement={(id) => setSel({ kind: 'requirement', id })} testid="ap-preview-plan" />
+                <PreviewSource result={live.data} />
+                <PlanView plan={plan} compact onSurvey={(c) => setSel({ kind: 'survey', id: c })} onRequirement={(id) => setSel({ kind: 'requirement', id })} onResolve={resolve} testid="ap-preview-plan" />
                 <button type="button" className="ap-linkbtn" onClick={() => setSel(null)} data-testid="ap-inspector-to-preview">Change the example application’s facts</button>
               </section>
             ) : null}
@@ -154,24 +169,38 @@ export function DesignerPage() {
   );
 }
 
+/** Whose result this is: the SAVED revision evaluated by the server, or an unsaved edit previewed as a what-if. */
+export function PreviewSource({ result }: { result?: EvaluateResult }) {
+  if (!result?.source) return null;
+  const stale = result.run_status && result.run_status !== 'OK';
+  return (
+    <p className={`ap-source-chip is-${stale ? 'stale' : result.source.toLowerCase()}`} data-testid="ap-preview-source" data-source={result.source} data-status={result.run_status} data-fingerprint={result.policy_fingerprint ?? ''}>
+      <Icon name={stale ? 'warn' : result.source === 'SAVED' ? 'check' : 'info'} size={12} />
+      {stale ? ` Not evaluated: ${result.reason ?? 'a dependency changed'}`
+        : result.source === 'SAVED' ? ` Saved revision ${result.revision} · evaluated by Call360 from exactly what it pins`
+          : ` Unsaved preview — a what-if on your edits, not the saved revision ${result.revision}`}
+    </p>
+  );
+}
+
 function PolicySettings({ policy, editable, change }: { policy: Policy; editable: boolean; change: (label: string, f: (p: Policy) => void) => void }) {
-  const { data } = useAppl();
+  const { data, look } = useAppl();
   const [open, setOpen] = useState(false);
+  const name = (id: string) => policy.requirements.find((r) => r.id === id)?.name ?? id;
+  const survey = (code: string) => policy.requirements.flatMap(surveysOf).find((x) => x.code === code)?.name ?? code;
   return (
     <section className="ap-settings" data-testid="ap-policy-settings">
       <button type="button" className="ap-settings-head" aria-expanded={open} onClick={() => setOpen(!open)} data-testid="ap-policy-settings-toggle">
         <Icon name={open ? 'down' : 'right'} size={14} /><strong>Applies to</strong>
-        <span>{policy.market} · {policy.profiles.map((c) => data.profiles.find((p) => p.code === c)?.name ?? c).join(' + ') || 'any profile'}</span>
-        <span className="ap-settings-same" data-testid="ap-same-survey-summary">{policy.same_survey === 'ONE_DELIVERY' ? 'A survey asked for twice is delivered once' : policy.same_survey === 'CONFLICT' ? 'A survey asked for twice is a conflict' : 'Not yet said: a survey asked for twice'}</span>
+        <span>{policy.market} · {policy.scope ? `only when ${sentence(policy.scope, look)}` : 'every application'}</span>
+        <span className="ap-settings-same" data-testid="ap-shared-summary">{policy.profiles.length ? `Facts from ${policy.profiles.map((c) => data.profiles.find((p) => p.code === c)?.name ?? c).join(' + ')}` : 'Any facts'}{policy.shared_deliveries.length ? ` · ${policy.shared_deliveries.length} shared deliver${policy.shared_deliveries.length === 1 ? 'y' : 'ies'}` : ''}</span>
       </button>
       {open ? (
         <div className="ap-settings-body">
-          <div><h4>When two requirements ask for the same survey</h4><p className="ap-quiet">This has to be stated; nothing is assumed.</p>
-            <div className="ap-checklist row" role="radiogroup" aria-label="When two requirements ask for the same survey">
-              {([['ONE_DELIVERY', 'Deliver it once', 'The survey appears once and is recorded as satisfying every requirement that asked for it.'], ['CONFLICT', 'Treat it as a conflict', 'The result is left undecided until the overlap is removed.']] as const).map(([v, t, h]) => <button key={v} type="button" role="radio" aria-checked={policy.same_survey === v} className={policy.same_survey === v ? 'on' : ''} disabled={!editable} data-testid={`ap-same-${v}`} onClick={() => change('Say what a repeated survey means', (p) => { p.same_survey = v; })}><span className="ap-check round">{policy.same_survey === v ? <Icon name="dot" size={12} /> : null}</span><span><strong>{t}</strong><small>{h}</small></span></button>)}
-            </div></div>
-          <div><h4>Which applications this policy covers</h4><p className="ap-quiet">Leave empty to cover every application of the market and profiles.</p>
-            {editable ? <ConditionBuilder expr={policy.scope} onChange={(e) => change('Change which applications a policy covers', (p) => { p.scope = e; })} allowAlways testid="ap-scope-builder" emptyHint="No limit: every application of this market and these profiles." /> : <p>{policy.scope ? 'Limited by a condition.' : 'Every application.'}</p>}</div>
+          <div><h4>Which applications this policy covers</h4><p className="ap-quiet">The only thing that decides whether this policy applies. Profiles describe an application’s facts; they never decide this. Leave empty to cover every application.</p>
+            {editable ? <ConditionBuilder expr={policy.scope} onChange={(e) => change('Change which applications a policy covers', (p) => { p.scope = e; })} allowAlways testid="ap-scope-builder" emptyHint="No limit: every application." /> : <p>{policy.scope ? sentence(policy.scope, look) : 'Every application.'}</p>}</div>
+          <div data-testid="ap-shared-deliveries"><h4>One delivery for several requirements</h4><p className="ap-quiet">When two requirements ask for the same survey, nothing is merged unless it is stated here, for those requirements only.</p>
+            {policy.shared_deliveries.length ? <ul className="ap-shared">{policy.shared_deliveries.map((d, i) => <li key={i} data-testid={`ap-shared-${d.survey}`}><Icon name="link" size={14} /><span><strong>{survey(d.survey)}</strong><small>one delivery satisfies {d.requirements.map(name).join(' and ')}</small></span>{editable ? <button type="button" className="ap-iconbtn" aria-label="Remove this statement" onClick={() => change('Remove a shared delivery', (p) => { p.shared_deliveries.splice(i, 1); })}><Icon name="x" size={13} /></button> : null}</li>)}</ul> : <p className="ap-quiet">None stated. A collision shows up in the live result with a way to resolve it.</p>}</div>
         </div>
       ) : null}
     </section>
@@ -200,7 +229,7 @@ function Palette({ policy, editable, sel, onNew, onToggleProfile, profileVars }:
           <li key={s.code} draggable={editable} onDragStart={(e) => dragData(e, { kind: 'survey', id: s.code })} data-testid={`ap-pal-survey-${s.code}`}>
             <span className="ap-pal-icon survey"><Icon name="survey" size={14} /></span><span className="ap-pal-text"><strong>{s.name}</strong><small>{s.summary} · version {s.label} · {short(s.fingerprint)}</small></span>
             {used.has(s.code) ? <Tag>in use</Tag> : null}
-            {editable ? <button type="button" className="ap-iconbtn" aria-label={target ? `Add ${s.name} to ${target.name}` : `New requirement for ${s.name}`} data-testid={`ap-pal-survey-${s.code}-add`} onClick={() => (target ? toSel((r, p) => { if (r.action.kind === 'INCLUDE') { if (!r.action.surveys.some((x) => x.code === s.code)) r.action.surveys.push(s); } else if (!r.action.alternatives.some((a) => a.survey.code === s.code)) r.action.alternatives.push({ survey: s, when: null }); if (!p.order.includes(s.code)) p.order.push(s.code); }, `Add ${s.name.split(' · ')[0]}`) : onNew(null, [s], `Requires ${s.name.split(' · ')[0]}`))}><Icon name="plus" size={14} /></button> : null}
+            {editable ? <button type="button" className="ap-iconbtn" aria-label={target ? `Add ${s.name} to ${target.name}` : `New requirement for ${s.name}`} data-testid={`ap-pal-survey-${s.code}-add`} onClick={() => (target ? toSel((r, p) => { if (r.action.kind === 'INCLUDE') { if (!r.action.surveys.some((x) => x.code === s.code)) r.action.surveys.push(s); } else if (!r.action.alternatives.some((a) => a.survey.code === s.code)) r.action.alternatives.push({ survey: s, when: null }); if (!p.order.includes(s.code)) p.order.push(s.code); }, `Add ${shortName(s.name)}`) : onNew(null, [s], `Requires ${shortName(s.name)}`))}><Icon name="plus" size={14} /></button> : null}
           </li>
         )) : null}
         {tab === 'conditions' ? [...data.conditions].sort((a, b) => Number(recent.has(b.code)) - Number(recent.has(a.code))).filter((c) => hit(c.name, c.description, sentence(c.expr, look))).map((c) => (
@@ -237,7 +266,7 @@ function RequirementInspector({ policy, id, plan, all, diagnostics, onScenario, 
   return (
     <>
       <header><div><span className="ap-side-kind"><Icon name="policy" size={13} /> Requirement</span><h2>{r.name}</h2></div><button type="button" className="ap-iconbtn" aria-label="Close" onClick={onClose} data-testid="ap-inspector-close"><Icon name="x" /></button></header>
-      <p className="ap-side-says"><span className="ap-when-word">When</span> {sentence(r.when, look)} <span className="ap-then-word">then</span> {r.action.kind === 'CHOOSE_ONE' ? 'one of ' : ''}{surveysOf(r).map((s) => s.name.split(' · ')[0]).join(r.action.kind === 'CHOOSE_ONE' ? ' or ' : ', ') || 'nothing yet'}.</p>
+      <p className="ap-side-says"><span className="ap-when-word">When</span> {sentence(r.when, look)} <span className="ap-then-word">then</span> {r.action.kind === 'CHOOSE_ONE' ? 'one of ' : ''}{surveysOf(r).map((s) => shortName(s.name)).join(r.action.kind === 'CHOOSE_ONE' ? ' or ' : ', ') || 'nothing yet'}.</p>
       <section><h3>For the previewed application</h3><p><OutcomeMark r={res} /></p>
         {res?.needs?.length ? <ul className="ap-why">{res.needs.map((n) => <li key={n.name} className="is-unknown"><Icon name="question" size={13} /> {n.name}: {n.reason}</li>)}</ul> : null}
         {res?.replaced_by?.length ? <p className="ap-quiet">Replaced by {res.replaced_by.map((x) => policy.requirements.find((y) => y.id === x)?.name).join(', ')}.</p> : null}</section>

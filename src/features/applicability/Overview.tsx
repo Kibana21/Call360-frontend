@@ -5,11 +5,11 @@ import { sentence } from './model/describe';
 import type { Requirement } from './model/types';
 import { useAppl } from './store';
 import { Icon, Tag } from './ui';
-import { BASE, surveysOf } from './usage';
+import { BASE, surveysOf, shortName } from './usage';
 
 export function RequirementSentence({ r }: { r: Requirement }) {
   const { look } = useAppl();
-  const names = surveysOf(r).map((s) => s.name.split(' · ')[0]);
+  const names = surveysOf(r).map((s) => shortName(s.name));
   return (
     <p className="ap-sentence" data-testid={`ap-sentence-${r.id}`}>
       <span className="ap-when-word">When</span> <span className="ap-sentence-cond">{sentence(r.when, look)}</span>
@@ -20,8 +20,7 @@ export function RequirementSentence({ r }: { r: Requirement }) {
 }
 
 export function OverviewPage() {
-  const { data, working } = useAppl();
-  const rec = data.policies[0];
+  const { data, working, current: rec } = useAppl();
   const doc = rec ? working(rec.code) : null;
   const analysis = useAnalysis(data, doc);
   const impact = useEvaluation(data, rec?.draft, rec?.draft && rec?.published ? data.scenarios : [], rec?.published);
@@ -42,8 +41,8 @@ export function OverviewPage() {
           <header>
             <div><h2>{doc.name}</h2><p>{doc.description}</p></div>
             <div className="ap-policy-states">
-              {rec.published ? <Tag tone="published" testid="ap-state-published"><Icon name="lock" size={11} /> Version {rec.published.version} published</Tag> : <Tag tone="plain">Nothing published yet</Tag>}
-              {rec.draft ? <Tag tone="draft" testid="ap-state-draft">Version {rec.draft.version} draft{rec.unsaved ? ' · unsaved changes' : ''}</Tag> : null}
+              {rec.published ? <Tag tone="published" testid="ap-state-published"><Icon name="lock" size={11} /> Version {rec.published.version} published · simulated</Tag> : <Tag tone="plain">Nothing published yet</Tag>}
+              {rec.draft ? <Tag tone="draft" testid="ap-state-draft">Version {rec.draft.version} draft · in this tab{rec.unsaved ? ' · unsaved' : ''}</Tag> : null}
               {rec.candidate ? <Tag tone="info">{rec.candidate.state === 'APPROVED' ? 'Approved, waiting for publication' : 'In review'}</Tag> : null}
             </div>
           </header>

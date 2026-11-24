@@ -257,6 +257,440 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/applicability/assets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Applicability Asset List
+         * @description Every variable, profile and condition of the caller's markets, with its draft, open candidate and published version.
+         */
+        get: operations["applicability_asset_list"];
+        put?: never;
+        /**
+         * Applicability Asset Create
+         * @description Create a library item with its first draft. The code is unique per market and kind, and never changes.
+         */
+        post: operations["applicability_asset_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applicability/assets/{asset_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Applicability Asset Get
+         * @description One item: draft, candidates, every published version with what it pins, where it is used, and its history.
+         */
+        get: operations["applicability_asset_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applicability/assets/{asset_id}/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Applicability Draft Save
+         * @description Save the draft. Refused with 409 STALE_REVISION when someone else saved it first: nothing is overwritten.
+         */
+        put: operations["applicability_draft_save"];
+        /**
+         * Applicability Draft Start
+         * @description Start a new draft from a published version. The published version itself never changes.
+         */
+        post: operations["applicability_draft_start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applicability/assets/{asset_id}/draft/discard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Applicability Draft Discard
+         * @description Discard the working draft. Published versions and history are kept.
+         */
+        post: operations["applicability_draft_discard"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applicability/assets/{asset_id}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Applicability Asset Submit
+         * @description Freeze the saved draft as an immutable candidate. Refused while it has a blocker or reads anything unpublished.
+         */
+        post: operations["applicability_asset_submit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applicability/assets/{asset_id}/validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Applicability Asset Validate
+         * @description Check the saved draft, or an unsaved edit, without changing anything: diagnostics and what it would pin.
+         */
+        post: operations["applicability_asset_validate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applicability/candidates/{candidate_id}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Applicability Candidate Decide
+         * @description Approve a candidate or return it to its author. Never by the person who submitted it.
+         */
+        post: operations["applicability_candidate_decide"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applicability/candidates/{candidate_id}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Applicability Candidate Publish
+         * @description Publish an approved candidate as the next immutable version: a third person. The earlier version is kept.
+         */
+        post: operations["applicability_candidate_publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applicability/candidates/{candidate_id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Applicability Candidate Withdraw
+         * @description The submitter takes an open candidate back; the draft can be edited again.
+         */
+        post: operations["applicability_candidate_withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applicability/policies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Applicability Policy List
+         * @description Every saved policy of the caller's markets, most recently saved first.
+         */
+        get: operations["applicability_policy_list"];
+        put?: never;
+        /**
+         * Applicability Policy Create
+         * @description Create a saved policy draft — blank, from a pattern or as a copy. The code is unique in its market and never changes.
+         */
+        post: operations["applicability_policy_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applicability/policies/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Applicability Policy Usage
+         * @description Which saved policies depend on a library item or a published survey, and at which exact version.
+         */
+        get: operations["applicability_policy_usage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applicability/policies/{policy_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Applicability Policy Get
+         * @description One policy: its saved document, its dependency manifest, its history, and — unless ``inspection=false`` — what the
+         *     server says about it (which runs the evaluator's whole analysis).
+         */
+        get: operations["applicability_policy_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applicability/policies/{policy_id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Archive a policy: out of the gallery, never deleted */
+        post: operations["applicability_policy_archive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applicability/policies/{policy_id}/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Applicability Policy Save
+         * @description Save the draft. 409 STALE_REVISION when someone else saved first; 422 when a survey reference or a dependency pin
+         *     does not name something that exists exactly as stated. Document, manifest, dependency rows and history: one transaction.
+         */
+        put: operations["applicability_policy_save"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applicability/policies/{policy_id}/evaluate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Applicability Policy Evaluate
+         * @description The SAVED revision applied to each synthetic scenario, from exactly the dependencies it was saved against. The same
+         *     revision and the same facts give the same plan and the same fingerprints. Refused (status DEPENDENCY_STALE) while a
+         *     pinned draft has changed. Stores nothing.
+         */
+        post: operations["applicability_policy_evaluate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applicability/policies/{policy_id}/inspect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Applicability Policy Inspect
+         * @description What the server says about a document, saved or not: its pins, every dependency and its state, diagnostics per
+         *     requirement, and whether it could be published. Writes nothing.
+         */
+        post: operations["applicability_policy_inspect"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applicability/policies/{policy_id}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Applicability Policy Preview
+         * @description An UNSAVED document applied to each synthetic scenario — a what-if, marked PREVIEW, never a result of the saved
+         *     policy. Same resolution, same evaluator. Stores nothing.
+         */
+        post: operations["applicability_policy_preview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applicability/policies/{policy_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Bring an archived policy back */
+        post: operations["applicability_policy_restore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applicability/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Applicability Expression Test
+         * @description TRUE, FALSE or UNKNOWN for one expression and one set of synthetic facts, against the PERSISTED library, with
+         *     the full trace. Run by the Python evaluator; nothing is stored.
+         */
+        post: operations["applicability_expression_test"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applicability/versions/{version_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Applicability Version Get
+         * @description One candidate or published version, exactly as it was frozen.
+         */
+        get: operations["applicability_version_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applicability/workspace": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Applicability Workspace
+         * @description The library of one market as the evaluator reads it. ``published``: published versions only. ``authoring``: a
+         *     working draft stands in for its item where one exists, marked ``DRAFT``.
+         */
+        get: operations["applicability_workspace"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/assignment-rule-drafts/{draft_id}": {
         parameters: {
             query?: never;
@@ -5128,6 +5562,727 @@ export interface components {
             stage?: string | null;
             /** Wording */
             wording?: string | null;
+        };
+        /** ApplicabilityAsset */
+        ApplicabilityAsset: {
+            candidate: components["schemas"]["ApplicabilityVersion"] | null;
+            /** Code */
+            code: string;
+            draft: components["schemas"]["ApplicabilityDraft"] | null;
+            /** Draft Revision */
+            draft_revision: number;
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "VARIABLE" | "PROFILE" | "CONDITION";
+            /** Market Code */
+            market_code: string;
+            /** Name */
+            name: string;
+            published: components["schemas"]["ApplicabilityVersion"] | null;
+            /** Published Versions */
+            published_versions: number;
+            returned: components["schemas"]["ApplicabilityVersion"] | null;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "DRAFT" | "IN_REVIEW" | "APPROVED" | "RETURNED" | "PUBLISHED" | "EMPTY";
+        };
+        /** ApplicabilityAssetCreateIn */
+        ApplicabilityAssetCreateIn: {
+            /** Code */
+            code: string;
+            /** Document */
+            document: {
+                [key: string]: unknown;
+            };
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "VARIABLE" | "PROFILE" | "CONDITION";
+            /** Market Code */
+            market_code: string;
+        };
+        /** ApplicabilityAssetDetail */
+        ApplicabilityAssetDetail: {
+            candidate: components["schemas"]["ApplicabilityVersion"] | null;
+            /** Code */
+            code: string;
+            /** Diagnostics */
+            diagnostics: components["schemas"]["ApplicabilityDiagnostic"][];
+            draft: components["schemas"]["ApplicabilityDraft"] | null;
+            /** Draft Revision */
+            draft_revision: number;
+            /** Events */
+            events: components["schemas"]["ApplicabilityEvent"][];
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "VARIABLE" | "PROFILE" | "CONDITION";
+            /** Market Code */
+            market_code: string;
+            /** Name */
+            name: string;
+            /** Newer Pins */
+            newer_pins: {
+                [key: string]: unknown;
+            }[];
+            published: components["schemas"]["ApplicabilityVersion"] | null;
+            /** Published Versions */
+            published_versions: number;
+            returned: components["schemas"]["ApplicabilityVersion"] | null;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "DRAFT" | "IN_REVIEW" | "APPROVED" | "RETURNED" | "PUBLISHED" | "EMPTY";
+            /** Used By */
+            used_by: components["schemas"]["ApplicabilityUse"][];
+            /** Versions */
+            versions: components["schemas"]["ApplicabilityVersion"][];
+        };
+        /** ApplicabilityAssetList */
+        ApplicabilityAssetList: {
+            /** Items */
+            items: components["schemas"]["ApplicabilityAsset"][];
+        };
+        /** ApplicabilityDecisionIn */
+        ApplicabilityDecisionIn: {
+            /**
+             * Comment
+             * @default
+             */
+            comment: string;
+            /**
+             * Verdict
+             * @enum {string}
+             */
+            verdict: "APPROVE" | "RETURN";
+        };
+        /** ApplicabilityDiagnostic */
+        ApplicabilityDiagnostic: {
+            /** At */
+            at?: {
+                [key: string]: unknown;
+            };
+            /** Code */
+            code: string;
+            /** Message */
+            message: string;
+            /** Severity */
+            severity: string;
+        };
+        /** ApplicabilityDraft */
+        ApplicabilityDraft: {
+            /** Base Version No */
+            base_version_no: number | null;
+            /** Document */
+            document: {
+                [key: string]: unknown;
+            };
+            /**
+             * Locked
+             * @description True while a candidate is in review: the draft cannot change.
+             */
+            locked: boolean;
+            /** Revision */
+            revision: number;
+            /** Updated At */
+            updated_at: string | null;
+            /** Updated By */
+            updated_by: string | null;
+        };
+        /** ApplicabilityDraftIn */
+        ApplicabilityDraftIn: {
+            /** Document */
+            document: {
+                [key: string]: unknown;
+            };
+            /**
+             * Expected Revision
+             * @description The draft revision this edit was made on.
+             */
+            expected_revision: number;
+        };
+        /** ApplicabilityEvent */
+        ApplicabilityEvent: {
+            /** Actor */
+            actor: string;
+            /** Comment */
+            comment: string;
+            /** Detail */
+            detail: {
+                [key: string]: unknown;
+            };
+            /** Event */
+            event: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Seq */
+            seq: number;
+            /** Version Id */
+            version_id: string | null;
+        };
+        /** ApplicabilityPin */
+        ApplicabilityPin: {
+            /** Code */
+            code: string;
+            /** Content Sha256 */
+            content_sha256: string;
+            /** Kind */
+            kind: string;
+            /** Version Id */
+            version_id: string;
+            /** Version No */
+            version_no: number;
+        };
+        /** ApplicabilityPinAck */
+        ApplicabilityPinAck: {
+            /** Code */
+            code: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "VARIABLE" | "PROFILE" | "CONDITION";
+            /** Version No */
+            version_no: number;
+        };
+        /** ApplicabilityPolicy */
+        ApplicabilityPolicy: {
+            /** Code */
+            code: string;
+            /** Conditions */
+            conditions: string[];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Description */
+            description: string;
+            /** Document */
+            document: {
+                [key: string]: unknown;
+            };
+            /** Document Sha256 */
+            document_sha256: string;
+            /** Draft Revision */
+            draft_revision: number;
+            /** Events */
+            events: components["schemas"]["ApplicabilityPolicyEvent"][];
+            /** Id */
+            id: string;
+            /** @description What the server says about the saved draft. Omitted when the read asked for the document only. */
+            inspection: components["schemas"]["ApplicabilityPolicyInspection"] | null;
+            /** Market Code */
+            market_code: string;
+            /** Name */
+            name: string;
+            /** Requirements */
+            requirements: number;
+            /**
+             * Snapshot
+             * @description The stored dependency manifest of the saved draft.
+             */
+            snapshot: {
+                [key: string]: unknown;
+            };
+            /** Snapshot Sha256 */
+            snapshot_sha256: string;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "DRAFT" | "ARCHIVED";
+            /** Surveys */
+            surveys: string[];
+            /** Unpublished */
+            unpublished: number;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Updated By */
+            updated_by: string | null;
+        };
+        /** ApplicabilityPolicyArchiveIn */
+        ApplicabilityPolicyArchiveIn: {
+            /** Expected Revision */
+            expected_revision: number;
+            /**
+             * Reason
+             * @default
+             */
+            reason: string;
+        };
+        /** ApplicabilityPolicyCreateIn */
+        ApplicabilityPolicyCreateIn: {
+            /**
+             * Code
+             * @description Chosen by the person after naming the policy; it never changes.
+             */
+            code: string;
+            /** Document */
+            document: {
+                [key: string]: unknown;
+            };
+            /** Market Code */
+            market_code: string;
+            /**
+             * Origin
+             * @description BLANK, TEMPLATE:<id> or COPY:<code>; recorded in the history.
+             * @default
+             */
+            origin: string;
+        };
+        /** ApplicabilityPolicyEvaluateIn */
+        ApplicabilityPolicyEvaluateIn: {
+            /** Scenarios */
+            scenarios: components["schemas"]["ApplicabilityPolicyScenarioIn"][];
+        };
+        /** ApplicabilityPolicyEvent */
+        ApplicabilityPolicyEvent: {
+            /** Actor */
+            actor: string;
+            /** Comment */
+            comment: string;
+            /** Detail */
+            detail: {
+                [key: string]: unknown;
+            };
+            /** Draft Revision */
+            draft_revision: number;
+            /** Event */
+            event: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Seq */
+            seq: number;
+        };
+        /** ApplicabilityPolicyInspectIn */
+        ApplicabilityPolicyInspectIn: {
+            /**
+             * Document
+             * @description An unsaved document to inspect; the saved draft when omitted.
+             */
+            document?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** ApplicabilityPolicyInspection */
+        ApplicabilityPolicyInspection: {
+            /** Blockers */
+            blockers: number;
+            /** Can Evaluate */
+            can_evaluate: boolean;
+            /**
+             * Dependencies
+             * @description Each dependency with its identity, fingerprints and state: published or draft, changed since saved, newer version available.
+             */
+            dependencies: {
+                [key: string]: unknown;
+            }[];
+            /** Diagnostics */
+            diagnostics: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Pins
+             * @description Every variable and profile the document reads, and every draft condition, at the exact version or draft revision resolved.
+             */
+            pins: {
+                [key: string]: unknown;
+            }[];
+            /** Policy Fingerprint */
+            policy_fingerprint: string | null;
+            /** Readiness */
+            readiness: string;
+            /** Ready For Publication */
+            ready_for_publication: boolean;
+            /**
+             * Requirements
+             * @description What each requirement depends on.
+             */
+            requirements: {
+                [key: string]: {
+                    [key: string]: string[];
+                };
+            };
+            /** Snapshot Sha256 */
+            snapshot_sha256: string;
+            /** Stale */
+            stale: number;
+            /** Unpublished */
+            unpublished: number;
+            /**
+             * Workspace
+             * @description The definitions exactly as pinned: what the evaluator reads for this document.
+             */
+            workspace: {
+                [key: string]: {
+                    [key: string]: unknown;
+                }[];
+            };
+        };
+        /** ApplicabilityPolicyList */
+        ApplicabilityPolicyList: {
+            /** Items */
+            items: components["schemas"]["ApplicabilityPolicySummary"][];
+        };
+        /** ApplicabilityPolicyPreviewIn */
+        ApplicabilityPolicyPreviewIn: {
+            /**
+             * Compare With Saved
+             * @description Also evaluate the saved draft and say what changes for each scenario.
+             * @default false
+             */
+            compare_with_saved: boolean;
+            /** Document */
+            document: {
+                [key: string]: unknown;
+            };
+            /** Scenarios */
+            scenarios: components["schemas"]["ApplicabilityPolicyScenarioIn"][];
+        };
+        /** ApplicabilityPolicyRun */
+        ApplicabilityPolicyRun: {
+            /** Contract */
+            contract: string;
+            /** Document Sha256 */
+            document_sha256: string | null;
+            /**
+             * Draft Revision
+             * @description The saved revision this run belongs to (for a preview: the revision it was edited from).
+             */
+            draft_revision: number;
+            /** Note */
+            note: string;
+            /** Policy Fingerprint */
+            policy_fingerprint: string | null;
+            /** Reasons */
+            reasons?: {
+                [key: string]: unknown;
+            }[];
+            /** Results */
+            results: {
+                [key: string]: unknown;
+            }[];
+            /** Snapshot Sha256 */
+            snapshot_sha256: string;
+            /**
+             * Source
+             * @description SAVED: the stored revision. PREVIEW: an unsaved document — a what-if, not a result of the saved policy.
+             * @enum {string}
+             */
+            source: "SAVED" | "PREVIEW";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "OK" | "DEPENDENCY_STALE" | "INVALID_DEPENDENCY";
+        };
+        /** ApplicabilityPolicySaveIn */
+        ApplicabilityPolicySaveIn: {
+            /** Document */
+            document: {
+                [key: string]: unknown;
+            };
+            /** Expected Revision */
+            expected_revision: number;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+        };
+        /** ApplicabilityPolicyScenarioIn */
+        ApplicabilityPolicyScenarioIn: {
+            /** Facts */
+            facts?: {
+                [key: string]: unknown;
+            };
+            /** Id */
+            id: string;
+            /** Profiles */
+            profiles?: string[] | null;
+        };
+        /** ApplicabilityPolicySummary */
+        ApplicabilityPolicySummary: {
+            /** Code */
+            code: string;
+            /** Conditions */
+            conditions: string[];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Description */
+            description: string;
+            /** Document Sha256 */
+            document_sha256: string;
+            /** Draft Revision */
+            draft_revision: number;
+            /** Id */
+            id: string;
+            /** Market Code */
+            market_code: string;
+            /** Name */
+            name: string;
+            /** Requirements */
+            requirements: number;
+            /** Snapshot Sha256 */
+            snapshot_sha256: string;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "DRAFT" | "ARCHIVED";
+            /** Surveys */
+            surveys: string[];
+            /** Unpublished */
+            unpublished: number;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Updated By */
+            updated_by: string | null;
+        };
+        /** ApplicabilityPolicyUsage */
+        ApplicabilityPolicyUsage: {
+            /** Items */
+            items: components["schemas"]["ApplicabilityPolicyUse"][];
+        };
+        /** ApplicabilityPolicyUse */
+        ApplicabilityPolicyUse: {
+            /** Code */
+            code: string;
+            /** Content Sha256 */
+            content_sha256: string;
+            /** Draft Revision */
+            draft_revision: number;
+            /** Kind */
+            kind: string;
+            /** Market Code */
+            market_code: string;
+            /** Pinned Draft Revision */
+            pinned_draft_revision: number | null;
+            /** Policy Code */
+            policy_code: string;
+            /** Policy Id */
+            policy_id: string;
+            /** Policy Name */
+            policy_name: string;
+            /** Version No */
+            version_no: number | null;
+        };
+        /** ApplicabilityRevisionIn */
+        ApplicabilityRevisionIn: {
+            /** Expected Revision */
+            expected_revision: number;
+        };
+        /** ApplicabilityStartDraftIn */
+        ApplicabilityStartDraftIn: {
+            /**
+             * Version No
+             * @description The published version to start from; the latest when omitted.
+             */
+            version_no?: number | null;
+        };
+        /** ApplicabilitySubmitIn */
+        ApplicabilitySubmitIn: {
+            /** Expected Revision */
+            expected_revision: number;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+            /**
+             * Pins
+             * @description The exact versions the submitter reviewed (from `validate`). When given, the submission is refused with 409 PINS_CHANGED unless they are exactly what would be frozen now.
+             */
+            pins?: components["schemas"]["ApplicabilityPinAck"][] | null;
+        };
+        /** ApplicabilityTestIn */
+        ApplicabilityTestIn: {
+            /** Expr */
+            expr: {
+                [key: string]: unknown;
+            };
+            /** Facts */
+            facts?: {
+                [key: string]: unknown;
+            };
+            /** Market Code */
+            market_code: string;
+            /** Profiles */
+            profiles?: string[] | null;
+            /**
+             * View
+             * @default authoring
+             * @enum {string}
+             */
+            view: "authoring" | "published";
+        };
+        /** ApplicabilityTestOut */
+        ApplicabilityTestOut: {
+            /** Diagnostics */
+            diagnostics: components["schemas"]["ApplicabilityDiagnostic"][];
+            /** Error */
+            error?: {
+                [key: string]: unknown;
+            } | null;
+            /** Facts */
+            facts: {
+                [key: string]: unknown;
+            };
+            /** Result */
+            result: ("TRUE" | "FALSE" | "UNKNOWN") | null;
+            /** Trace */
+            trace: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** ApplicabilityUse */
+        ApplicabilityUse: {
+            /** Code */
+            code: string;
+            /** Kind */
+            kind: string;
+            /** Name */
+            name: string;
+            /** Pinned Version */
+            pinned_version: number | null;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "PUBLISHED" | "EARLIER_VERSION" | "IN_REVIEW" | "DRAFT";
+            /** Version No */
+            version_no: number | null;
+        };
+        /** ApplicabilityValidateIn */
+        ApplicabilityValidateIn: {
+            /**
+             * Document
+             * @description An unsaved edit to check; the saved draft when omitted.
+             */
+            document?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** ApplicabilityValidateOut */
+        ApplicabilityValidateOut: {
+            /** Can Submit */
+            can_submit: boolean;
+            /** Diagnostics */
+            diagnostics: components["schemas"]["ApplicabilityDiagnostic"][];
+            /** Pins */
+            pins: components["schemas"]["ApplicabilityPin"][];
+        };
+        /** ApplicabilityVersion */
+        ApplicabilityVersion: {
+            /** Candidate No */
+            candidate_no: number;
+            /** Content Sha256 */
+            content_sha256: string;
+            /** Decided At */
+            decided_at: string | null;
+            /** Decided By */
+            decided_by: string | null;
+            /** Decision Comment */
+            decision_comment: string | null;
+            /** Document */
+            document: {
+                [key: string]: unknown;
+            };
+            /** Draft Revision */
+            draft_revision: number;
+            /** Id */
+            id: string;
+            /** Is Approver */
+            is_approver: boolean;
+            /** Is Submitter */
+            is_submitter: boolean;
+            /** Manifest Sha256 */
+            manifest_sha256: string;
+            /** Note */
+            note: string;
+            /**
+             * Pins
+             * @description The exact published versions this candidate reads.
+             */
+            pins: components["schemas"]["ApplicabilityPin"][];
+            /** Published At */
+            published_at: string | null;
+            /** Published By */
+            published_by: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "SUBMITTED" | "APPROVED" | "RETURNED" | "WITHDRAWN" | "PUBLISHED" | "SUPERSEDED";
+            /**
+             * Submitted At
+             * Format: date-time
+             */
+            submitted_at: string;
+            /** Submitted By */
+            submitted_by: string;
+            /**
+             * Version No
+             * @description Set when the candidate was published.
+             */
+            version_no: number | null;
+        };
+        /** ApplicabilityWithdrawIn */
+        ApplicabilityWithdrawIn: {
+            /**
+             * Reason
+             * @default
+             */
+            reason: string;
+        };
+        /** ApplicabilityWorkspace */
+        ApplicabilityWorkspace: {
+            /** Conditions */
+            conditions: {
+                [key: string]: unknown;
+            }[];
+            /** Market Code */
+            market_code: string;
+            /** Profiles */
+            profiles: {
+                [key: string]: unknown;
+            }[];
+            /** Variables */
+            variables: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * View
+             * @enum {string}
+             */
+            view: "authoring" | "published";
         };
         /** ApplyAssignmentIn */
         ApplyAssignmentIn: {
@@ -18481,6 +19636,1892 @@ export interface operations {
             };
             /** @description Precondition Required */
             428: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    applicability_asset_list: {
+        parameters: {
+            query?: {
+                kind?: ("VARIABLE" | "PROFILE" | "CONDITION") | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicabilityAssetList"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    applicability_asset_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplicabilityAssetCreateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicabilityAssetDetail"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    applicability_asset_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicabilityAssetDetail"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    applicability_draft_save: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplicabilityDraftIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicabilityAssetDetail"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    applicability_draft_start: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplicabilityStartDraftIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicabilityAssetDetail"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    applicability_draft_discard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplicabilityRevisionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicabilityAssetDetail"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    applicability_asset_submit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplicabilitySubmitIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicabilityAssetDetail"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    applicability_asset_validate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplicabilityValidateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicabilityValidateOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    applicability_candidate_decide: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                candidate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplicabilityDecisionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicabilityAssetDetail"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    applicability_candidate_publish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                candidate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicabilityAssetDetail"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    applicability_candidate_withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                candidate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplicabilityWithdrawIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicabilityAssetDetail"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    applicability_policy_list: {
+        parameters: {
+            query?: {
+                archived?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicabilityPolicyList"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    applicability_policy_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplicabilityPolicyCreateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicabilityPolicy"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    applicability_policy_usage: {
+        parameters: {
+            query?: {
+                kind?: ("VARIABLE" | "PROFILE" | "CONDITION" | "SURVEY") | null;
+                code?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicabilityPolicyUsage"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    applicability_policy_get: {
+        parameters: {
+            query?: {
+                inspection?: boolean;
+            };
+            header?: never;
+            path: {
+                policy_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicabilityPolicy"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    applicability_policy_archive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                policy_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplicabilityPolicyArchiveIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicabilityPolicy"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    applicability_policy_save: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                policy_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplicabilityPolicySaveIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicabilityPolicy"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    applicability_policy_evaluate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                policy_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplicabilityPolicyEvaluateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicabilityPolicyRun"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    applicability_policy_inspect: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                policy_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplicabilityPolicyInspectIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicabilityPolicyInspection"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    applicability_policy_preview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                policy_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplicabilityPolicyPreviewIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicabilityPolicyRun"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    applicability_policy_restore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                policy_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplicabilityPolicyArchiveIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicabilityPolicy"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    applicability_expression_test: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplicabilityTestIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicabilityTestOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    applicability_version_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicabilityVersion"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    applicability_workspace: {
+        parameters: {
+            query?: {
+                market_code?: string | null;
+                view?: "authoring" | "published";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicabilityWorkspace"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

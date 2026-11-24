@@ -34,6 +34,7 @@ import { keepFrame } from '../model/standalone';
 import { PlaceProvider, type Place } from '../place';
 import { applicabilityEnabled } from '../../applicability/flag';
 import { ApplicabilityRoot } from '../../applicability/Shell';
+import { ApplicabilityReturn } from '../../applicability/WhereUsed';
 
 
 // the baseline of each survey opened in this page, beside its unsaved workspace (store.tsx): memory only
@@ -44,6 +45,7 @@ export const forgetOpenedSurveys = () => { baselines.clear(); forgetPersistedMem
 export function PersistedStudioRoot() {
   return (
     <div className="ss" data-testid="survey-studio" data-mode="persisted">
+      <ApplicabilityReturn />
       <Routes>
         <Route index element={<><Bar crumbs={['Survey Studio']} /><WorkspacePage CreateForm={CreateForm} /></>} />
         <Route path="rules" element={<RulesExplorerPage />} />

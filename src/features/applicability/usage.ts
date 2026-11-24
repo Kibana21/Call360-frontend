@@ -70,3 +70,6 @@ export function composed(d: Data, codes: string[]) {
   return { rows, constraints, profiles: [...seen] };
 }
 export const BASE = B;
+
+/** A survey's name where space is short: without the collection prefix and the "(synthetic demo)" suffix. */
+export const shortName = (name: string | undefined): string => (name ?? '').replace(/^Applicability Showcase · /, '').replace(/ \(synthetic demo\)$/, '') || (name ?? '');

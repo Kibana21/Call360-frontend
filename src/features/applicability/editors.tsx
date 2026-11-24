@@ -4,6 +4,7 @@
 import { useMemo, useState } from 'react';
 import { MANY, NO_OPERAND, WORDS, childPath, operatorsFor, sentence, starter, valueLabel, withOperator } from './model/describe';
 import type { Condition, Diagnostic, Expr, Operator, Scalar, Trace, Tri, Variable } from './model/types';
+import { applicabilityLibrary } from './flag';
 import { useAppl } from './store';
 import { Icon, Picker, Tag, TriMark, type PickItem } from './ui';
 
@@ -227,6 +228,10 @@ function TestRow({ node, onChange, t, id, issues }: { node: Extract<Expr, { op: 
 }
 
 /** "Add": a fact about the application, a saved condition, or a nested group. */
+/** The version a new reference names. With the saved library on, a condition that has a published version is
+    referenced at that exact PUBLISHED version — never at a draft that only exists as work in progress. */
+export const pinOf = (c: { version: number; status: string; history?: { version: number }[] }): number =>
+  applicabilityLibrary() && c.status === 'DRAFT' && c.history?.length ? Math.max(...c.history.map((h) => h.version)) : c.version;
 export function AddMenu({ onAdd, self, testid, label, allowGroup, primary, level = 'advanced' }: { onAdd: (e: Expr) => void; self?: string; testid: string; label: string; allowGroup?: boolean; primary?: boolean; level?: Level }) {
   const { data, look, openDrawer } = useAppl();
   const vars = useVariableItems();
@@ -241,7 +246,7 @@ export function AddMenu({ onAdd, self, testid, label, allowGroup, primary, level
       <Picker label="Add a fact about the application" testid={`${testid}-fact`} items={vars} placeholder="Search variables…" onPick={(id) => { setMode('variable'); const v = look.variable(id); if (v) onAdd(starter(v)); }}
         button={<span className={`ap-btn ${primary ? 'primary' : 'quiet'}`} onMouseDown={() => setMode('variable')}><Icon name="plus" size={13} /> {label === 'Add' ? 'Fact' : label}</span>}
         footer={(close, q) => <button type="button" className="ap-pop-create" data-testid={`${testid}-fact-create`} onClick={() => { close(); openDrawer({ kind: 'variable', name: q, then: (made) => onAdd(starter(made)) }); }}><Icon name="plus" size={13} /> Create a variable{q ? ` called “${q}”` : ''}</button>} />
-      {level === 'advanced' ? <Picker label="Use a saved condition" testid={`${testid}-saved`} items={conds} placeholder="Search saved conditions…" onPick={(id) => { setMode('condition'); const c = look.condition(id); if (c) onAdd({ op: 'ref', condition: c.code, version: c.version }); else pick(id); }}
+      {level === 'advanced' ? <Picker label="Use a saved condition" testid={`${testid}-saved`} items={conds} placeholder="Search saved conditions…" onPick={(id) => { setMode('condition'); const c = look.condition(id); if (c) onAdd({ op: 'ref', condition: c.code, version: pinOf(c) }); else pick(id); }}
         button={<span className="ap-btn quiet"><Icon name="condition" size={13} /> Saved condition</span>}
         footer={(close) => <button type="button" className="ap-pop-create" data-testid={`${testid}-saved-create`} onClick={() => { close(); openDrawer({ kind: 'condition', then: (made) => onAdd({ op: 'ref', condition: made.code, version: made.version }) }); }}><Icon name="plus" size={13} /> Create a condition</button>} /> : null}
       {allowGroup && level !== 'simple' ? <button type="button" className="ap-btn quiet" data-testid={`${testid}-group`} onClick={() => onAdd({ op: 'any', args: [] })}><Icon name="canvas" size={13} /> Group</button> : null}

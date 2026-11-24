@@ -5,8 +5,9 @@ import { Link } from 'react-router-dom';
 import { useConditionTest } from './api';
 import { ConditionBuilder, type Level } from './editors';
 import { FactsEditor } from './facts';
-import { sentence, slug } from './model/describe';
+import { same, sentence, slug } from './model/describe';
 import type { Condition, Expr, Facts, Trace } from './model/types';
+import { LibraryBar, LibraryDot, useLibrary } from './library';
 import { useAppl } from './store';
 import { Empty, Icon, Segmented, Tag, TriMark, useParamState } from './ui';
 import { conditionUses, reach } from './usage';
@@ -38,11 +39,14 @@ export function ConditionLabPage() {
 
 function Lab({ chosen, pick }: { chosen: string | null; pick: (c: string | null) => void }) {
   const { data, update, say, look } = useAppl();
+  const lib = useLibrary();
   const [q, setQ] = useState('');
   const sel = data.conditions.find((c) => c.code === chosen) ?? (chosen === 'new' ? undefined : data.conditions[0]);
   const fresh = chosen === 'new';
   const [work, setWork] = useState<{ name: string; description: string; expr: Expr | null }>(() => (sel ? { name: sel.name, description: sel.description, expr: sel.expr } : { name: '', description: '', expr: null }));
   const [level, setLevel] = useState<Level>(() => levelOf(sel?.expr ?? null));
+  // a deeply nested condition needs room: the builder alone, full width, with the live test beneath it
+  const [focus, setFocus] = useState(false);
   const [facts, setFacts] = useState<Facts>({});
   const test = useConditionTest(data, work.expr, facts);
   const reads = useMemo(() => [...reach(data, work.expr).variables].filter((c) => !look.variable(c)?.derived || true), [data, work.expr, look]);
@@ -53,7 +57,7 @@ function Lab({ chosen, pick }: { chosen: string | null; pick: (c: string | null)
     if (Object.keys(add).length) setFacts((f) => ({ ...add, ...f }));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reads.join('|')]);
-  const dirty = !sel ? !!work.expr || !!work.name : sel.name !== work.name || sel.description !== work.description || JSON.stringify(sel.expr) !== JSON.stringify(work.expr);
+  const dirty = !sel ? !!work.expr || !!work.name : sel.name !== work.name || sel.description !== work.description || !same(sel.expr, work.expr);
   const diagnostics = test.data?.diagnostics ?? [];
   const blockers = diagnostics.filter((d) => d.severity === 'BLOCKER');
   const code = sel?.code ?? slug(work.name);
@@ -64,23 +68,25 @@ function Lab({ chosen, pick }: { chosen: string | null; pick: (c: string | null)
   const save = () => {
     if (!work.expr) return;
     const published = sel?.status === 'PUBLISHED';
-    const exprChanged = !sel || JSON.stringify(sel.expr) !== JSON.stringify(work.expr);
+    const exprChanged = !sel || !same(sel.expr, work.expr);
     const made: Condition = { code, name: work.name.trim(), description: work.description, expr: work.expr, status: 'DRAFT',
       version: sel ? sel.version + (published && exprChanged ? 1 : 0) : 1, history: sel && published && exprChanged ? [...(sel.history ?? []), { version: sel.version, expr: sel.expr }] : sel?.history };
-    if (sel && published && !exprChanged) made.status = 'PUBLISHED';
+    if (sel && published && !exprChanged && !lib.on) made.status = 'PUBLISHED';
     update(sel ? `Change condition ${made.name}` : `Create condition ${made.name}`, (d) => { const i = d.conditions.findIndex((c) => c.code === code); if (i >= 0) d.conditions[i] = made; else d.conditions.push(made); });
-    say(sel && published && exprChanged ? `Saved as version ${made.version}. Policies that name version ${sel.version} are unchanged.` : `${made.name} saved`);
+    if (!lib.on) say(sel && published && exprChanged ? `Saved as version ${made.version}. Policies that name version ${sel.version} are unchanged.` : `${made.name} saved`);
+    // with the saved library on, "Save" keeps it in Call360 as a draft at once — never as a published version
+    if (lib.on) void lib.save('CONDITION', code, { item: made });
     if (!sel) pick(code);
   };
   const publish = () => { if (!sel) return; update(`Publish condition ${sel.name}`, (d) => { const c = d.conditions.find((x) => x.code === sel.code); if (c) c.status = 'PUBLISHED'; }); say(`${sel.name} version ${sel.version} published`); };
   const result = test.data?.status === 'OK' ? test.data.result : undefined;
   const why = reasons(test.data?.trace);
   return (
-    <div className="ap-page ap-lab" data-testid="ap-conditions">
+    <div className={`ap-page ap-lab${focus ? ' focus' : ''}`} data-testid="ap-conditions" data-focus={focus}>
       <aside className="ap-list" aria-label="Saved conditions">
         <header><h2>Saved conditions</h2><button type="button" className="ap-btn quiet" onClick={() => pick('new')} data-testid="ap-condition-new"><Icon name="plus" size={13} /> New</button></header>
         <label className="ap-searchbox"><Icon name="search" size={14} /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search conditions" aria-label="Search conditions" data-testid="ap-condition-search" /></label>
-        <ul>{shown.map((c) => <li key={c.code}><button type="button" className={c.code === sel?.code ? 'on' : ''} onClick={() => pick(c.code)} data-testid={`ap-condition-${c.code}`}><span className="ap-list-icon cond"><Icon name="condition" size={15} /></span><span><strong>{c.name}</strong><small>{sentence(c.expr, look)}</small></span>{c.status === 'DRAFT' ? <Tag tone="draft">v{c.version} draft</Tag> : <Tag>v{c.version}</Tag>}</button></li>)}
+        <ul>{shown.map((c) => <li key={c.code}><button type="button" className={c.code === sel?.code ? 'on' : ''} onClick={() => pick(c.code)} data-testid={`ap-condition-${c.code}`}><span className="ap-list-icon cond"><Icon name="condition" size={15} /></span><span><strong>{c.name}</strong><small>{sentence(c.expr, look)}</small></span>{lib.on ? <><LibraryDot kind="CONDITION" code={c.code} /><Tag>v{c.version}</Tag></> : c.status === 'DRAFT' ? <Tag tone="draft">v{c.version} draft</Tag> : <Tag>v{c.version}</Tag>}</button></li>)}
           {!shown.length ? <li className="ap-pop-none">No condition matches.</li> : null}</ul>
       </aside>
 
@@ -91,15 +97,17 @@ function Lab({ chosen, pick }: { chosen: string | null; pick: (c: string | null)
             <input className="ap-sub-input" aria-label="What this condition is for" placeholder="What is it for? (optional)" value={work.description} onChange={(e) => { const description = e.target.value; setWork((w) => ({ ...w, description })); }} />
           </div>
           <div className="ap-savebar" data-testid="ap-condition-state" data-state={dirty ? 'unsaved' : sel?.status === 'PUBLISHED' ? 'published' : 'saved'}>
-            {dirty ? <Tag tone="warn">Unsaved changes</Tag> : sel ? <Tag tone={sel.status === 'PUBLISHED' ? 'published' : 'draft'}>{sel.status === 'PUBLISHED' ? `Version ${sel.version} published` : `Version ${sel.version} draft, saved`}</Tag> : null}
+            {dirty ? <Tag tone="warn">Unsaved changes</Tag> : sel && !lib.on ? <Tag tone={sel.status === 'PUBLISHED' ? 'published' : 'draft'}>{sel.status === 'PUBLISHED' ? `Version ${sel.version} published` : `Version ${sel.version} draft, saved`}</Tag> : null}
             {dirty && sel ? <button type="button" className="ap-btn quiet" onClick={() => setWork({ name: sel.name, description: sel.description, expr: sel.expr })}>Discard</button> : null}
-            <button type="button" className="ap-btn primary" disabled={!canSave} onClick={save} data-testid="ap-condition-save"><Icon name="check" size={13} /> {sel?.status === 'PUBLISHED' && JSON.stringify(sel.expr) !== JSON.stringify(work.expr) ? `Save as version ${sel.version + 1}` : 'Save'}</button>
-            {sel && !dirty && sel.status === 'DRAFT' ? <button type="button" className="ap-btn" onClick={publish} data-testid="ap-condition-publish">Publish version {sel.version}</button> : null}
+            <button type="button" className="ap-btn primary" disabled={!canSave} onClick={save} data-testid="ap-condition-save"><Icon name="check" size={13} /> {sel?.status === 'PUBLISHED' && !same(sel.expr, work.expr) ? `Save as version ${sel.version + 1}` : 'Save'}</button>
+            {!lib.on && sel && !dirty && sel.status === 'DRAFT' ? <button type="button" className="ap-btn" onClick={publish} data-testid="ap-condition-publish">Publish version {sel.version}</button> : null}
           </div>
         </header>
+        {sel && !dirty ? <LibraryBar key={sel.code} kind="CONDITION" code={sel.code} /> : null}
         {clash ? <p className="ap-field-error"><Icon name="warn" size={12} /> A condition with this name already exists.</p> : null}
 
         <div className="ap-levelbar">
+          <button type="button" className={`ap-btn quiet${focus ? ' on' : ''}`} aria-pressed={focus} onClick={() => setFocus(!focus)} data-testid="ap-lab-focus" title="Give the builder the whole width; the list of conditions is hidden and the live test moves beneath it"><Icon name="canvas" size={13} /> {focus ? 'Show the list and the test beside it' : 'Focus on the builder'}</button>
           <Segmented label="How much of the builder to show" value={level} onChange={setLevel} testid="ap-condition-level" options={[{ value: 'simple', label: 'Simple', testid: 'ap-level-simple' }, { value: 'grouped', label: 'Grouped', testid: 'ap-level-grouped' }, { value: 'advanced', label: 'Advanced', testid: 'ap-level-advanced' }]} />
           <span className="ap-quiet">{level === 'simple' ? 'One fact, one comparison, one value.' : level === 'grouped' ? 'Combine lines with “all of” and “any of”, negate them, nest groups.' : 'Everything, including saved conditions inside this one.'}</span>
         </div>

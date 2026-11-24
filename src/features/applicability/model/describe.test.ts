@@ -41,7 +41,9 @@ describe('Survey applicability — wording and document helpers (no evaluation h
     const uses = variableUses(d, 'product_family');
     expect(uses.map((u) => `${u.kind}:${u.label}`)).toEqual(expect.arrayContaining(['variable:Is ILP', 'condition:Is ILP', 'condition:ILP with NFTF', 'profile:Common insurance application', 'policy:ILP needs the ILP survey']));
     expect(conditionUses(d, 'nftf_applies').some((u) => u.label === 'ILP with NFTF needs the combined survey' && u.detail.includes('through another condition'))).toBe(true);
-    expect(surveyUses(d, 'S-C').map((u) => u.detail)).toEqual(['Singapore new business · draft v2 · pins version 1.0']);
+    // the seed names real Survey Studio codes; the exact version is pinned only when Survey Studio's catalogue is read
+    expect(surveyUses(d, 'S-APPL-DEMO-COMBINED').map((u) => u.detail)).toEqual(['ILP and NFTF showcase · draft v2 · pins version 0']);
+    expect(d.surveys).toEqual([]); // no survey is invented in the browser
   });
   it('composes profiles by reference, with where each variable came from and what each profile narrows', () => {
     const c = composed(d, ['ilp_extension', 'nftf_extension']);

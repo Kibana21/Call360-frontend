@@ -6,6 +6,7 @@ import { useConditionTest } from './api';
 import { ConditionBuilder, SOURCE_WORD } from './editors';
 import { TYPE_HINT, TYPE_LABEL, mentions, sentence, slug } from './model/describe';
 import type { Condition, Expr, Option, Variable, VarType } from './model/types';
+import { useLibrary } from './library';
 import { useAppl } from './store';
 import { DrawerPanel, Field, Icon, Tag, type IconName } from './ui';
 
@@ -16,6 +17,7 @@ const similar = (a: string, b: string) => { const x = a.toLowerCase().replace(/[
 
 export function VariableDrawer() {
   const { data, drawer, openDrawer, update, say } = useAppl();
+  const lib = useLibrary();
   const d = drawer?.kind === 'variable' ? drawer : null;
   const existing = d?.code ? data.variables.find((v) => v.code === d.code) : undefined;
   const [step, setStep] = useState(0);
@@ -51,7 +53,8 @@ export function VariableDrawer() {
         if (!profiles.includes(p.code) && has) p.sections.forEach((s) => { s.variables = s.variables.filter((c) => c !== code); });
       });
     });
-    say(existing ? `${made.name} changed — a new draft version` : `${made.name} created`);
+    // with the saved library on it is kept in Call360 as a DRAFT: usable while designing, never a published dependency
+    if (lib.on) void lib.save('VARIABLE', code, { item: made }); else say(existing ? `${made.name} changed — a new draft version` : `${made.name} created`);
     close();
     d.then?.(made);
   };
@@ -155,6 +158,7 @@ export function VariableDrawer() {
 /** A saved condition created (or changed) over the current page, with a live test beside it. */
 export function ConditionDrawer() {
   const { data, drawer, openDrawer, update, say, look } = useAppl();
+  const lib = useLibrary();
   const d = drawer?.kind === 'condition' ? drawer : null;
   const existing = d?.code ? data.conditions.find((c) => c.code === d.code) : undefined;
   const [name, setName] = useState(existing?.name ?? '');
@@ -172,7 +176,7 @@ export function ConditionDrawer() {
     const published = existing?.status === 'PUBLISHED';
     const made: Condition = { code, name: name.trim(), description, expr, version: existing ? existing.version + (published ? 1 : 0) : 1, status: 'DRAFT', history: existing && published ? [...(existing.history ?? []), { version: existing.version, expr: existing.expr }] : existing?.history };
     update(existing ? `Change condition ${made.name}` : `Create condition ${made.name}`, (x) => { const i = x.conditions.findIndex((c) => c.code === code); if (i >= 0) x.conditions[i] = made; else x.conditions.push(made); });
-    say(existing ? `${made.name}: draft version ${made.version}. Policies keep the version they name.` : `${made.name} saved`);
+    if (lib.on) void lib.save('CONDITION', code, { item: made }); else say(existing ? `${made.name}: draft version ${made.version}. Policies keep the version they name.` : `${made.name} saved`);
     close();
     d.then?.(made);
   };

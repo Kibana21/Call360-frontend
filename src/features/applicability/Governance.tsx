@@ -4,13 +4,15 @@
 import { useMemo, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useAnalysis, useEvaluation } from './api';
+import { Dependencies, PolicyBar, usePolicies } from './policyService';
+import { savedPolicy } from './policyStore';
 import { RequirementSentence } from './Overview';
 import { TYPE_LABEL, sentence } from './model/describe';
 import type { Diagnostic, Persona, Policy } from './model/types';
 import { Impact } from './Scenarios';
 import { PEOPLE, logEvent, useAppl, who } from './store';
 import { Empty, Icon, Tag, short } from './ui';
-import { BASE, reach, surveysOf } from './usage';
+import { BASE, reach, surveysOf, shortName } from './usage';
 
 type Tab = 'review' | 'validation' | 'impact' | 'manifest' | 'history';
 const STAGES = ['Draft', 'Validated', 'In review', 'Approved', 'Published'] as const;
@@ -21,11 +23,15 @@ export function GovernancePage() {
   const { code } = useParams();
   const [params, setParams] = useSearchParams();
   const tab = (params.get('tab') as Tab) || 'review';
-  const rec = data.policies.find((p) => p.code === code) ?? data.policies[0];
+  const { current } = useAppl();
+  const rec = data.policies.find((p) => p.code === code) ?? current;
   const [note, setNote] = useState('');
   const [reason, setReason] = useState('');
   const subject: Policy | null = rec ? rec.candidate?.policy ?? rec.draft ?? rec.published : null;
   const analysis = useAnalysis(data, subject);
+  const pol = usePolicies();
+  // APPL-X3: a saved policy has NO simulated approval. It is a working draft; publication arrives with APPL-X4.
+  const persisted = pol.on && !!rec && !!savedPolicy(rec.code);
   const impact = useEvaluation(data, rec?.candidate?.policy ?? rec?.draft, rec?.published && (rec.candidate || rec.draft) ? data.scenarios : [], rec?.published);
   const manifest = useMemo(() => {
     if (!subject) return { variables: [], conditions: [], surveys: [], profiles: [] as string[] };
@@ -60,10 +66,19 @@ export function GovernancePage() {
   return (
     <div className="ap-page ap-gov" data-testid="ap-governance">
       <header className="ap-pagehead">
-        <div><h1>{subject.name}</h1><p>Reviewed and published as one policy, by three different people: the person who wrote it, a checker, and a publisher.</p></div>
-        <div className="ap-policy-states">{rec.published ? <Tag tone="published" testid="ap-gov-published"><Icon name="lock" size={11} /> Version {rec.published.version} published</Tag> : null}{rec.draft && !cand ? <Tag tone="draft">Version {rec.draft.version} draft</Tag> : null}{cand ? <Tag tone="info" testid="ap-gov-candidate">Version {cand.policy.version} {cand.state === 'APPROVED' ? 'approved' : 'in review'}</Tag> : null}</div>
+        {persisted ? <div><h1>{subject.name}</h1><p>What this saved draft would need before it could be published. Nothing on this page publishes it.</p></div> : <div><h1>{subject.name}</h1><p>Reviewed and published as one policy, by three different people: the person who wrote it, a checker, and a publisher.</p><p className="ap-simulated" data-testid="ap-gov-simulated"><Icon name="info" size={13} /> <strong>Simulated in this prototype.</strong> The three people are a switch in this page and nothing is recorded in Call360. Only Survey Studio’s own publication of surveys is enforced by the server today.</p></div>}
+        <div className="ap-policy-states">{rec.published ? <Tag tone="published" testid="ap-gov-published"><Icon name="lock" size={11} /> Version {rec.published.version} published · simulated</Tag> : null}{rec.draft && !cand ? <Tag tone="draft">Version {rec.draft.version} draft</Tag> : null}{cand ? <Tag tone="info" testid="ap-gov-candidate">Version {cand.policy.version} {cand.state === 'APPROVED' ? 'approved' : 'in review'}</Tag> : null}</div>
       </header>
 
+      {persisted && rec ? (
+        <section className="ap-nextstep ap-x4" data-testid="ap-gov-readiness" data-ready={analysis.data?.inspection?.ready_for_publication ?? false}>
+          <PolicyBar rec={rec} />
+          <h2>{analysis.data?.inspection ? (analysis.data.inspection.ready_for_publication ? 'No blocker was found' : analysis.data.inspection.stale ? 'A dependency changed — not ready for publication' : analysis.data.inspection.unpublished ? 'Draft contains unpublished dependencies — not ready for publication' : 'Not ready for publication') : 'Checking…'}</h2>
+          <p data-testid="ap-gov-readiness-says">{analysis.data?.inspection?.readiness}</p>
+          <p className="ap-quiet"><Icon name="info" size={13} /> <strong>A policy cannot be submitted, approved or published yet.</strong> This page shows what would stand in the way. Review by three different people, and published policy versions, arrive with the next checkpoint; until then nothing here records an approval, and no one is impersonated.</p>
+          <Dependencies rec={rec} inspection={analysis.data?.inspection} editable={pol.canEdit} />
+        </section>
+      ) : (<>
       <ol className="ap-stages" aria-label="Where this version is" data-testid="ap-stages" data-stage={STAGES[stage]}>
         {STAGES.map((s, i) => <li key={s} className={i < stage ? 'done' : i === stage ? 'at' : ''}><span>{i < stage ? <Icon name="check" size={12} /> : i + 1}</span>{s}</li>)}
       </ol>
@@ -76,7 +91,7 @@ export function GovernancePage() {
             {!cand ? (
               <>
                 <textarea className="ap-input" rows={2} placeholder="A note for the checker: what changed and why" value={note} onChange={(e) => setNote(e.target.value)} aria-label="Note for the checker" data-testid="ap-gov-note" />
-                {persona !== 'maker' ? refuse('Only the maker submits a policy for review.') : blockers.length ? refuse(`${blockers.length} blocking problem${blockers.length === 1 ? '' : 's'} must be fixed first.`) : rec.unsaved ? refuse('Save the draft before submitting it.') : null}
+                {persona !== 'maker' ? refuse('Only the maker submits a policy for review.') : blockers.length ? refuse(`${blockers.length} blocking problem${blockers.length === 1 ? '' : 's'} must be fixed first.`) : rec.unsaved ? refuse('Keep the draft (in the designer) before submitting it.') : null}
                 <button type="button" className="ap-btn primary" disabled={persona !== 'maker' || !!blockers.length || rec.unsaved || !analysis.data} onClick={submit} data-testid="ap-gov-submit"><Icon name="arrow" size={13} /> Submit version {rec.draft?.version} for review</button>
               </>
             ) : cand.state === 'IN_REVIEW' ? (
@@ -94,7 +109,8 @@ export function GovernancePage() {
             )}
           </div>
         </section>
-      ) : <section className="ap-nextstep done" data-testid="ap-gov-next"><div className="ap-nextstep-who"><span className="ap-avatar ok"><Icon name="check" size={14} /></span><div><strong>Version {rec.published?.version} is published</strong><span>Nothing is waiting. To change it, open the designer: a new draft version starts from this one.</span></div></div><Link className="ap-btn" to={`${BASE}/policies/${rec.code}`}>Open the designer</Link></section>}
+      ) : <section className="ap-nextstep done" data-testid="ap-gov-next"><div className="ap-nextstep-who"><span className="ap-avatar ok"><Icon name="check" size={14} /></span><div><strong>Version {rec.published?.version} is published — in this prototype only</strong><span>Nothing is waiting. To change it, open the designer: a new draft version starts from this one.</span></div></div><Link className="ap-btn" to={`${BASE}/policies/${rec.code}`}>Open the designer</Link></section>}
+      </>)}
 
       <div className="ap-tabs" role="tablist" aria-label="Review">
         {([['review', 'eye', 'What is being published'], ['validation', 'warn', `Validation${blockers.length ? ` · ${blockers.length} to fix` : warnings.length ? ` · ${warnings.length} to check` : ''}`], ['impact', 'replace', `Impact${changedCount ? ` · ${changedCount} change${changedCount === 1 ? '' : 's'}` : ''}`], ['manifest', 'lock', 'Pinned versions'], ['history', 'history', 'History']] as const).map(([id, icon, label]) => <button key={id} type="button" role="tab" aria-selected={tab === id} className={tab === id ? 'on' : ''} onClick={() => go(id)} data-testid={`ap-gov-tab-${id}`}><Icon name={icon} size={14} /> {label}</button>)}
@@ -104,8 +120,8 @@ export function GovernancePage() {
         <section className="ap-gov-review" data-testid="ap-gov-review">
           <div className="ap-policy-sentences">{subject.requirements.map((r) => <RequirementSentence key={r.id} r={r} />)}</div>
           <dl className="ap-facts-dl wide">
-            <dt>Delivery order</dt><dd>{subject.order.map((c, i) => `${i + 1}. ${manifest.surveys.find((s) => s.code === c)?.name.split(' · ')[0] ?? c}`).join('   ')}</dd>
-            <dt>A survey asked for twice</dt><dd>{subject.same_survey === 'ONE_DELIVERY' ? 'is delivered once and satisfies every requirement that asked for it' : subject.same_survey === 'CONFLICT' ? 'is a conflict' : 'not stated'}</dd>
+            <dt>Delivery order</dt><dd>{subject.order.map((c, i) => `${i + 1}. ${shortName(manifest.surveys.find((s) => s.code === c)?.name) || c}`).join('   ')}</dd>
+            <dt>Shared deliveries</dt><dd>{subject.shared_deliveries.length ? subject.shared_deliveries.map((d) => `${shortName(manifest.surveys.find((x) => x.code === d.survey)?.name) || d.survey}: one delivery for ${d.requirements.length} requirements`).join('; ') : 'none stated — the same survey asked for twice stays unresolved'}</dd>
             <dt>Applies to</dt><dd>{subject.market} · {subject.profiles.map((c) => data.profiles.find((p) => p.code === c)?.name ?? c).join(' + ')}{subject.scope ? ` · only when ${sentence(subject.scope, look)}` : ''}</dd>
             <dt>Fingerprint</dt><dd><code data-testid="ap-gov-fingerprint">{analysis.data?.policy_fingerprint ?? '…'}</code></dd>
           </dl>

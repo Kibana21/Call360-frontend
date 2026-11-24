@@ -19,9 +19,11 @@ const STATUS: Record<Plan['status'], { word: string; tone: string; icon: IconNam
   SCOPE_UNRESOLVED: { word: 'Cannot tell whether this policy covers it', tone: 'unknown', icon: 'question' }, ERROR: { word: 'Could not be evaluated', tone: 'bad', icon: 'warn' },
 };
 
-export function PlanView({ plan, onSurvey, onRequirement, onNeed, activeSurvey, compact, testid = 'ap-plan' }: {
+export function PlanView({ plan, onSurvey, onRequirement, onNeed, onResolve, activeSurvey, compact, testid = 'ap-plan' }: {
   plan: Plan | undefined; onSurvey?: (code: string) => void; onRequirement?: (id: string) => void; onNeed?: (variable: string) => void;
   activeSurvey?: string | null; compact?: boolean; testid?: string;
+  /** AP-2: state that one delivery of a survey satisfies exactly these requirements */
+  onResolve?: (survey: string, requirements: string[]) => void;
 }) {
   if (!plan) return <div className="ap-plan loading" data-testid={testid}><p className="ap-quiet">Working it out…</p></div>;
   const st = STATUS[plan.status];
@@ -72,7 +74,7 @@ export function PlanView({ plan, onSurvey, onRequirement, onNeed, activeSurvey, 
         </section>
       ) : null}
 
-      {plan.diagnostics.length ? <ul className="ap-issues block" data-testid={`${testid}-diagnostics`}>{plan.diagnostics.map((d, i) => <li key={i} className={d.severity.toLowerCase()} data-testid={`${testid}-diag-${d.code}`}><Icon name={d.severity === 'INFO' ? 'info' : 'warn'} size={12} /> {d.message}</li>)}</ul> : null}
+      {plan.diagnostics.length ? <ul className="ap-issues block" data-testid={`${testid}-diagnostics`}>{plan.diagnostics.map((d, i) => <li key={i} className={d.severity.toLowerCase()} data-testid={`${testid}-diag-${d.code}`}><Icon name={d.severity === 'INFO' ? 'info' : 'warn'} size={12} /> <span>{d.message}{d.code === 'DUPLICATE_SURVEY' && onResolve && d.survey && d.requirements ? <> <button type="button" className="ap-linkbtn" data-testid={`${testid}-resolve-${d.survey}`} onClick={() => onResolve(d.survey!, d.requirements!)}>State that one delivery satisfies these {d.requirements.length} requirements</button></> : null}</span></li>)}</ul> : null}
       {!compact && plan.policy ? <p className="ap-plan-foot" data-testid={`${testid}-provenance`}>{plan.policy.name} · version {plan.policy.version} ({plan.policy.status.toLowerCase()}) · policy {short(plan.policy.fingerprint)} · result {short(plan.fingerprint)} · a synthetic result, not an assignment</p> : null}
     </div>
   );

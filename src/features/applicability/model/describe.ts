@@ -109,3 +109,8 @@ export function mentions(e: Expr | null | undefined, into = { variables: new Set
   return into;
 }
 export const slug = (name: string) => name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 40);
+
+/** Whether two documents say the same thing, whatever order their keys are in (a saved document comes back from the
+    database with its keys reordered). */
+const ordered = (x: unknown): unknown => (Array.isArray(x) ? x.map(ordered) : x && typeof x === 'object' ? Object.fromEntries(Object.entries(x as Record<string, unknown>).sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => [k, ordered(v)])) : x);
+export const same = (a: unknown, b: unknown): boolean => JSON.stringify(ordered(a)) === JSON.stringify(ordered(b));

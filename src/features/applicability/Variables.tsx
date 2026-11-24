@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { SOURCE_TONE, SOURCE_WORD } from './editors';
 import { TYPE_LABEL, sentence, valueLabel } from './model/describe';
 import type { Variable, VarType } from './model/types';
+import { LibraryBar, LibraryDot, useLibrary } from './library';
 import { useAppl } from './store';
 import { Empty, Icon, Segmented, Tag, useParamState } from './ui';
 import { variableUses } from './usage';
@@ -20,6 +21,7 @@ const diff = (a: Variable, b: Variable) => {
 
 export function VariablesPage() {
   const { data, openDrawer, look, update, say } = useAppl();
+  const lib = useLibrary();
   const [chosen, pick] = useParamState('v');
   const [q, setQ] = useState('');
   const [type, setType] = useState<VarType | 'ALL'>('ALL');
@@ -54,7 +56,7 @@ export function VariablesPage() {
             <div className="ap-vargrid">
               {list.map((v) => (
                 <button key={v.code} type="button" className={`ap-varcard${sel?.code === v.code ? ' on' : ''}`} onClick={() => pick(v.code)} data-testid={`ap-variable-${v.code}`} aria-pressed={sel?.code === v.code}>
-                  <span className="ap-varcard-top"><strong>{v.name}</strong>{v.status !== 'PUBLISHED' ? <Tag tone={v.status === 'DRAFT' ? 'draft' : 'bad'}>{v.status === 'DRAFT' ? `Draft v${v.version}` : 'Deprecated'}</Tag> : null}</span>
+                  <span className="ap-varcard-top"><strong>{v.name}</strong>{lib.on ? <LibraryDot kind="VARIABLE" code={v.code} /> : v.status !== 'PUBLISHED' ? <Tag tone={v.status === 'DRAFT' ? 'draft' : 'bad'}>{v.status === 'DRAFT' ? `Draft v${v.version}` : 'Deprecated'}</Tag> : null}</span>
                   <span className="ap-varcard-says">{v.description}</span>
                   <span className="ap-varcard-foot"><Tag tone="var">{TYPE_LABEL[v.type]}</Tag><Tag tone={SOURCE_TONE[v.source.status]}>{SOURCE_WORD[v.source.status]}</Tag><span className="ap-varcard-used">{usedCount(v)} use{usedCount(v) === 1 ? '' : 's'}</span></span>
                 </button>
@@ -74,8 +76,9 @@ export function VariablesPage() {
           <p className="ap-side-says">{sel.description}</p>
           <div className="ap-side-actions">
             <button type="button" className="ap-btn" onClick={() => openDrawer({ kind: 'variable', code: sel.code })} data-testid="ap-variable-edit"><Icon name="variable" size={13} /> Change</button>
-            {sel.status === 'DRAFT' ? <button type="button" className="ap-btn" data-testid="ap-variable-publish" onClick={() => { update(`Publish variable ${sel.name}`, (d) => { const v = d.variables.find((x) => x.code === sel.code); if (v) { v.status = 'PUBLISHED'; v.previous = null; } }); say(`${sel.name} version ${sel.version} published. Nothing that names an earlier version changed.`); }}><Icon name="check" size={13} /> Publish version {sel.version}</button> : null}
+            {!lib.on && sel.status === 'DRAFT' ? <button type="button" className="ap-btn" data-testid="ap-variable-publish" onClick={() => { update(`Publish variable ${sel.name}`, (d) => { const v = d.variables.find((x) => x.code === sel.code); if (v) { v.status = 'PUBLISHED'; v.previous = null; } }); say(`${sel.name} version ${sel.version} published. Nothing that names an earlier version changed.`); }}><Icon name="check" size={13} /> Publish version {sel.version}</button> : null}
           </div>
+          <LibraryBar key={sel.code} kind="VARIABLE" code={sel.code} />
           <dl className="ap-facts-dl">
             <dt>Kind of value</dt><dd>{TYPE_LABEL[sel.type]}{sel.currency ? ` · ${sel.currency}` : ''}{sel.min !== undefined || sel.max !== undefined ? ` · ${sel.min ?? '…'} to ${sel.max ?? '…'}` : ''}</dd>
             {sel.values ? <><dt>Allowed values</dt><dd className="ap-chips">{sel.values.map((o) => <span key={o.value} className="ap-chip plain">{o.label}</span>)}</dd></> : null}

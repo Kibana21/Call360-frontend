@@ -5,7 +5,7 @@ import type { Facts, FactState, Variable } from './model/types';
 import { useAppl } from './store';
 import { Icon, Tag } from './ui';
 
-const STATE_WORD: Record<FactState['state'], string> = { KNOWN: '', UNKNOWN: 'Not known', NOT_PROVIDED: 'Not provided', INVALID: 'Invalid value', UNSUPPORTED: 'Not in this profile' };
+const STATE_WORD: Record<FactState['state'], string> = { KNOWN: '', UNKNOWN: 'Not known', NOT_PROVIDED: 'Not provided', INVALID: 'Invalid value' };
 export function FactsEditor({ codes, facts, onChange, states, groups, testid = 'ap-facts', highlight, compact }: {
   codes: string[]; facts: Facts; onChange: (f: Facts) => void; states?: Record<string, FactState>;
   groups?: { name: string; variables: string[] }[]; testid?: string; highlight?: string[]; compact?: boolean;
@@ -19,7 +19,7 @@ export function FactsEditor({ codes, facts, onChange, states, groups, testid = '
     const derived = !!v.derived;
     return (
       <div key={code} className={`ap-fact${compact ? ' compact' : ''}${st && st.state !== 'KNOWN' ? ` is-${st.state.toLowerCase()}` : ''}${highlight?.includes(code) ? ' needed' : ''}`} data-testid={`${testid}-${code}`} data-state={st?.state ?? (given ? (facts[code] === null ? 'UNKNOWN' : 'KNOWN') : 'NOT_PROVIDED')}>
-        <div className="ap-fact-name"><strong>{v.name}</strong>{v.source.status === 'UNMAPPED' ? <Tag tone="unknown" title={v.source.note}>no source yet</Tag> : null}{highlight?.includes(code) ? <Tag tone="warn">needed to decide</Tag> : null}</div>
+        <div className="ap-fact-name"><strong>{v.name}</strong>{v.source.status === 'UNMAPPED' ? <Tag tone="unknown" title={v.source.note}>no source yet</Tag> : null}{highlight?.includes(code) ? <Tag tone="warn">needed to decide</Tag> : null}{st?.outside_profiles ? <Tag title="The application's profiles do not carry this fact. It is still read.">outside the profile</Tag> : null}</div>
         <div className="ap-fact-value">
           {derived ? <span className="ap-derived" data-testid={`${testid}-${code}-derived`}><Icon name="link" size={13} /> Worked out: <strong>{st ? (st.state === 'KNOWN' ? st.label : 'not known') : '…'}</strong></span>
             : given ? <ValueEditor variable={v as Variable} value={facts[code]} onChange={(x) => onChange({ ...facts, [code]: x })} unknown compact={compact} testid={`${testid}-${code}-value`} />
@@ -37,8 +37,8 @@ export function FactsEditor({ codes, facts, onChange, states, groups, testid = '
     const rest = codes.filter((c) => !grouped.has(c));
     return (
       <div className="ap-facts" data-testid={testid}>
-        {groups.map((g) => { const mine = g.variables.filter((c) => codes.includes(c)); return mine.length ? <section key={g.name}><h4>{g.name}</h4>{mine.map(row)}</section> : null; })}
-        {rest.length ? <section><h4>Other</h4>{rest.map(row)}</section> : null}
+        {groups.map((g) => { const mine = g.variables.filter((c) => codes.includes(c)); return mine.length ? <details key={g.name} open className="ap-factgroup"><summary>{g.name} <span className="ap-count">{mine.length}</span></summary>{mine.map(row)}</details> : null; })}
+        {rest.length ? <details open className="ap-factgroup"><summary>Other <span className="ap-count">{rest.length}</span></summary>{rest.map(row)}</details> : null}
       </div>
     );
   }

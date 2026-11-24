@@ -13,12 +13,14 @@ export interface Variable {
   version: number; status: 'DRAFT' | 'PUBLISHED' | 'DEPRECATED';
   /** the published version this draft would replace, kept for the comparison */
   previous?: Variable | null;
+  /** set when the item comes from the saved library (APPL-X2): its stable identity and exact published version */
+  asset_id?: string; version_id?: string; fingerprint?: string;
 }
 export interface Profile {
   code: string; name: string; description: string; extends: string[];
   sections: { name: string; variables: string[] }[];
   required: string[]; constraints?: Record<string, { allowed: string[] }>;
-  version: number; status: 'DRAFT' | 'PUBLISHED';
+  version: number; status: 'DRAFT' | 'PUBLISHED'; asset_id?: string; version_id?: string; fingerprint?: string;
 }
 export type Operator =
   | 'is_true' | 'is_false' | 'equals' | 'not_equals' | 'in' | 'not_in' | 'includes_any' | 'includes_all' | 'includes_none'
@@ -32,25 +34,37 @@ export type Expr =
   | { op: 'ref'; condition: string; version: number };
 export interface Condition {
   code: string; name: string; description: string; expr: Expr; version: number; status: 'DRAFT' | 'PUBLISHED';
-  history?: { version: number; expr: Expr }[];
+  history?: { version: number; expr: Expr }[]; asset_id?: string; version_id?: string; fingerprint?: string;
 }
-export interface SurveyRef { code: string; version: number; name: string; fingerprint: string; label?: string; summary?: string }
+/** An exact PUBLISHED survey version of Survey Studio: never a bare survey name. `version_id`, `fingerprint` (content)
+    and `manifest` are what Survey Studio published; a newer publication never changes a reference already made. */
+export interface SurveyRef {
+  code: string; version: number; name: string; fingerprint: string; label?: string; summary?: string;
+  version_id?: string; definition_id?: string; manifest?: string; market?: string; published_at?: string;
+}
 export type Action =
   | { kind: 'INCLUDE'; surveys: SurveyRef[] }
-  | { kind: 'CHOOSE_ONE'; alternatives: { survey: SurveyRef; when: Expr | null }[] };
+  | { kind: 'CHOOSE_ONE'; alternatives: { survey: SurveyRef; when: Expr | null; fallback?: boolean }[] };
 export interface Requirement { id: string; name: string; when: Expr | null; action: Action; replaces: string[]; note?: string }
-export type SameSurvey = 'ONE_DELIVERY' | 'CONFLICT' | null;
+/** AP-2: the author's explicit statement that ONE delivery of a survey satisfies THESE requirements (and no others). */
+export interface SharedDelivery { survey: string; requirements: string[]; note?: string }
 export interface Policy {
   code: string; name: string; market: string; description: string; profiles: string[]; scope: Expr | null;
-  same_survey: SameSurvey; requirements: Requirement[]; order: string[]; version: number;
+  shared_deliveries: SharedDelivery[]; requirements: Requirement[]; order: string[]; version: number;
+  /** APPL-X3: the exact version (or draft revision) of every variable and profile this policy reads, and of every
+      draft condition. Part of the document, so adopting a newer one is an edit like any other — and undoable. */
+  pins?: Pin[];
   status: 'DRAFT' | 'IN_REVIEW' | 'APPROVED' | 'PUBLISHED' | 'SUPERSEDED';
 }
+export interface Pin { kind: 'VARIABLE' | 'PROFILE' | 'CONDITION'; code: string; version?: number; draft_revision?: number }
 export type Persona = 'maker' | 'checker' | 'publisher';
 export interface PolicyEvent { at: string; who: string; persona: Persona | 'system'; what: string; detail?: string }
 export interface Candidate { policy: Policy; fingerprint: string | null; submittedBy: string; note: string; approvedBy?: string; state: 'IN_REVIEW' | 'APPROVED' }
 export interface PolicyRecord {
   code: string; published: Policy | null; draft: Policy | null; candidate: Candidate | null;
   versions: Policy[]; events: PolicyEvent[]; unsaved: boolean;
+  /** where this policy in the prototype came from: the guided showcase, a template, a copy, or made from nothing */
+  origin?: 'SHOWCASE' | 'TEMPLATE' | 'COPY' | 'BLANK' | 'SCALE';
 }
 export type Facts = Record<string, unknown>;
 export interface Scenario {
@@ -64,7 +78,7 @@ export interface Data {
 
 // ---- what the evaluator returns (contract call360.survey-applicability/0)
 export type Tri = 'TRUE' | 'FALSE' | 'UNKNOWN';
-export interface FactState { variable: string; name: string; state: 'KNOWN' | 'UNKNOWN' | 'NOT_PROVIDED' | 'INVALID' | 'UNSUPPORTED'; value: unknown; label: string; reason: string; derived?: boolean; given?: unknown }
+export interface FactState { variable: string; name: string; state: 'KNOWN' | 'UNKNOWN' | 'NOT_PROVIDED' | 'INVALID'; value: unknown; label: string; reason: string; derived?: boolean; given?: unknown; outside_profiles?: boolean }
 export interface Trace {
   op: 'all' | 'any' | 'not' | 'test' | 'ref'; path: string; result: Tri; text: string; decisive?: boolean; reason?: string;
   children?: Trace[]; variable?: string; operator?: Operator; fact?: FactState; condition?: string; version?: number;
@@ -74,9 +88,9 @@ export type Outcome = 'ACTIVE' | 'REPLACED' | 'PENDING' | 'UNRESOLVED' | 'INACTI
 export interface ReqResult {
   id: string; name: string; state: 'APPLIES' | 'DOES_NOT_APPLY' | 'UNRESOLVED'; outcome: Outcome; trace: Trace; action: string;
   replaces: string[]; replaced_by?: string[]; may_be_replaced_by?: string[]; surveys: SurveyRef[]; needs: Need[];
-  choice?: { outcome: string; reason: string; chosen: SurveyRef | null; alternatives: { index: number; survey: SurveyRef; otherwise: boolean; result: Tri | null; chosen: boolean; trace: Trace | null }[] };
+  choice?: { outcome: string; reason: string; chosen: SurveyRef | null; alternatives: { index: number; survey: SurveyRef; otherwise: boolean; missing_criterion?: boolean; result: Tri | null; chosen: boolean; trace: Trace | null }[] };
 }
-export interface Diagnostic { severity: 'BLOCKER' | 'WARNING' | 'INFO'; code: string; message: string; at?: Record<string, unknown>; survey?: string; variable?: string }
+export interface Diagnostic { severity: 'BLOCKER' | 'WARNING' | 'INFO'; code: string; message: string; at?: Record<string, unknown>; survey?: string; variable?: string; requirements?: string[] }
 export interface Selected { survey: SurveyRef; required_by: string[]; position?: number; obligations?: number; conflict?: boolean }
 export interface Plan {
   status: 'RESOLVED' | 'UNRESOLVED' | 'OUT_OF_SCOPE' | 'SCOPE_UNRESOLVED' | 'ERROR';

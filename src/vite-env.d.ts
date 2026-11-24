@@ -5,4 +5,6 @@ interface ImportMetaEnv {
   readonly VITE_SURVEY_STUDIO_PERSISTED?: string;
   /** "1" enables the Survey Applicability prototype (APPL-X1) inside persisted Survey Studio. Off by default. */
   readonly VITE_SURVEY_APPLICABILITY?: string;
+  readonly VITE_APPLICABILITY_LIBRARY?: string;
+  readonly VITE_APPLICABILITY_POLICIES?: string;
 }

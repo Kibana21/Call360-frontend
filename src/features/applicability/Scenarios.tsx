@@ -9,7 +9,7 @@ import type { EvalRow, Scenario } from './model/types';
 import { PlanView } from './plan';
 import { useAppl } from './store';
 import { Empty, Field, Icon, Picker, Segmented, Tag, useParamState } from './ui';
-import { BASE, composed } from './usage';
+import { BASE, composed, shortName } from './usage';
 
 type Tab = 'test' | 'generate' | 'impact';
 const TEMPLATES: { id: string; name: string; says: string; facts: Record<string, unknown> }[] = [
@@ -26,18 +26,21 @@ const TEMPLATES: { id: string; name: string; says: string; facts: Record<string,
 ];
 
 export function ScenariosPage() {
-  const { data, update, say, look } = useAppl();
+  const { data, update, say, look, current: rec } = useAppl();
   const [chosen, setChosen] = useParamState('s');
   const [tabParam, setTab] = useParamState('tab');
   const [fresh, setFresh] = useParamState('new');
   const tab = (tabParam as Tab) || 'test';
-  const rec = data.policies[0];
   const [against, setAgainst] = useState<'draft' | 'published'>(rec?.draft ? 'draft' : 'published');
   const policy = rec ? (against === 'published' ? rec.published : rec.draft) ?? rec.published ?? rec.draft : null;
   const [q, setQ] = useState('');
   const [creating, setCreating] = useState(fresh === '1');
   const sel = data.scenarios.find((s) => s.id === chosen) ?? data.scenarios[0];
   const [activeSurvey, setActiveSurvey] = useState<string | null>(null);
+  // the fact editor shows only what this policy reads unless asked otherwise
+  const [factScope, setFactScope] = useState<'policy' | 'all'>('policy');
+  const [factFind, setFactFind] = useState('');
+  const [factOnly, setFactOnly] = useState<'all' | 'changed' | 'missing' | 'unknown'>('all');
   const go = (patch: { s?: string | null; tab?: string | null; new?: string | null }) => { if ('s' in patch) setChosen(patch.s ?? null); if ('tab' in patch) setTab(patch.tab ?? null); if ('new' in patch) setFresh(patch.new ?? null); };
   const one = useEvaluation(data, policy, sel ? [sel] : [], rec?.draft && rec.published ? (against === 'draft' ? rec.published : rec.draft) : null);
   const all = useEvaluation(data, policy, data.scenarios);
@@ -46,6 +49,19 @@ export function ScenariosPage() {
   const plan = row?.plan;
   const byId = useMemo(() => new Map((all.data?.results ?? []).map((r) => [r.scenario, r])), [all.data]);
   const vars = useMemo(() => { if (!sel) return { codes: [] as string[], groups: [] as { name: string; variables: string[] }[] }; const c = composed(data, sel.profiles); const sections = new Map<string, string[]>(); c.rows.forEach((r) => sections.set(r.section, [...(sections.get(r.section) ?? []), r.variable])); const extra = Object.keys(sel.facts).filter((k) => !c.rows.some((r) => r.variable === k) && look.variable(k)); return { codes: [...c.rows.map((r) => r.variable), ...extra], groups: [...sections.entries()].map(([name, variables]) => ({ name, variables })) }; }, [data, sel, look]);
+  const baseline = sel?.basedOn ? data.scenarios.find((x) => x.id === sel.basedOn) : undefined;
+  const reads = Object.keys(plan?.facts ?? {});
+  // a fact the policy reads is always offered, even when the scenario's profiles do not carry it
+  const everyCode = [...new Set([...vars.codes, ...reads.filter((c) => look.variable(c))])];
+  const factCodes = everyCode.filter((c) => {
+    if (factScope === 'policy' && reads.length && !reads.includes(c)) return false;
+    const v = look.variable(c); const st = plan?.facts?.[c]?.state;
+    if (factFind.trim() && !`${v?.name} ${v?.description}`.toLowerCase().includes(factFind.trim().toLowerCase())) return false;
+    if (factOnly === 'changed') return !!baseline && JSON.stringify(baseline.facts[c]) !== JSON.stringify(sel?.facts[c]);
+    if (factOnly === 'missing') return !(c in (sel?.facts ?? {})) && !v?.derived;
+    if (factOnly === 'unknown') return st === 'UNKNOWN' || st === 'NOT_PROVIDED' || st === 'INVALID' || sel?.facts[c] === null;
+    return true;
+  });
   const suites = useMemo(() => { const k = q.trim().toLowerCase(); const m = new Map<string, Scenario[]>(); data.scenarios.filter((s) => !k || `${s.name} ${s.description}`.toLowerCase().includes(k)).forEach((s) => m.set(s.suite ?? 'No suite', [...(m.get(s.suite ?? 'No suite') ?? []), s])); return [...m.entries()]; }, [data.scenarios, q]);
   const edit = (label: string, f: (s: Scenario) => void) => sel && update(label, (d) => { const s = d.scenarios.find((x) => x.id === sel.id); if (s) f(s); });
   const add = (s: Omit<Scenario, 'id'>) => { const id = `sc-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`; update(`Create scenario “${s.name}”`, (d) => { d.scenarios.push({ ...s, id }); if (s.suite && !d.suites.includes(s.suite)) d.suites.push(s.suite); }); go({ s: id, tab: 'test', new: null }); setCreating(false); return id; };
@@ -61,7 +77,7 @@ export function ScenariosPage() {
           <section key={suite}><h3>{suite} <span className="ap-count">{list.length}</span></h3>
             <ul>{list.map((s) => { const p = byId.get(s.id)?.plan; return (
               <li key={s.id}><button type="button" className={s.id === sel?.id ? 'on' : ''} onClick={() => go({ s: s.id, tab: tab === 'generate' ? 'test' : tab })} data-testid={`ap-scenario-${s.id}`} data-status={p?.status}>
-                <span className={`ap-dot is-${p ? (p.status === 'RESOLVED' ? 'true' : 'unknown') : 'none'}`} aria-hidden="true" /><span><strong>{s.name}</strong><small>{p ? (p.status === 'RESOLVED' ? (p.selected.length ? p.selected.map((e) => e.survey.name.split(' · ')[0]).join(', ') : 'No survey') : 'Not decided') : '…'}</small></span>{s.golden ? <Tag tone="info" title="A regression scenario: its result is expected to stay the same">regression</Tag> : null}
+                <span className={`ap-dot is-${p ? (p.status === 'RESOLVED' ? 'true' : 'unknown') : 'none'}`} aria-hidden="true" /><span><strong>{s.name}</strong><small>{p ? (p.status === 'RESOLVED' ? (p.selected.length ? p.selected.map((e) => shortName(e.survey.name)).join(', ') : 'No survey') : 'Not decided') : '…'}</small></span>{s.golden ? <Tag tone="info" title="A regression scenario: its result is expected to stay the same">regression</Tag> : null}
               </button></li>
             ); })}</ul>
           </section>
@@ -71,7 +87,7 @@ export function ScenariosPage() {
 
       <section className="ap-scn-main">
         <header className="ap-pagehead">
-          <div><h1>Scenario and test lab</h1><p>Example applications with synthetic facts. Run them against the draft or the published policy, see exactly why each survey is or is not required, and what a change would alter.</p></div>
+          <div><h1>Scenario and test lab</h1><p>Example applications with synthetic facts. Run them against the policy, see exactly why each survey is or is not required, and what a change would alter.</p><p className="ap-kept-note" data-testid="ap-scenarios-kept"><Icon name="info" size={13} /> <strong>Scenarios are kept in this browser tab only.</strong> They are synthetic, are lost when the page is reloaded, and are not saved in Call360 yet.</p></div>
           {rec?.draft && rec.published ? <Segmented label="Run against" value={against} onChange={setAgainst} testid="ap-against" options={[{ value: 'draft', label: `Draft v${rec.draft.version}`, testid: 'ap-against-draft' }, { value: 'published', label: `Published v${rec.published.version}`, icon: 'lock', testid: 'ap-against-published' }]} /> : null}
         </header>
         <div className="ap-tabs" role="tablist" aria-label="Scenario lab">
@@ -97,7 +113,15 @@ export function ScenariosPage() {
               </div>
               <div className="ap-scn-profiles"><span>Profiles</span>{sel.profiles.map((c) => <span key={c} className="ap-chip profile"><Icon name="profile" size={13} /> {data.profiles.find((p) => p.code === c)?.name ?? c}<button type="button" aria-label="Remove this profile" onClick={() => edit('Change a scenario’s profiles', (s) => { s.profiles = s.profiles.filter((x) => x !== c); })}><Icon name="x" size={11} /></button></span>)}
                 <Picker label="Add a profile" testid="ap-scenario-profile" items={data.profiles.filter((p) => !sel.profiles.includes(p.code)).map((p) => ({ id: p.code, label: p.name, hint: p.description, icon: 'profile' }))} onPick={(c) => edit('Change a scenario’s profiles', (s) => { s.profiles.push(c); })} button={<span className="ap-linkbtn"><Icon name="plus" size={12} /> Add a profile</span>} /></div>
-              <FactsEditor codes={vars.codes} groups={vars.groups} facts={sel.facts} states={plan?.facts} highlight={plan?.needs.map((n) => n.variable)} testid="ap-scenario-facts" onChange={(f) => edit(`Change a fact of “${sel.name}”`, (s) => { s.facts = f; })} />
+              <div className="ap-factbar" data-testid="ap-factbar">
+                <div className="ap-seg tight" role="radiogroup" aria-label="Which facts to show"><button type="button" role="radio" aria-checked={factScope === 'policy'} className={factScope === 'policy' ? 'on' : ''} onClick={() => setFactScope('policy')} data-testid="ap-facts-scope-policy">Facts this policy reads</button><button type="button" role="radio" aria-checked={factScope === 'all'} className={factScope === 'all' ? 'on' : ''} onClick={() => setFactScope('all')} data-testid="ap-facts-scope-all">Every fact of the profile</button></div>
+                <label className="ap-searchbox"><Icon name="search" size={14} /><input value={factFind} onChange={(e) => setFactFind(e.target.value)} placeholder="Find a fact" aria-label="Find a fact" data-testid="ap-facts-search" /></label>
+                <select className="ap-input" aria-label="Show" value={factOnly} onChange={(e) => setFactOnly(e.target.value as typeof factOnly)} data-testid="ap-facts-only"><option value="all">All</option><option value="unknown">Not known or invalid</option><option value="missing">Left out</option>{baseline ? <option value="changed">Changed from “{baseline.name}”</option> : null}</select>
+                {baseline ? <button type="button" className="ap-btn quiet" data-testid="ap-facts-reset" onClick={() => edit(`Reset “${sel.name}” to its baseline`, (x) => { x.facts = structuredClone(baseline.facts); })}><Icon name="undo" size={13} /> Reset to “{baseline.name}”</button> : null}
+                <span className="ap-count" data-testid="ap-facts-count">{factCodes.length} of {everyCode.length} facts</span>
+              </div>
+              {!factCodes.length ? <p className="ap-quiet">No fact matches. {factScope === 'policy' && !reads.length ? 'This policy reads no fact yet.' : ''}</p> : null}
+              <FactsEditor codes={factCodes} groups={vars.groups} facts={sel.facts} states={plan?.facts} highlight={plan?.needs.map((n) => n.variable)} testid="ap-scenario-facts" onChange={(f) => edit(`Change a fact of “${sel.name}”`, (s) => { s.facts = f; })} />
             </div>
             <div className="ap-scn-result" data-testid="ap-scenario-result" aria-live="polite">
               <h2>What the policy selects</h2>
@@ -124,13 +148,13 @@ function SurveyPath({ plan, code }: { plan: NonNullable<EvalRow['plan']>; code: 
   const leaves = (r: (typeof reqs)[number]) => { const out: { text: string; result: string }[] = []; const walk = (t: typeof r.trace) => { if (t.op === 'test') out.push({ text: `${t.fact?.name} = ${t.fact?.state === 'KNOWN' ? t.fact.label : 'not known'}`, result: t.result }); t.children?.filter((c) => c.decisive !== false).forEach(walk); }; walk(r.trace); return out; };
   return (
     <div className="ap-path" data-testid="ap-survey-path">
-      <h4>How {sel.survey.name.split(' · ')[0]} was selected</h4>
+      <h4>How {shortName(sel.survey.name)} was selected</h4>
       {reqs.map((r) => (
         <ol key={r.id} className="ap-path-steps">
           <li className="facts">{leaves(r).map((l, i) => <span key={i} className={`ap-chip fact is-${l.result.toLowerCase()}`}>{l.text}</span>)}{!leaves(r).length ? <span className="ap-chip plain">always</span> : null}</li>
           <li className="cond"><Icon name="arrow" size={14} /><span className="ap-chip cond">{r.trace.text}</span></li>
           <li className="req"><Icon name="arrow" size={14} /><span className="ap-chip req">{r.name}</span></li>
-          <li className="survey"><Icon name="arrow" size={14} /><span className="ap-chip survey">{sel.survey.name.split(' · ')[0]}</span></li>
+          <li className="survey"><Icon name="arrow" size={14} /><span className="ap-chip survey">{shortName(sel.survey.name)}</span></li>
         </ol>
       ))}
     </div>
@@ -171,8 +195,7 @@ function NewScenario({ onCancel, onCreate }: { onCancel: () => void; onCreate: (
 }
 
 function Generator({ onKeep, policyKey }: { onKeep: (s: Scenario[]) => void; policyKey: string }) {
-  const { data } = useAppl();
-  const rec = data.policies[0];
+  const { data, current: rec } = useAppl();
   const policy = (policyKey === 'published' ? rec?.published : rec?.draft) ?? rec?.published ?? null;
   const [out, setOut] = useState<{ scenarios: Scenario[]; coverage: Coverage } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -204,7 +227,7 @@ function Generator({ onKeep, policyKey }: { onKeep: (s: Scenario[]) => void; pol
             <tbody>{out.scenarios.map((s) => { const p = by.get(s.id); const on = picked.has(s.id); return (
               <tr key={s.id} data-testid={`ap-generated-${s.id}`} data-status={p?.status}><td><button type="button" role="checkbox" aria-checked={on} aria-label={`Keep ${s.name}`} className={`ap-checkbtn${on ? ' on' : ''}`} onClick={() => { const n = new Set(picked); if (on) n.delete(s.id); else n.add(s.id); setPicked(n); }}>{on ? <Icon name="check" size={12} /> : null}</button></td>
                 <th scope="row">{s.name}</th><td><Tag tone={s.kind === 'COMBINATION' ? 'plain' : 'warn'}>{s.kind === 'COMBINATION' ? 'combination' : s.kind === 'INVALID_INPUT' ? 'invalid input' : 'missing input'}</Tag></td>
-                <td>{p ? <Tag tone={p.status === 'RESOLVED' ? 'published' : 'unknown'}>{p.status === 'RESOLVED' ? 'Decided' : 'Not decided'}</Tag> : '…'}</td><td>{p ? (p.selected.map((e) => e.survey.name.split(' · ')[0]).join(', ') || (p.status === 'RESOLVED' ? 'none' : '—')) : '…'}{p?.pending.length ? <small> · possibly {p.pending.map((e) => e.survey.name.split(' · ')[0]).join(', ')}</small> : null}</td></tr>
+                <td>{p ? <Tag tone={p.status === 'RESOLVED' ? 'published' : 'unknown'}>{p.status === 'RESOLVED' ? 'Decided' : 'Not decided'}</Tag> : '…'}</td><td>{p ? (p.selected.map((e) => shortName(e.survey.name)).join(', ') || (p.status === 'RESOLVED' ? 'none' : '—')) : '…'}{p?.pending.length ? <small> · possibly {p.pending.map((e) => shortName(e.survey.name)).join(', ')}</small> : null}</td></tr>
             ); })}</tbody>
           </table></div>
           <div className="ap-gen-foot"><span className="ap-quiet">{picked.size} of {out.scenarios.length} chosen</span><button type="button" className="ap-btn primary" disabled={!picked.size} onClick={() => onKeep(out.scenarios.filter((s) => picked.has(s.id)))} data-testid="ap-generate-keep"><Icon name="check" size={13} /> Keep the chosen ones as scenarios</button></div>
@@ -215,8 +238,7 @@ function Generator({ onKeep, policyKey }: { onKeep: (s: Scenario[]) => void; pol
 }
 
 export function Impact({ rows, onOpen, compact }: { rows: EvalRow[] | undefined; onOpen?: (id: string) => void; compact?: boolean }) {
-  const { data } = useAppl();
-  const rec = data.policies[0];
+  const { data, current: rec } = useAppl();
   if (!rec?.draft || !rec.published) return <Empty icon="replace" title="Nothing to compare">A comparison needs a published version and a draft.</Empty>;
   if (!rows) return <p className="ap-quiet">Comparing…</p>;
   const changed = rows.filter((r) => r.comparison?.changed);
@@ -232,7 +254,7 @@ export function Impact({ rows, onOpen, compact }: { rows: EvalRow[] | undefined;
       </div>
       <p className="ap-quiet">Published version {rec.published.version} on the left, draft version {rec.draft.version} on the right. Every line is what Call360’s evaluator worked out for both.</p>
       <ul className="ap-impact-list">
-        {rows.filter((r) => !compact || r.comparison?.changed).map((r) => { const s = data.scenarios.find((x) => x.id === r.scenario); const c = r.comparison; if (!s || !c) return null; const names = (p: EvalRow['plan'] | undefined): string[] => (p?.selected ?? []).map((e) => e.survey.name.split(' · ')[0] ?? e.survey.name); return (
+        {rows.filter((r) => !compact || r.comparison?.changed).map((r) => { const s = data.scenarios.find((x) => x.id === r.scenario); const c = r.comparison; if (!s || !c) return null; const names = (p: EvalRow['plan'] | undefined): string[] => (p?.selected ?? []).map((e) => shortName(e.survey.name)); return (
           <li key={r.scenario} className={c.changed ? 'changed' : 'same'} data-testid={`ap-impact-${r.scenario}`} data-changed={c.changed}>
             <header><button type="button" className="ap-linkbtn strong" onClick={() => onOpen?.(s.id)}>{s.name}</button>{s.golden ? <Tag tone={c.changed ? 'bad' : 'info'}>regression</Tag> : null}{c.changed ? <Tag tone="warn">changes</Tag> : <Tag tone="published">unchanged</Tag>}</header>
             <div className="ap-impact-sides">

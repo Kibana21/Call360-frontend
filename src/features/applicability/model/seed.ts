@@ -43,31 +43,62 @@ export const CONDITIONS: Condition[] = [
   c({ code: 'rider_includes_ci', name: 'Selected rider includes CI', description: 'A critical illness rider was chosen.', expr: { op: 'test', variable: 'selected_riders', operator: 'includes_any', values: ['CI'] } }),
 ];
 
-const s = (letter: string, name: string, summary: string, version = 1): SurveyRef => ({ code: `S-${letter}`, version, name: `Survey ${letter} · ${name}`, label: `${version}.0`, summary, fingerprint: `synthetic-${letter.toLowerCase()}${version}-${'0f3a9c6b1d7e'.slice(0, 8)}` });
-export const SURVEYS: SurveyRef[] = [
-  s('A', 'ILP product understanding', 'Checks the customer understood an investment-linked plan.'),
-  s('B', 'Non-face-to-face sale check', 'Checks how the sale was conducted.'),
-  s('C', 'ILP sold non-face-to-face', 'One combined survey covering both.'),
-  s('D', 'Replacement advice check', 'Checks the advice given when a policy is replaced.'),
-  s('E', 'High premium affordability', 'Checks affordability for a large premium.'),
-  s('F', 'Critical illness rider disclosure', 'Checks what was explained about the rider.'),
-];
-const S = (letter: string) => SURVEYS.find((x) => x.code === `S-${letter}`)!;
-const include = (id: string, name: string, when: Expr | null, letters: string[], replaces: string[] = []): Requirement => ({ id, name, when, action: { kind: 'INCLUDE', surveys: letters.map(S) }, replaces });
+// Surveys are NOT invented here. A requirement names a survey by the code it has in Survey Studio; the exact published
+// version (its id and fingerprints) is pinned from Survey Studio's own catalogue when the workspace opens (surveys.ts).
+// Until then — or if Survey Studio does not hold that survey — the reference is visibly "not pinned".
+export const DEMO = {
+  A: ['S-APPL-DEMO-ILP', 'Survey A · ILP product understanding'], B: ['S-APPL-DEMO-NFTF', 'Survey B · NFTF additional questions'],
+  C: ['S-APPL-DEMO-COMBINED', 'Survey C · Combined ILP + NFTF'], D: ['S-APPL-DEMO-REPLACEMENT', 'Survey D · Replacement scenario'],
+  E: ['S-APPL-DEMO-RIDER', 'Survey E · Rider scenario'],
+} as const;
+export type DemoKey = keyof typeof DEMO;
+/** A reference waiting to be pinned to what Survey Studio has published (version 0 = not pinned). */
+export const unpinned = (k: DemoKey): SurveyRef => ({ code: DEMO[k][0], version: 0, name: DEMO[k][1], fingerprint: '' });
+export const include = (id: string, name: string, when: Expr | null, keys: DemoKey[], replaces: string[] = []): Requirement => ({ id, name, when, action: { kind: 'INCLUDE', surveys: keys.map(unpinned) }, replaces });
 
-const base = { code: 'SG-NEW-BUSINESS', name: 'Singapore new business', market: 'SG', description: 'Which surveys a newly sold policy needs. Synthetic.', profiles: ['new_business'], scope: null, same_survey: 'ONE_DELIVERY' as const };
+const base = { code: 'SHOWCASE-ILP-NFTF', name: 'ILP and NFTF showcase', market: 'SG', description: 'The guided example: which showcase surveys a newly sold policy needs. Synthetic.', profiles: ['new_business'], scope: null, shared_deliveries: [] };
 export const PUBLISHED: Policy = {
-  ...base, version: 1, status: 'PUBLISHED', order: ['S-A', 'S-B'],
+  ...base, version: 1, status: 'PUBLISHED', order: [DEMO.A[0], DEMO.B[0]],
   requirements: [include('r1', 'ILP needs the ILP survey', ref('is_ilp'), ['A']), include('r2', 'NFTF needs the NFTF survey', ref('nftf_applies'), ['B'])],
 };
 export const DRAFT: Policy = {
-  ...base, version: 2, status: 'DRAFT', order: ['S-A', 'S-B', 'S-C', 'S-D'],
+  ...base, version: 2, status: 'DRAFT', order: [DEMO.A[0], DEMO.B[0], DEMO.C[0], DEMO.D[0], DEMO.E[0]],
   requirements: [
     ...PUBLISHED.requirements,
     include('r3', 'ILP with NFTF needs the combined survey', ref('ilp_with_nftf'), ['C'], ['r1', 'r2']),
     include('r4', 'A replacement needs the replacement survey', ref('replacement_applies'), ['D']),
+    include('r5', 'A critical illness rider needs the rider survey', ref('rider_includes_ci'), ['E']),
   ],
 };
+
+// ---- starting points offered when a policy is created (each produces an ordinary, fully editable policy)
+export interface Template { id: string; name: string; says: string; build: () => Pick<Policy, 'requirements' | 'order'> }
+const both: Expr = { op: 'all', args: [ref('is_ilp'), ref('nftf_applies')] };
+export const TEMPLATES: Template[] = [
+  { id: 'additive', name: 'Two alone, one combined — all three add up', says: 'ILP → A, NFTF → B, and both together → C as well.', build: () => ({ order: [DEMO.A[0], DEMO.B[0], DEMO.C[0]], requirements: [include('r1', 'ILP needs Survey A', ref('is_ilp'), ['A']), include('r2', 'NFTF needs Survey B', ref('nftf_applies'), ['B']), include('r3', 'ILP with NFTF also needs Survey C', both, ['C'])] }) },
+  { id: 'replace', name: 'Two alone, one combined — the combined one replaces', says: 'ILP → A, NFTF → B; when both apply, C replaces A and B.', build: () => ({ order: [DEMO.A[0], DEMO.B[0], DEMO.C[0]], requirements: [include('r1', 'ILP needs Survey A', ref('is_ilp'), ['A']), include('r2', 'NFTF needs Survey B', ref('nftf_applies'), ['B']), include('r3', 'ILP with NFTF needs Survey C instead', both, ['C'], ['r1', 'r2'])] }) },
+  { id: 'several', name: 'One condition, several surveys', says: 'When ILP and NFTF both apply, include A, B and C together.', build: () => ({ order: [DEMO.A[0], DEMO.B[0], DEMO.C[0]], requirements: [include('r1', 'ILP with NFTF needs three surveys', both, ['A', 'B', 'C'])] }) },
+  { id: 'either', name: 'Either condition, and "but not"', says: 'ILP or NFTF → D; ILP without NFTF → E. A synthetic demonstration of OR and NOT.', build: () => ({ order: [DEMO.D[0], DEMO.E[0]], requirements: [include('r1', 'ILP or NFTF needs Survey D', { op: 'any', args: [ref('is_ilp'), ref('nftf_applies')] }, ['D']), include('r2', 'ILP without NFTF needs Survey E', ref('ilp_without_nftf'), ['E'])] }) },
+  { id: 'choose', name: 'Choose exactly one', says: 'One of two surveys, each with its own stated criterion, and an explicit fallback.', build: () => ({ order: [DEMO.A[0], DEMO.C[0], DEMO.B[0]], requirements: [{ id: 'r1', name: 'One survey for an ILP sale', when: ref('is_ilp'), replaces: [], action: { kind: 'CHOOSE_ONE', alternatives: [{ survey: unpinned('C'), when: ref('nftf_applies') }, { survey: unpinned('A'), when: null, fallback: true }] } }] }) },
+];
+/** A large synthetic policy, only to see how the designer behaves at scale. Its conditions are combinations of the seeded variables. */
+export function scalePolicy(n: number): Pick<Policy, 'requirements' | 'order'> {
+  const keys = Object.keys(DEMO) as DemoKey[];
+  const channels = ['AGENCY', 'BANCASSURANCE', 'BROKER', 'DIRECT'], families = ['ILP', 'PROTECTION', 'ENDOWMENT'], risks = ['LOW', 'MEDIUM', 'HIGH'], freq = ['SINGLE', 'MONTHLY', 'ANNUAL'];
+  const shared = [ref('is_ilp'), ref('nftf_applies'), ref('replacement_applies'), ref('rider_includes_ci'), ref('high_premium', 2)];
+  const requirements: Requirement[] = Array.from({ length: n }, (_, i) => {
+    const args: Expr[] = [
+      { op: 'test', variable: 'sales_channel', operator: 'equals', value: channels[i % 4]! },
+      { op: 'test', variable: 'product_family', operator: 'equals', value: families[Math.floor(i / 4) % 3]! },
+      ...(i % 3 === 0 ? [{ op: 'test' as const, variable: 'risk_class', operator: 'equals' as const, value: risks[Math.floor(i / 12) % 3]! }] : []),
+      ...(i % 5 === 0 ? [shared[i % shared.length]!] : []),
+      ...(i >= 36 ? [{ op: 'test' as const, variable: 'premium_frequency', operator: 'equals' as const, value: freq[Math.floor(i / 36) % 3]! }] : []),
+    ];
+    const k = keys[i % keys.length]!;
+    return include(`r${i + 1}`, `${channels[i % 4]!.toLowerCase()} · ${families[Math.floor(i / 4) % 3]!.toLowerCase()}${i % 3 === 0 ? ` · ${risks[Math.floor(i / 12) % 3]!.toLowerCase()} risk` : ''}${i >= 36 ? ` · ${freq[Math.floor(i / 36) % 3]!.toLowerCase()}` : ''} needs ${DEMO[k][1].split(' · ')[0]}`, { op: 'all', args }, [k]);
+  });
+  return { requirements, order: keys.map((k) => DEMO[k][0]) };
+}
 
 const sc = (id: string, name: string, description: string, facts: Scenario['facts'], more: Partial<Scenario> = {}): Scenario => ({ id, name, description, profiles: ['new_business'], facts: { market: 'SG', sales_channel: 'AGENCY', replacement: false, ...facts }, suite: 'Core combinations', ...more });
 export const SCENARIOS: Scenario[] = [
@@ -77,14 +108,15 @@ export const SCENARIOS: Scenario[] = [
   sc('sc-neither', 'Neither', 'A protection sale made face to face.', { product_family: 'PROTECTION', nftf: false }),
   sc('sc-missing', 'ILP with NFTF not known', 'The application does not say whether NFTF applies.', { product_family: 'ILP', nftf: null }),
   sc('sc-replacement', 'ILP replacement', 'An ILP that replaces an existing policy.', { product_family: 'ILP', nftf: false, replacement: true }, { suite: 'Replacement' }),
+  sc('sc-rider', 'Protection with a critical illness rider', 'Riders chosen on a protection plan.', { product_family: 'PROTECTION', nftf: false, selected_riders: ['CI', 'WOP'] }, { suite: 'Riders' }),
   sc('sc-invalid', 'Invalid product family', 'A source value that is not one of the allowed values.', { product_family: 'UNIT_TRUST', nftf: true }, { suite: 'Bad input' }),
 ];
 
 export const seed = (): Data => structuredClone({
-  variables: VARIABLES, profiles: PROFILES, conditions: CONDITIONS, surveys: SURVEYS, scenarios: SCENARIOS,
-  suites: ['Core combinations', 'Replacement', 'Bad input'],
+  variables: VARIABLES, profiles: PROFILES, conditions: CONDITIONS, surveys: [], scenarios: SCENARIOS,
+  suites: ['Core combinations', 'Replacement', 'Riders', 'Bad input'],
   policies: [{
-    code: base.code, published: PUBLISHED, draft: DRAFT, candidate: null, versions: [PUBLISHED], unsaved: false,
+    code: base.code, published: PUBLISHED, draft: DRAFT, candidate: null, versions: [PUBLISHED], unsaved: false, origin: 'SHOWCASE',
     events: [
       { at: '2026-11-18 10:02', who: 'Maya (maker)', persona: 'maker', what: 'Submitted version 1 for review' },
       { at: '2026-11-18 15:40', who: 'Chen (checker)', persona: 'checker', what: 'Approved version 1' },
